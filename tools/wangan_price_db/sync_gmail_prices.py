@@ -9,6 +9,7 @@ import datetime as dt
 import email.utils
 import hashlib
 import html
+import json
 import os
 import re
 import sqlite3
@@ -20,7 +21,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
-DEFAULT_QUERY = '("湾岸" OR "豊洲" OR "晴海" OR "勝どき" OR "月島" OR "有明" OR "東雲") newer_than:14d'
+DEFAULT_QUERY = 'subject:"湾岸マンション価格ナビ" newer_than:180d'
 
 
 @dataclass(frozen=True)
@@ -35,18 +36,36 @@ class GmailMessage:
 
 
 @dataclass(frozen=True)
+class EmailLine:
+    line_id: str
+    message_id: str
+    line_index: int
+    line_text: str
+    line_hash: str
+
+
+@dataclass(frozen=True)
 class PriceObservation:
     observation_id: str
     message_id: str
     observed_at: str
+    source_type: str
+    row_index: int
     property_name: str | None
+    building_name: str | None
     area: str | None
     room_type: str | None
     floor: int | None
     size_sqm: float | None
     price_jpy: int
-    unit_price_per_tsubo: int | None
+    previous_price_jpy: int | None
+    price_change_jpy: int | None
+    unit_price_per_tsubo_man: float | None
+    unit_price_per_tsubo_jpy: int | None
+    direction: str | None
+    raw_line: str
     source_text: str
+    parsed_fields_json: str
     confidence: float
 
 
@@ -54,7 +73,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", default=getenv_default("WANGAN_DB_PATH", "data/wangan_prices.sqlite"))
     parser.add_argument("--query", default=getenv_default("WANGAN_GMAIL_QUERY", DEFAULT_QUERY))
-    parser.add_argument("--max-results", type=int, default=int(getenv_default("WANGAN_GMAIL_MAX_RESULTS", "50")))
+    parser.add_argument("--max-results", type=int, default=int(getenv_default("WANGAN_GMAIL_MAX_RESULTS", "500")))
     parser.add_argument("--dry-run", action="store_true", help="Fetch and parse without writing to SQLite.")
     return parser.parse_args()
 
@@ -98,21 +117,44 @@ def init_db(conn: sqlite3.Connection) -> None:
             imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
 
+        CREATE TABLE IF NOT EXISTS email_lines (
+            line_id TEXT PRIMARY KEY,
+            message_id TEXT NOT NULL REFERENCES gmail_messages(message_id),
+            line_index INTEGER NOT NULL,
+            line_text TEXT NOT NULL,
+            line_hash TEXT NOT NULL,
+            imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(message_id, line_index)
+        );
+
         CREATE TABLE IF NOT EXISTS price_observations (
             observation_id TEXT PRIMARY KEY,
             message_id TEXT NOT NULL REFERENCES gmail_messages(message_id),
             observed_at TEXT NOT NULL,
+            source_type TEXT NOT NULL DEFAULT 'price_context',
+            row_index INTEGER,
             property_name TEXT,
+            building_name TEXT,
             area TEXT,
             room_type TEXT,
             floor INTEGER,
             size_sqm REAL,
             price_jpy INTEGER NOT NULL,
+            previous_price_jpy INTEGER,
+            price_change_jpy INTEGER,
             unit_price_per_tsubo INTEGER,
+            unit_price_per_tsubo_man REAL,
+            unit_price_per_tsubo_jpy INTEGER,
+            direction TEXT,
+            raw_line TEXT,
             source_text TEXT NOT NULL,
+            parsed_fields_json TEXT NOT NULL DEFAULT '{}',
             confidence REAL NOT NULL,
             imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE INDEX IF NOT EXISTS idx_email_lines_message_id
+            ON email_lines(message_id);
 
         CREATE INDEX IF NOT EXISTS idx_price_observations_observed_at
             ON price_observations(observed_at);
@@ -121,6 +163,26 @@ def init_db(conn: sqlite3.Connection) -> None:
             ON price_observations(property_name);
         """
     )
+    migrate_price_observations(conn)
+
+
+def migrate_price_observations(conn: sqlite3.Connection) -> None:
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(price_observations)")}
+    additions = {
+        "source_type": "TEXT NOT NULL DEFAULT 'price_context'",
+        "row_index": "INTEGER",
+        "building_name": "TEXT",
+        "previous_price_jpy": "INTEGER",
+        "price_change_jpy": "INTEGER",
+        "unit_price_per_tsubo_man": "REAL",
+        "unit_price_per_tsubo_jpy": "INTEGER",
+        "direction": "TEXT",
+        "raw_line": "TEXT",
+        "parsed_fields_json": "TEXT NOT NULL DEFAULT '{}'",
+    }
+    for column, ddl in additions.items():
+        if column not in columns:
+            conn.execute(f"ALTER TABLE price_observations ADD COLUMN {column} {ddl}")
 
 
 def search_message_ids(service, query: str, max_results: int) -> list[dict[str, str]]:
@@ -206,13 +268,20 @@ def normalize_text(value: str) -> str:
 
 
 PRICE_RE = re.compile(r"(?P<price>\d{1,3}(?:,\d{3})+|\d{3,6})\s*(?:万円|万)")
-TSUBO_RE = re.compile(r"(?:坪単価|坪)\s*[:：]?\s*(?P<unit>\d{2,4})\s*(?:万円|万)")
+TSUBO_RE = re.compile(r"(?:坪単価|坪)?\s*[:：]?\s*(?P<unit>\d{2,4}(?:\.\d+)?)\s*(?:万円|万)")
 SIZE_RE = re.compile(r"(?P<size>\d{2,3}(?:\.\d+)?)\s*(?:m2|㎡|平米)")
 FLOOR_RE = re.compile(r"(?P<floor>\d{1,2})\s*階")
 ROOM_RE = re.compile(r"\b(?P<room>[1-5][SLDKR＋+]{1,6})\b", re.IGNORECASE)
 AREA_RE = re.compile(r"(豊洲|晴海|勝どき|月島|有明|東雲|芝浦|港南|台場|湾岸)")
+DIRECTION_RE = re.compile(r"(北西|北東|南西|南東|北|南|東|西)(?:向き)?")
+PRICE_CHANGE_RE = re.compile(r"(?P<sign>[▼▲△▽-])\s*(?P<amount>\d{1,3}(?:,\d{3})+|\d{2,6})\s*(?:万円|万)")
 PROPERTY_HINT_RE = re.compile(
     r"(?P<name>[^\n。]{0,30}(?:タワー|レジデンス|マンション|シティ|パーク|ベイ|晴海フラッグ|HARUMI FLAG)[^\n。]{0,30})",
+    re.IGNORECASE,
+)
+BUILDING_LINE_RE = re.compile(
+    r"(?P<name>(?:HARUMI FLAG|晴海フラッグ|[A-Za-z0-9一-龥ァ-ヶー・ ]+)"
+    r"(?:T棟|A棟|B棟|C棟|D棟|E棟|F棟|[0-9]+階|タワー|レジデンス|マンション|シティ|パーク|ベイ)[^\n]*)",
     re.IGNORECASE,
 )
 
@@ -223,15 +292,37 @@ def extract_observations(message: GmailMessage) -> list[PriceObservation]:
     observations: list[PriceObservation] = []
 
     for index, line in enumerate(lines):
+        if PRICE_CHANGE_RE.search(line):
+            continue
         for match in PRICE_RE.finditer(line):
             price_jpy = parse_price_to_jpy(match.group("price"))
             if price_jpy < 10_000_000:
                 continue
             context = build_context(lines, index)
-            observation = build_observation(message, context, price_jpy)
+            observation = build_observation(message, context, line, index, price_jpy)
             observations.append(observation)
 
     return dedupe_observations(observations)
+
+
+def extract_email_lines(message: GmailMessage) -> list[EmailLine]:
+    text = "\n".join(part for part in [message.subject, message.body_text] if part)
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    email_lines: list[EmailLine] = []
+    for index, line in enumerate(lines):
+        normalized = normalize_text(line)
+        line_hash = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+        line_id = stable_line_id(message.message_id, index, line_hash)
+        email_lines.append(
+            EmailLine(
+                line_id=line_id,
+                message_id=message.message_id,
+                line_index=index,
+                line_text=normalized,
+                line_hash=line_hash,
+            )
+        )
+    return email_lines
 
 
 def parse_price_to_jpy(value: str) -> int:
@@ -245,29 +336,145 @@ def build_context(lines: list[str], index: int) -> str:
     return normalize_text("\n".join(lines[start:end]))
 
 
-def build_observation(message: GmailMessage, context: str, price_jpy: int) -> PriceObservation:
-    property_name = find_first(PROPERTY_HINT_RE, context, "name")
-    area = find_first(AREA_RE, context, 1)
-    room_type = find_first(ROOM_RE, context, "room")
-    floor = parse_int(find_first(FLOOR_RE, context, "floor"))
-    size_sqm = parse_float(find_first(SIZE_RE, context, "size"))
-    unit_price = parse_int(find_first(TSUBO_RE, context, "unit"))
-    confidence = score_confidence(property_name, area, room_type, size_sqm, unit_price)
-    observation_id = stable_observation_id(message.message_id, context, price_jpy)
+def build_observation(
+    message: GmailMessage,
+    context: str,
+    raw_line: str,
+    row_index: int,
+    price_jpy: int,
+) -> PriceObservation:
+    parsed = parse_listing_context(context, price_jpy)
+    property_name = parsed.get("property_name")
+    building_name = parsed.get("building_name")
+    area = parsed.get("area")
+    room_type = parsed.get("room_type")
+    floor = parsed.get("floor")
+    size_sqm = parsed.get("size_sqm")
+    previous_price_jpy = parsed.get("previous_price_jpy")
+    price_change_jpy = parsed.get("price_change_jpy")
+    unit_price_per_tsubo_man = parsed.get("unit_price_per_tsubo_man")
+    unit_price_per_tsubo_jpy = parsed.get("unit_price_per_tsubo_jpy")
+    direction = parsed.get("direction")
+    confidence = score_confidence(property_name, area, room_type, size_sqm, unit_price_per_tsubo_man, direction)
+    observation_id = stable_observation_id(message.message_id, context, raw_line, price_jpy)
     return PriceObservation(
         observation_id=observation_id,
         message_id=message.message_id,
         observed_at=message.received_at,
+        source_type="price_line",
+        row_index=row_index,
         property_name=property_name,
+        building_name=building_name,
         area=area,
         room_type=room_type.upper() if room_type else None,
         floor=floor,
         size_sqm=size_sqm,
         price_jpy=price_jpy,
-        unit_price_per_tsubo=unit_price,
+        previous_price_jpy=previous_price_jpy,
+        price_change_jpy=price_change_jpy,
+        unit_price_per_tsubo_man=unit_price_per_tsubo_man,
+        unit_price_per_tsubo_jpy=unit_price_per_tsubo_jpy,
+        direction=direction,
+        raw_line=normalize_text(raw_line),
         source_text=context,
+        parsed_fields_json=json.dumps(parsed, ensure_ascii=False, sort_keys=True),
         confidence=confidence,
     )
+
+
+def parse_listing_context(context: str, price_jpy: int) -> dict[str, object]:
+    lines = [line.strip() for line in context.splitlines() if line.strip()]
+    price_values = [parse_price_to_jpy(match.group("price")) for match in PRICE_RE.finditer(context)]
+    price_change_jpy = parse_price_change(context)
+    previous_price_jpy = infer_previous_price(price_values, price_jpy, price_change_jpy)
+    unit_price_per_tsubo_man = extract_unit_price_man(lines, price_values)
+    building_name = clean_property_name(find_first(BUILDING_LINE_RE, context, "name"))
+    property_name = clean_property_name(find_first(PROPERTY_HINT_RE, context, "name")) or building_name
+    area = find_first(AREA_RE, context, 1)
+    room_type = find_first(ROOM_RE, context, "room")
+    floor = parse_int(find_first(FLOOR_RE, context, "floor"))
+    size_sqm = extract_size_sqm(lines, context)
+    direction = extract_direction(lines, context)
+    return {
+        "property_name": property_name,
+        "building_name": building_name,
+        "area": area,
+        "room_type": room_type.upper() if room_type else None,
+        "floor": floor,
+        "size_sqm": size_sqm,
+        "price_jpy": price_jpy,
+        "all_price_jpy": price_values,
+        "previous_price_jpy": previous_price_jpy,
+        "price_change_jpy": price_change_jpy,
+        "unit_price_per_tsubo_man": unit_price_per_tsubo_man,
+        "unit_price_per_tsubo_jpy": int(round(unit_price_per_tsubo_man * 10_000)) if unit_price_per_tsubo_man else None,
+        "direction": direction,
+        "raw_context_lines": lines,
+        "parser_version": 2,
+    }
+
+
+def extract_size_sqm(lines: list[str], context: str) -> float | None:
+    explicit = parse_float(find_first(SIZE_RE, context, "size"))
+    if explicit:
+        return explicit
+    for line in lines:
+        if re.fullmatch(r"\d{2,3}(?:\.\d+)?", line):
+            return float(line)
+    return None
+
+
+def extract_unit_price_man(lines: list[str], price_values: list[int]) -> float | None:
+    price_man_values = {value / 10_000 for value in price_values}
+    for line in lines:
+        stripped = line.replace("万円", "").replace("万", "").strip()
+        if "," in stripped:
+            continue
+        if not re.fullmatch(r"\d{2,4}(?:\.\d+)?", stripped):
+            continue
+        value = float(stripped)
+        if value in price_man_values:
+            continue
+        if 200 <= value <= 5000:
+            return value
+    return None
+
+
+def clean_property_name(value: str | None) -> str | None:
+    if not value:
+        return None
+    value = re.sub(r"^(詳しく見る|物件名|マンション名)\s*", "", value)
+    value = re.split(r"\s*(?:販売価格|価格|[0-9]{1,3}(?:,\d{3})*万円|[0-9]{2,3}(?:\.\d+)?平米)", value)[0]
+    return normalize_text(value) or None
+
+
+def extract_direction(lines: list[str], context: str) -> str | None:
+    for line in lines:
+        match = re.fullmatch(r"(北西|北東|南西|南東|北|南|東|西)(?:向き)?", line)
+        if match:
+            return match.group(1)
+    return find_first(DIRECTION_RE, context, 1)
+
+
+def parse_price_change(context: str) -> int | None:
+    match = PRICE_CHANGE_RE.search(context)
+    if not match:
+        return None
+    amount = parse_price_to_jpy(match.group("amount"))
+    return -amount if match.group("sign") in {"▼", "▽", "-"} else amount
+
+
+def infer_previous_price(
+    price_values: list[int],
+    price_jpy: int,
+    price_change_jpy: int | None,
+) -> int | None:
+    if not price_change_jpy:
+        return None
+    candidates = [value for value in price_values if value != price_jpy]
+    if candidates:
+        return candidates[0]
+    return price_jpy - price_change_jpy
 
 
 def find_first(pattern: re.Pattern[str], value: str, group: str | int) -> str | None:
@@ -290,7 +497,8 @@ def score_confidence(
     area: str | None,
     room_type: str | None,
     size_sqm: float | None,
-    unit_price: int | None,
+    unit_price: float | None,
+    direction: str | None,
 ) -> float:
     score = 0.35
     score += 0.2 if property_name else 0
@@ -298,11 +506,17 @@ def score_confidence(
     score += 0.1 if room_type else 0
     score += 0.1 if size_sqm else 0
     score += 0.1 if unit_price else 0
+    score += 0.05 if direction else 0
     return min(score, 1.0)
 
 
-def stable_observation_id(message_id: str, context: str, price_jpy: int) -> str:
-    digest = hashlib.sha256(f"{message_id}|{price_jpy}|{context}".encode("utf-8")).hexdigest()
+def stable_observation_id(message_id: str, context: str, raw_line: str, price_jpy: int) -> str:
+    digest = hashlib.sha256(f"{message_id}|{price_jpy}|{raw_line}|{context}".encode("utf-8")).hexdigest()
+    return digest[:32]
+
+
+def stable_line_id(message_id: str, line_index: int, line_hash: str) -> str:
+    digest = hashlib.sha256(f"{message_id}|{line_index}|{line_hash}".encode("utf-8")).hexdigest()
     return digest[:32]
 
 
@@ -332,6 +546,27 @@ def save_message(conn: sqlite3.Connection, message: GmailMessage) -> None:
     )
 
 
+def save_email_lines(conn: sqlite3.Connection, email_lines: Iterable[EmailLine]) -> int:
+    count = 0
+    for line in email_lines:
+        cursor = conn.execute(
+            """
+            INSERT OR IGNORE INTO email_lines (
+                line_id, message_id, line_index, line_text, line_hash
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                line.line_id,
+                line.message_id,
+                line.line_index,
+                line.line_text,
+                line.line_hash,
+            ),
+        )
+        count += cursor.rowcount
+    return count
+
+
 def save_observations(conn: sqlite3.Connection, observations: Iterable[PriceObservation]) -> int:
     count = 0
     for observation in observations:
@@ -341,29 +576,49 @@ def save_observations(conn: sqlite3.Connection, observations: Iterable[PriceObse
                 observation_id,
                 message_id,
                 observed_at,
+                source_type,
+                row_index,
                 property_name,
+                building_name,
                 area,
                 room_type,
                 floor,
                 size_sqm,
                 price_jpy,
+                previous_price_jpy,
+                price_change_jpy,
                 unit_price_per_tsubo,
+                unit_price_per_tsubo_man,
+                unit_price_per_tsubo_jpy,
+                direction,
+                raw_line,
                 source_text,
+                parsed_fields_json,
                 confidence
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 observation.observation_id,
                 observation.message_id,
                 observation.observed_at,
+                observation.source_type,
+                observation.row_index,
                 observation.property_name,
+                observation.building_name,
                 observation.area,
                 observation.room_type,
                 observation.floor,
                 observation.size_sqm,
                 observation.price_jpy,
-                observation.unit_price_per_tsubo,
+                observation.previous_price_jpy,
+                observation.price_change_jpy,
+                int(round(observation.unit_price_per_tsubo_man)) if observation.unit_price_per_tsubo_man else None,
+                observation.unit_price_per_tsubo_man,
+                observation.unit_price_per_tsubo_jpy,
+                observation.direction,
+                observation.raw_line,
                 observation.source_text,
+                observation.parsed_fields_json,
                 observation.confidence,
             ),
         )
@@ -385,17 +640,21 @@ def main() -> None:
         init_db(conn)
 
     imported_messages = 0
+    imported_lines = 0
     imported_observations = 0
     for ref in message_refs:
         message = fetch_message(service, ref["id"])
+        email_lines = extract_email_lines(message)
         observations = extract_observations(message)
         print(
             f"{message.received_at} | {message.subject[:80]} | "
+            f"{len(email_lines)} lines | "
             f"{len(observations)} price observations"
         )
         if conn:
             save_message(conn, message)
             imported_messages += 1
+            imported_lines += save_email_lines(conn, email_lines)
             imported_observations += save_observations(conn, observations)
 
     if conn:
@@ -404,6 +663,7 @@ def main() -> None:
 
     print(
         f"Done. Imported messages: {imported_messages}. "
+        f"New email lines: {imported_lines}. "
         f"New price observations: {imported_observations}."
     )
 
