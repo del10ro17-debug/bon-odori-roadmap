@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>晴海ふ頭公園盆踊り大会2026 出店工程表</title>
+  <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店に向けた準備工程表です。">
+  <script src="./data.js"></script>
+  <style>
+    :root {
+      --bg: #fff8f0;
+      --card: #ffffff;
+      --ink: #242424;
+      --muted: #666666;
+      --accent: #d64b2a;
+      --accent-soft: #ffe2d9;
+      --line: #ead8cc;
+      --ok: #1f7a4d;
+      --warn: #a15c00;
+      --danger: #a33131;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+      line-height: 1.75;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 22px 16px 56px;
+    }
+
+    header {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(26px, 6vw, 42px);
+      line-height: 1.2;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      border-left: 6px solid var(--accent);
+      padding-left: 10px;
+    }
+
+    h3 {
+      margin: 10px 0 6px;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+
+    li + li {
+      margin-top: 4px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .section {
+      margin-top: 18px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      background: #fffdf9;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--accent);
+      font-size: 26px;
+      line-height: 1.2;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .event-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .event-item {
+      background: #fffdf9;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .event-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .event-item strong {
+      display: block;
+      font-size: 16px;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .phase {
+      background: #fffdf9;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      position: relative;
+    }
+
+    .phase.current {
+      border-color: var(--accent);
+      background: #fff3ed;
+    }
+
+    .phase-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .period {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .pill.waiting {
+      background: #fff0d6;
+      color: var(--warn);
+    }
+
+    .pill.todo {
+      background: #efefef;
+      color: var(--muted);
+    }
+
+    .pill.live {
+      background: #def5e8;
+      color: var(--ok);
+    }
+
+    .owner {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .focus {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fffdf9;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #fff3ed;
+      font-size: 13px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .notice {
+      border-left: 6px solid var(--warn);
+      background: #fff8ea;
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .footer {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      th,
+      td {
+        padding: 8px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="meta">公開用工程表</p>
+      <h1 id="page-title">晴海ふ頭公園盆踊り大会2026 出店工程表</h1>
+      <p id="page-lead">ケバブ出店に向けた準備状況と、当日までの流れをまとめています。</p>
+      <div class="event-grid" id="event-grid"></div>
+    </header>
+
+    <section class="section">
+      <h2>全体サマリー</h2>
+      <div class="grid" id="summary-grid"></div>
+      <div class="notice">
+        5月中に「火気使用申請の要否」「スタッフ候補」「会場レイアウト」を押さえ、6月に運営設計・調達・試作、7月に最終確認と本番運営へ進みます。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>ここまで完了</h2>
+      <ul id="completed-list"></ul>
+    </section>
+
+    <section class="section">
+      <h2>当日までの工程表</h2>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <section class="section">
+      <h2>今週から着手する順番</h2>
+      <div id="urgent-table"></div>
+    </section>
+
+    <section class="section">
+      <h2>主要リスクと先回り</h2>
+      <div id="risk-table"></div>
+    </section>
+
+    <p class="footer" id="footer"></p>
+  </main>
+
+  <script>
+    const data = window.BON_ODORI_DATA;
+
+    const statusClass = (status) => {
+      if (status === "待ち") return "waiting";
+      if (status === "本番" || status === "着手") return "live";
+      return "todo";
+    };
+
+    const eventItems = [
+      ["イベント", data.event.title],
+      ["日程", data.event.dates],
+      ["主催", data.event.organizer],
+      ["出店者", data.event.vendor],
+      ["販売商材", data.event.product],
+    ];
+
+    document.getElementById("event-grid").innerHTML = eventItems.map(([label, value]) => `
+      <div class="event-item">
+        <span>${label}</span>
+        <strong>${value}</strong>
+      </div>
+    `).join("");
+
+    document.getElementById("summary-grid").innerHTML = `
+      <div class="stat"><strong>${data.summary.daysToEvent}日</strong><span>初日まで</span></div>
+      <div class="stat"><strong>${data.summary.phases}</strong><span>工程ブロック</span></div>
+      <div class="stat"><strong>${data.summary.urgentActions}件</strong><span>重要アクション</span></div>
+      <div class="stat"><strong>${data.summary.recommendedStaff}</strong><span>当日の推奨人数</span></div>
+    `;
+
+    document.getElementById("completed-list").innerHTML = data.completed
+      .map((item) => `<li>${item}</li>`)
+      .join("");
+
+    document.getElementById("timeline").innerHTML = data.phases.map((phase, index) => `
+      <article class="phase ${index === 0 ? "current" : ""}">
+        <div class="phase-top">
+          <span class="period">${phase.period}</span>
+          <span class="pill ${statusClass(phase.status)}">${phase.status}</span>
+        </div>
+        <h3>${phase.title}</h3>
+        <p class="owner">担当: ${phase.owner}</p>
+        <p class="focus">${phase.focus}</p>
+        <ul>
+          ${phase.tasks.map((task) => `<li>${task}</li>`).join("")}
+        </ul>
+      </article>
+    `).join("");
+
+    const renderTable = (headers, rows) => `
+      <table>
+        <thead>
+          <tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}
+        </tbody>
+      </table>
+    `;
+
+    document.getElementById("urgent-table").innerHTML = renderTable(
+      ["優先", "アクション", "担当", "期限", "状態"],
+      data.urgentActions.map((item) => [item.priority, item.action, item.owner, item.due, item.status])
+    );
+
+    document.getElementById("risk-table").innerHTML = renderTable(
+      ["リスク", "影響", "先回り"],
+      data.risks.map((item) => [item.risk, item.impact, item.action])
+    );
+
+    document.getElementById("footer").textContent = `最終更新: ${data.updatedAt}`;
+  </script>
+</body>
+</html>
