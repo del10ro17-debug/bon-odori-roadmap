@@ -1,0 +1,44 @@
+name: Update Wangan Price DB
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every Friday at 18:00 JST.
+    - cron: "0 9 * * 5"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r tools/wangan_price_db/requirements.txt
+
+      - name: Sync Gmail price emails
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          WANGAN_GMAIL_QUERY: ${{ vars.WANGAN_GMAIL_QUERY }}
+          WANGAN_GMAIL_MAX_RESULTS: ${{ vars.WANGAN_GMAIL_MAX_RESULTS }}
+        run: |
+          python tools/wangan_price_db/sync_gmail_prices.py \
+            --db data/wangan_prices.sqlite
+
+      - name: Commit updated database
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update wangan price database"
+          file_pattern: data/wangan_prices.sqlite
