@@ -72,6 +72,7 @@ Repository variables は任意です。
   - 未設定時: `subject:"湾岸マンション価格ナビ" newer_than:180d`
 - `WANGAN_GMAIL_MAX_RESULTS`
   - 未設定時: `500`
+<<<<<<< HEAD
 
 ## 過去分バックフィル
 
@@ -83,6 +84,8 @@ Repository variables は任意です。
 - `max_results`: `500`
 
 ノイズメールを避けるため、通常は件名を `湾岸マンション価格ナビ` に絞ります。期間を広げる場合は `newer_than:365d` のように変更できます。
+=======
+>>>>>>> 240c06b (Backfill wangan price emails)
 
 ## Gmail OAuth準備
 
@@ -116,8 +119,12 @@ export GOOGLE_REFRESH_TOKEN="..."
 
 python3 tools/wangan_price_db/sync_gmail_prices.py \
   --db data/wangan_prices.sqlite \
+<<<<<<< HEAD
   --query 'subject:"湾岸マンション価格ナビ" newer_than:180d' \
   --max-results 500
+=======
+  --query 'subject:"湾岸マンション価格ナビ" newer_than:180d'
+>>>>>>> 240c06b (Backfill wangan price emails)
 ```
 
 書き込み前に抽出結果だけ見る場合:
