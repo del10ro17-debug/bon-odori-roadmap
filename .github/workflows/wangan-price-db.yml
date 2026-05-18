@@ -2,6 +2,15 @@ name: Update Wangan Price DB
 
 on:
   workflow_dispatch:
+    inputs:
+      query:
+        description: Gmail search query. Leave blank to use the 180-day Wangan default.
+        required: false
+        default: 'subject:"湾岸マンション価格ナビ" newer_than:180d'
+      max_results:
+        description: Maximum Gmail messages to scan.
+        required: false
+        default: "500"
   schedule:
     # Every Friday at 18:00 JST.
     - cron: "0 9 * * 5"
@@ -31,8 +40,8 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
-          WANGAN_GMAIL_QUERY: ${{ vars.WANGAN_GMAIL_QUERY }}
-          WANGAN_GMAIL_MAX_RESULTS: ${{ vars.WANGAN_GMAIL_MAX_RESULTS }}
+          WANGAN_GMAIL_QUERY: ${{ inputs.query || vars.WANGAN_GMAIL_QUERY }}
+          WANGAN_GMAIL_MAX_RESULTS: ${{ inputs.max_results || vars.WANGAN_GMAIL_MAX_RESULTS }}
         run: |
           python tools/wangan_price_db/sync_gmail_prices.py \
             --db data/wangan_prices.sqlite
