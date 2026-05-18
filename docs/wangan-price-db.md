@@ -87,6 +87,17 @@ Repository variables は任意です。
 =======
 >>>>>>> 240c06b (Backfill wangan price emails)
 
+## 過去分バックフィル
+
+初回や分析前に過去数ヶ月分を取り込む場合は、GitHub Actionsの `Update Wangan Price DB` を手動実行します。
+
+推奨入力:
+
+- `query`: `subject:"湾岸マンション価格ナビ" newer_than:180d`
+- `max_results`: `500`
+
+ノイズメールを避けるため、通常は件名を `湾岸マンション価格ナビ` に絞ります。期間を広げる場合は `newer_than:365d` のように変更できます。
+
 ## Gmail OAuth準備
 
 1. Google Cloud Consoleでプロジェクトを作成します。
@@ -120,11 +131,16 @@ export GOOGLE_REFRESH_TOKEN="..."
 python3 tools/wangan_price_db/sync_gmail_prices.py \
   --db data/wangan_prices.sqlite \
 <<<<<<< HEAD
+<<<<<<< HEAD
   --query 'subject:"湾岸マンション価格ナビ" newer_than:180d' \
   --max-results 500
 =======
   --query 'subject:"湾岸マンション価格ナビ" newer_than:180d'
 >>>>>>> 240c06b (Backfill wangan price emails)
+=======
+  --query 'subject:"湾岸マンション価格ナビ" newer_than:180d' \
+  --max-results 500
+>>>>>>> 942eb02 (Enable Wangan price backfill inputs)
 ```
 
 書き込み前に抽出結果だけ見る場合:
