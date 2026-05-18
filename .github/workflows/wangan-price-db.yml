@@ -46,8 +46,15 @@ jobs:
           python tools/wangan_price_db/sync_gmail_prices.py \
             --db data/wangan_prices.sqlite
 
-      - name: Commit updated database
+      - name: Export dashboard data
+        run: |
+          python tools/wangan_price_db/export_dashboard_data.py \
+            --db data/wangan_prices.sqlite \
+            --output docs/wangan-price-dashboard/data.js \
+            --public-safe
+
+      - name: Commit updated database and dashboard data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Update wangan price database"
-          file_pattern: data/wangan_prices.sqlite
+          file_pattern: data/wangan_prices.sqlite docs/wangan-price-dashboard/data.js
