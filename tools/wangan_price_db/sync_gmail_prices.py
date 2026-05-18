@@ -53,6 +53,9 @@ class PriceObservation:
     row_index: int
     property_name: str | None
     building_name: str | None
+    project_name: str | None
+    village_name: str | None
+    building_code: str | None
     area: str | None
     room_type: str | None
     floor: int | None
@@ -135,6 +138,9 @@ def init_db(conn: sqlite3.Connection) -> None:
             row_index INTEGER,
             property_name TEXT,
             building_name TEXT,
+            project_name TEXT,
+            village_name TEXT,
+            building_code TEXT,
             area TEXT,
             room_type TEXT,
             floor INTEGER,
@@ -161,6 +167,9 @@ def init_db(conn: sqlite3.Connection) -> None:
 
         CREATE INDEX IF NOT EXISTS idx_price_observations_property_name
             ON price_observations(property_name);
+
+        CREATE INDEX IF NOT EXISTS idx_price_observations_project_name
+            ON price_observations(project_name);
         """
     )
     migrate_price_observations(conn)
@@ -172,6 +181,9 @@ def migrate_price_observations(conn: sqlite3.Connection) -> None:
         "source_type": "TEXT NOT NULL DEFAULT 'price_context'",
         "row_index": "INTEGER",
         "building_name": "TEXT",
+        "project_name": "TEXT",
+        "village_name": "TEXT",
+        "building_code": "TEXT",
         "previous_price_jpy": "INTEGER",
         "price_change_jpy": "INTEGER",
         "unit_price_per_tsubo_man": "REAL",
@@ -183,6 +195,12 @@ def migrate_price_observations(conn: sqlite3.Connection) -> None:
     for column, ddl in additions.items():
         if column not in columns:
             conn.execute(f"ALTER TABLE price_observations ADD COLUMN {column} {ddl}")
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_price_observations_project_name
+            ON price_observations(project_name)
+        """
+    )
 
 
 def search_message_ids(service, query: str, max_results: int) -> list[dict[str, str]]:
@@ -275,6 +293,19 @@ ROOM_RE = re.compile(r"\b(?P<room>[1-5][SLDKR＋+]{1,6})\b", re.IGNORECASE)
 AREA_RE = re.compile(r"(豊洲|晴海|勝どき|月島|有明|東雲|芝浦|港南|台場|湾岸)")
 DIRECTION_RE = re.compile(r"(北西|北東|南西|南東|北|南|東|西)(?:向き)?")
 PRICE_CHANGE_RE = re.compile(r"(?P<sign>[▼▲△▽-])\s*(?P<amount>\d{1,3}(?:,\d{3})+|\d{2,6})\s*(?:万円|万)")
+HARUMI_FLAG_RE = re.compile(r"(HARUMI\s*FLAG|晴海フラッグ)", re.IGNORECASE)
+BUILDING_CODE_RE = re.compile(r"(?:^|[^A-Z0-9])(?P<code>[A-Z])\s*棟", re.IGNORECASE)
+FULLWIDTH_ASCII_TRANS = str.maketrans(
+    "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ",
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+)
+VILLAGE_PATTERNS = [
+    ("SUN VILLAGE", re.compile(r"(SUN\s*VILLAGE|サン\s*ヴィレッジ|サンビレッジ)", re.IGNORECASE)),
+    ("SEA VILLAGE", re.compile(r"(SEA\s*VILLAGE|シー\s*ヴィレッジ|シービレッジ)", re.IGNORECASE)),
+    ("PARK VILLAGE", re.compile(r"(PARK\s*VILLAGE|パーク\s*ヴィレッジ|パークビレッジ)", re.IGNORECASE)),
+    ("SKY DUO", re.compile(r"(SKY\s*DUO|スカイ\s*デュオ|スカイデュオ)", re.IGNORECASE)),
+    ("PORT VILLAGE", re.compile(r"(PORT\s*VILLAGE|ポート\s*ヴィレッジ|ポートビレッジ)", re.IGNORECASE)),
+]
 PROPERTY_HINT_RE = re.compile(
     r"(?P<name>[^\n。]{0,30}(?:タワー|レジデンス|マンション|シティ|パーク|ベイ|晴海フラッグ|HARUMI FLAG)[^\n。]{0,30})",
     re.IGNORECASE,
@@ -346,6 +377,9 @@ def build_observation(
     parsed = parse_listing_context(context, price_jpy)
     property_name = parsed.get("property_name")
     building_name = parsed.get("building_name")
+    project_name = parsed.get("project_name")
+    village_name = parsed.get("village_name")
+    building_code = parsed.get("building_code")
     area = parsed.get("area")
     room_type = parsed.get("room_type")
     floor = parsed.get("floor")
@@ -355,7 +389,16 @@ def build_observation(
     unit_price_per_tsubo_man = parsed.get("unit_price_per_tsubo_man")
     unit_price_per_tsubo_jpy = parsed.get("unit_price_per_tsubo_jpy")
     direction = parsed.get("direction")
-    confidence = score_confidence(property_name, area, room_type, size_sqm, unit_price_per_tsubo_man, direction)
+    confidence = score_confidence(
+        property_name,
+        project_name,
+        village_name,
+        area,
+        room_type,
+        size_sqm,
+        unit_price_per_tsubo_man,
+        direction,
+    )
     observation_id = stable_observation_id(message.message_id, context, raw_line, price_jpy)
     return PriceObservation(
         observation_id=observation_id,
@@ -365,6 +408,9 @@ def build_observation(
         row_index=row_index,
         property_name=property_name,
         building_name=building_name,
+        project_name=project_name,
+        village_name=village_name,
+        building_code=building_code,
         area=area,
         room_type=room_type.upper() if room_type else None,
         floor=floor,
@@ -390,6 +436,9 @@ def parse_listing_context(context: str, price_jpy: int) -> dict[str, object]:
     unit_price_per_tsubo_man = extract_unit_price_man(lines, price_values)
     building_name = clean_property_name(find_first(BUILDING_LINE_RE, context, "name"))
     property_name = clean_property_name(find_first(PROPERTY_HINT_RE, context, "name")) or building_name
+    project_name = extract_project_name(context)
+    village_name = extract_village_name(context)
+    building_code = extract_building_code(context)
     area = find_first(AREA_RE, context, 1)
     room_type = find_first(ROOM_RE, context, "room")
     floor = parse_int(find_first(FLOOR_RE, context, "floor"))
@@ -398,6 +447,9 @@ def parse_listing_context(context: str, price_jpy: int) -> dict[str, object]:
     return {
         "property_name": property_name,
         "building_name": building_name,
+        "project_name": project_name,
+        "village_name": village_name,
+        "building_code": building_code,
         "area": area,
         "room_type": room_type.upper() if room_type else None,
         "floor": floor,
@@ -427,6 +479,11 @@ def extract_size_sqm(lines: list[str], context: str) -> float | None:
 def extract_unit_price_man(lines: list[str], price_values: list[int]) -> float | None:
     price_man_values = {value / 10_000 for value in price_values}
     for line in lines:
+        match = TSUBO_RE.search(line)
+        if match:
+            value = float(match.group("unit"))
+            if ("坪" in line or value not in price_man_values) and 200 <= value <= 5000:
+                return value
         stripped = line.replace("万円", "").replace("万", "").strip()
         if "," in stripped:
             continue
@@ -438,6 +495,27 @@ def extract_unit_price_man(lines: list[str], price_values: list[int]) -> float |
         if 200 <= value <= 5000:
             return value
     return None
+
+
+def extract_project_name(context: str) -> str | None:
+    if HARUMI_FLAG_RE.search(context):
+        return "HARUMI FLAG"
+    return None
+
+
+def extract_village_name(context: str) -> str | None:
+    for village_name, pattern in VILLAGE_PATTERNS:
+        if pattern.search(context):
+            return village_name
+    return None
+
+
+def extract_building_code(context: str) -> str | None:
+    normalized = context.translate(FULLWIDTH_ASCII_TRANS).upper()
+    match = BUILDING_CODE_RE.search(normalized)
+    if not match:
+        return None
+    return f"{match.group('code')}棟"
 
 
 def clean_property_name(value: str | None) -> str | None:
@@ -494,6 +572,8 @@ def parse_float(value: str | None) -> float | None:
 
 def score_confidence(
     property_name: str | None,
+    project_name: str | None,
+    village_name: str | None,
     area: str | None,
     room_type: str | None,
     size_sqm: float | None,
@@ -502,6 +582,8 @@ def score_confidence(
 ) -> float:
     score = 0.35
     score += 0.2 if property_name else 0
+    score += 0.1 if project_name else 0
+    score += 0.05 if village_name else 0
     score += 0.15 if area else 0
     score += 0.1 if room_type else 0
     score += 0.1 if size_sqm else 0
@@ -580,6 +662,9 @@ def save_observations(conn: sqlite3.Connection, observations: Iterable[PriceObse
                 row_index,
                 property_name,
                 building_name,
+                project_name,
+                village_name,
+                building_code,
                 area,
                 room_type,
                 floor,
@@ -595,7 +680,7 @@ def save_observations(conn: sqlite3.Connection, observations: Iterable[PriceObse
                 source_text,
                 parsed_fields_json,
                 confidence
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 observation.observation_id,
@@ -605,6 +690,9 @@ def save_observations(conn: sqlite3.Connection, observations: Iterable[PriceObse
                 observation.row_index,
                 observation.property_name,
                 observation.building_name,
+                observation.project_name,
+                observation.village_name,
+                observation.building_code,
                 observation.area,
                 observation.room_type,
                 observation.floor,
