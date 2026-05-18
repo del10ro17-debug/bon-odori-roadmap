@@ -8,6 +8,8 @@ Gmailに毎週届く湾岸マンション関連メールを取得し、価格情
 - SQLite DB: `data/wangan_prices.sqlite`
 - 定期実行: `.github/workflows/wangan-price-db.yml`
 - 実行タイミング: 毎週金曜 18:00 JST
+- 取得条件の初期値: `subject:"湾岸マンション価格ナビ" newer_than:180d`
+- 取得件数の初期値: `500`
 
 ## DBテーブル
 
@@ -71,6 +73,17 @@ Repository variables は任意です。
 - `WANGAN_GMAIL_MAX_RESULTS`
   - 未設定時: `500`
 
+## 過去分バックフィル
+
+初回や分析前に過去数ヶ月分を取り込む場合は、GitHub Actionsの `Update Wangan Price DB` を手動実行します。
+
+推奨入力:
+
+- `query`: `subject:"湾岸マンション価格ナビ" newer_than:180d`
+- `max_results`: `500`
+
+ノイズメールを避けるため、通常は件名を `湾岸マンション価格ナビ` に絞ります。期間を広げる場合は `newer_than:365d` のように変更できます。
+
 ## Gmail OAuth準備
 
 1. Google Cloud Consoleでプロジェクトを作成します。
@@ -103,7 +116,8 @@ export GOOGLE_REFRESH_TOKEN="..."
 
 python3 tools/wangan_price_db/sync_gmail_prices.py \
   --db data/wangan_prices.sqlite \
-  --query 'subject:"湾岸マンション価格ナビ" newer_than:180d'
+  --query 'subject:"湾岸マンション価格ナビ" newer_than:180d' \
+  --max-results 500
 ```
 
 書き込み前に抽出結果だけ見る場合:
