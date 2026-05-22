@@ -1,10 +1,27 @@
 (function () {
-  const STORAGE_KEY = "bon-odori-2026-attendance-v1";
+  const STORAGE_KEY = "bon-odori-2026-attendance-v2";
   const STATUS = {
     yes: { label: "参加", className: "yes" },
     no: { label: "不可", className: "no" },
     maybe: { label: "未定", className: "maybe" },
   };
+
+  const TIME_SLOTS = [
+    { id: "11-12", label: "11時〜12時" },
+    { id: "12-13", label: "12時〜13時" },
+    { id: "13-14", label: "13時〜14時" },
+    { id: "14-15", label: "14時〜15時" },
+    { id: "15-16", label: "15時〜16時" },
+    { id: "16-17", label: "16時〜17時" },
+    { id: "17-18", label: "17時〜18時" },
+    { id: "18-19", label: "18時〜19時" },
+    { id: "19-20", label: "19時〜20時" },
+    { id: "20-21", label: "20時〜21時" },
+    { id: "21-22", label: "21時〜22時" },
+  ];
+
+  const SLOT_IDS = new Set(TIME_SLOTS.map((s) => s.id));
+  const ROLE_OPTIONS = ["調理", "会計", "搬入"];
 
   const data = window.BON_ODORI_DATA || {};
   const apiUrl = data.attendanceApiUrl || "";
@@ -26,7 +43,10 @@
 
   function loadLocalMap() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      const v2 = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (Object.keys(v2).length) return v2;
+      const legacy = JSON.parse(localStorage.getItem("bon-odori-2026-attendance-v1") || "{}");
+      return legacy;
     } catch {
       return {};
     }
@@ -34,6 +54,37 @@
 
   function saveLocalMap(map) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+  }
+
+  function normalizeSlotList(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) {
+      return value.filter((id) => SLOT_IDS.has(id));
+    }
+    if (typeof value === "string" && value.trim()) {
+      return value
+        .split(/[,、\s]+/)
+        .map((part) => part.trim())
+        .filter((id) => SLOT_IDS.has(id));
+    }
+    return [];
+  }
+
+  function normalizeRow(row) {
+    const slots = row.slots && typeof row.slots === "object" ? row.slots : {};
+    return {
+      name: (row.name || "").trim(),
+      day11: STATUS[row.day11] ? row.day11 : "maybe",
+      day12: STATUS[row.day12] ? row.day12 : "maybe",
+      slots: {
+        day11: normalizeSlotList(slots.day11 ?? row.day11Slots),
+        day12: normalizeSlotList(slots.day12 ?? row.day12Slots),
+      },
+      role: ROLE_OPTIONS.includes(row.role) ? row.role : "",
+      equipment: row.equipment || "",
+      note: row.note || "",
+      updatedAt: row.updatedAt || "",
+    };
   }
 
   function mergeResponses() {
@@ -44,25 +95,9 @@
     Object.values(loadLocalMap()).forEach((row) => {
       if (row && row.name) map.set(row.name.trim(), normalizeRow(row));
     });
-    return [...map.values()].sort((a, b) => {
-      const fam = (a.family || "").localeCompare(b.family || "", "ja");
-      if (fam !== 0) return fam;
-      return (a.name || "").localeCompare(b.name || "", "ja");
-    });
-  }
-
-  function normalizeRow(row) {
-    return {
-      name: (row.name || "").trim(),
-      family: row.family || "",
-      day11: STATUS[row.day11] ? row.day11 : "maybe",
-      day12: STATUS[row.day12] ? row.day12 : "maybe",
-      timeSlot: row.timeSlot || "",
-      role: row.role || "",
-      equipment: row.equipment || "",
-      note: row.note || "",
-      updatedAt: row.updatedAt || "",
-    };
+    return [...map.values()].sort((a, b) =>
+      (a.name || "").localeCompare(b.name || "", "ja")
+    );
   }
 
   function countByDay(responses, dayKey) {
@@ -72,6 +107,15 @@
       if (counts[key] !== undefined) counts[key] += 1;
     });
     return counts;
+  }
+
+  function slotLabel(id) {
+    return TIME_SLOTS.find((s) => s.id === id)?.label || id;
+  }
+
+  function formatSlots(slots) {
+    if (!slots || !slots.length) return "—";
+    return slots.map(slotLabel).join("、");
   }
 
   function renderStatusBadge(value) {
@@ -104,8 +148,8 @@
           <p><strong class="num yes">${bothYes}</strong> 名</p>
         </article>
         <article class="attendance-stat">
-          <h3>目標人数</h3>
-          <p><strong class="num">${responses.length}</strong> / ${target} 名登録</p>
+          <h3>登録人数</h3>
+          <p><strong class="num">${responses.length}</strong> / ${target} 名</p>
           <div class="progress-bar"><span style="width:${Math.min(100, (responses.length / target) * 100)}%"></span></div>
         </article>
       </div>
@@ -121,11 +165,11 @@
       .map(
         (row) => `
       <tr>
-        <td>${escapeHtml(row.family)}</td>
         <td><strong>${escapeHtml(row.name)}</strong></td>
         <td>${renderStatusBadge(row.day11)}</td>
+        <td class="slot-cell">${escapeHtml(formatSlots(row.slots?.day11))}</td>
         <td>${renderStatusBadge(row.day12)}</td>
-        <td>${escapeHtml(row.timeSlot || "—")}</td>
+        <td class="slot-cell">${escapeHtml(formatSlots(row.slots?.day12))}</td>
         <td>${escapeHtml(row.role || "—")}</td>
         <td class="muted">${escapeHtml(row.updatedAt ? formatTime(row.updatedAt) : "—")}</td>
       </tr>
@@ -138,11 +182,11 @@
         <table class="attendance-table">
           <thead>
             <tr>
-              <th>家族</th>
               <th>名前</th>
-              <th>7/11（土）</th>
-              <th>7/12（日）</th>
-              <th>時間帯</th>
+              <th>7/11</th>
+              <th>7/11 時間枠</th>
+              <th>7/12</th>
+              <th>7/12 時間枠</th>
               <th>担当</th>
               <th>更新</th>
             </tr>
@@ -198,15 +242,47 @@
     return res.json().catch(() => ({}));
   }
 
+  function renderSlotGrid(dayKey) {
+    return `
+      <div class="slot-grid" data-day="${dayKey}">
+        ${TIME_SLOTS.map(
+          (slot) => `
+          <label class="slot-chip">
+            <input type="checkbox" name="slots-${dayKey}" value="${slot.id}">
+            <span>${slot.label}</span>
+          </label>
+        `
+        ).join("")}
+      </div>
+    `;
+  }
+
+  function readSlotsFromForm(form, dayKey) {
+    return [...form.querySelectorAll(`input[name="slots-${dayKey}"]:checked`)].map(
+      (el) => el.value
+    );
+  }
+
+  function setSlotsOnForm(form, dayKey, slots) {
+    const set = new Set(slots || []);
+    form.querySelectorAll(`input[name="slots-${dayKey}"]`).forEach((el) => {
+      el.checked = set.has(el.value);
+    });
+  }
+
   function bindForm() {
     const form = document.getElementById("attendance-form");
-    const familySelect = document.getElementById("att-family");
     const nameInput = document.getElementById("att-name");
     const nameSuggestions = document.getElementById("att-name-suggestions");
     const statusEl = document.getElementById("attendance-form-status");
 
+    document.getElementById("att-slots-day11").innerHTML = renderSlotGrid("day11");
+    document.getElementById("att-slots-day12").innerHTML = renderSlotGrid("day12");
+
     const uniqueNames = [...new Set((data.attendanceRoster || []).map((r) => r.name))];
-    nameSuggestions.innerHTML = uniqueNames.map((n) => `<option value="${escapeHtml(n)}">`).join("");
+    nameSuggestions.innerHTML = uniqueNames
+      .map((n) => `<option value="${escapeHtml(n)}">`)
+      .join("");
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -215,11 +291,13 @@
 
       const row = normalizeRow({
         name: nameInput.value,
-        family: familySelect.value,
         day11: form.querySelector('input[name="day11"]:checked')?.value || "maybe",
         day12: form.querySelector('input[name="day12"]:checked')?.value || "maybe",
-        timeSlot: document.getElementById("att-time").value,
-        role: document.getElementById("att-role").value,
+        slots: {
+          day11: readSlotsFromForm(form, "day11"),
+          day12: readSlotsFromForm(form, "day12"),
+        },
+        role: form.querySelector('input[name="role"]:checked')?.value || "",
         equipment: document.getElementById("att-equipment").value,
         note: document.getElementById("att-note").value,
         updatedAt: new Date().toISOString(),
@@ -238,21 +316,25 @@
         statusEl.className = "form-status ok";
         refreshView();
       } catch {
-        statusEl.textContent = "この端末には保存しました。共有APIへの送信に失敗した場合は、エクスポートを坂倉または竹山家へ送ってください。";
+        statusEl.textContent =
+          "この端末には保存しました。共有APIへの送信に失敗した場合は、エクスポートを坂倉または竹山家へ送ってください。";
         statusEl.className = "form-status warn";
         refreshView();
       }
     });
 
     nameInput.addEventListener("change", () => {
-      const hit = (data.attendanceRoster || []).find((r) => r.name === nameInput.value.trim());
-      if (hit) familySelect.value = hit.family;
       const existing = mergeResponses().find((r) => r.name === nameInput.value.trim());
       if (!existing) return;
       form.querySelector(`input[name="day11"][value="${existing.day11}"]`)?.click();
       form.querySelector(`input[name="day12"][value="${existing.day12}"]`)?.click();
-      document.getElementById("att-time").value = existing.timeSlot || "";
-      document.getElementById("att-role").value = existing.role || "";
+      setSlotsOnForm(form, "day11", existing.slots?.day11);
+      setSlotsOnForm(form, "day12", existing.slots?.day12);
+      form.querySelector(`input[name="role"][value="${existing.role}"]`)?.click();
+      if (!existing.role) {
+        const noneRole = form.querySelector('input[name="role"][value=""]');
+        if (noneRole) noneRole.checked = true;
+      }
       document.getElementById("att-equipment").value = existing.equipment || "";
       document.getElementById("att-note").value = existing.note || "";
     });
@@ -272,7 +354,8 @@
       const text = JSON.stringify(payload, null, 2);
       navigator.clipboard.writeText(text).then(
         () => {
-          toolStatus.textContent = "JSONをクリップボードにコピーしました。坂倉または竹山家へLINEで送れます。";
+          toolStatus.textContent =
+            "JSONをクリップボードにコピーしました。坂倉または竹山家へLINEで送れます。";
           toolStatus.className = "form-status ok";
         },
         () => {
