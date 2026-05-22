@@ -22,7 +22,9 @@
 ・会計・生産：青島 裕也
 ・子ども：坂倉 遥
 
-公開ページにも同じ内容があります。
+公開ページ（青×白・最新）:
+https://del10ro17-debug.github.io/bon-odori-roadmap/bon-odori/
+※ Finder から開く team-share.html は古いオレンジ画面です。上のURLを使ってください。
 
 ■ 定例の話し合い（週1回・30分）※日程これから決めます
 候補：

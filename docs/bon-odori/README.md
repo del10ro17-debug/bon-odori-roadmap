@@ -27,6 +27,14 @@
 
 Google Apps Script をデプロイし、発行された URL を `data.js` の `attendanceApiUrl` に設定すると、保存時に全員の画面へ即時反映できます。
 
+## 共有URL（LINE用）
+
+**こちらだけを共有してください（青×白の最新版）:**
+
+https://del10ro17-debug.github.io/bon-odori-roadmap/bon-odori/
+
+`company/projects/bon-odori-harumi-2026/team-share.html` はローカル用の旧ファイルです。Finder から開くとオレンジの古い画面が出ます。
+
 ## 公開前の注意
 
 - 個人情報、内部連絡先、メールアドレス、売上見込みなどは載せない

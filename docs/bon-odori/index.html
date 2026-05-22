@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>晴海ふ頭公園盆踊り大会2026 出店工程表</title>
   <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店に向けた準備工程表です。">
-  <script src="./data.js"></script>
+  <meta name="theme-color" content="#1a5282">
+  <script src="./data.js?v=20260523"></script>
   <style>
     :root {
       /* HARUMI FLAG 自治会サイト（青×白）に合わせた配色 */
@@ -36,6 +37,16 @@
       line-height: 1.75;
     }
 
+    .site-bar {
+      background: var(--accent);
+      color: #fff;
+      text-align: center;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
     main {
       max-width: 1080px;
       margin: 0 auto;
@@ -43,12 +54,35 @@
     }
 
     header {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-top: 4px solid var(--accent);
+      background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 55%, #2a6fa8 100%);
+      color: #fff;
+      border: none;
       border-radius: 22px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(26, 82, 130, 0.06);
+      padding: 28px 24px;
+      box-shadow: 0 12px 32px rgba(18, 61, 97, 0.22);
+    }
+
+    header h1,
+    header p,
+    header .meta {
+      color: #fff;
+    }
+
+    header .meta {
+      opacity: 0.92;
+    }
+
+    header .event-item {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    header .event-item span {
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    header .event-item strong {
+      color: #fff;
     }
 
     h1 {
@@ -588,6 +622,175 @@
       color: var(--muted);
     }
 
+    .milestone-intro {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0 0 16px;
+    }
+
+    .milestone-track {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .milestone-flow {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      min-width: min-content;
+      gap: 0;
+    }
+
+    .milestone-chevron {
+      position: relative;
+      flex: 0 0 auto;
+      min-width: 148px;
+      max-width: 180px;
+      padding: 12px 28px 12px 18px;
+      margin-right: -12px;
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .milestone-chevron:first-child {
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%);
+      padding-left: 14px;
+    }
+
+    .milestone-chevron.done {
+      background: #e8f5ee;
+      border-color: #9fd4b6;
+      color: var(--ok);
+    }
+
+    .milestone-chevron.active {
+      background: var(--surface-highlight);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(26, 82, 130, 0.15);
+    }
+
+    .milestone-chevron.waiting {
+      background: #fff8ea;
+      border-color: #efd39a;
+    }
+
+    .milestone-chevron.upcoming {
+      background: var(--surface);
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    .milestone-chevron .ms-id {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0.75;
+      margin-bottom: 2px;
+    }
+
+    .milestone-chevron .ms-title {
+      display: block;
+      font-weight: 700;
+      font-size: 13px;
+      color: inherit;
+    }
+
+    .milestone-chevron .ms-due {
+      display: block;
+      font-size: 11px;
+      margin-top: 4px;
+      opacity: 0.85;
+    }
+
+    .milestone-chevron.goal {
+      min-width: 120px;
+      background: var(--accent);
+      border-color: var(--accent-dark);
+      color: #fff;
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%);
+    }
+
+    .milestone-chevron.goal .ms-title {
+      color: #fff;
+    }
+
+    .milestone-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .milestone-detail {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .milestone-detail.done {
+      border-color: #9fd4b6;
+      background: #f6fbf8;
+    }
+
+    .milestone-detail.active {
+      border-color: var(--accent);
+      background: var(--surface-highlight);
+    }
+
+    .milestone-detail.waiting {
+      border-color: #efd39a;
+      background: #fffdf9;
+    }
+
+    .milestone-detail-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .milestone-detail-top h3 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .milestone-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .milestone-meta span {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+
+    .milestone-definition {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .milestone-definition strong {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
     @media (max-width: 640px) {
       th,
       td {
@@ -598,9 +801,10 @@
   </style>
 </head>
 <body>
+  <p class="site-bar">HARUMI FLAG 自治会 · 出店チーム共有（公式カラー）</p>
   <main>
     <header>
-      <p class="meta">公開用工程表</p>
+      <p class="meta">公開用工程表 · GitHub Pages</p>
       <h1 id="page-title">晴海ふ頭公園盆踊り大会2026 出店工程表</h1>
       <p id="page-lead">ケバブ出店に向けた準備状況と、当日までの流れをまとめています。</p>
       <div class="event-grid" id="event-grid"></div>
@@ -617,6 +821,18 @@
     <section class="section">
       <h2>ここまで完了</h2>
       <ul id="completed-list"></ul>
+    </section>
+
+    <section class="section" id="milestones">
+      <h2>マイルストーン（矢羽根）</h2>
+      <p class="milestone-intro">
+        本番（7/11–12）に向けて、いつまでに「何を」「どこまで」完成させるかを示しています。調理は<strong>電源のみ</strong>（火気不使用）で進めます。
+      </p>
+      <div class="milestone-track">
+        <div class="milestone-flow" id="milestone-flow"></div>
+      </div>
+      <h3>マイルストーン詳細</h3>
+      <div class="milestone-detail-grid" id="milestone-details"></div>
     </section>
 
     <section class="section" id="attendance">
@@ -752,9 +968,16 @@
     const data = window.BON_ODORI_DATA;
 
     const statusClass = (status) => {
-      if (status === "待ち") return "waiting";
-      if (status === "本番" || status === "着手") return "live";
+      if (status === "待ち" || status === "waiting") return "waiting";
+      if (status === "本番" || status === "着手" || status === "active") return "live";
       return "todo";
+    };
+
+    const milestoneStatusLabel = (status) => {
+      if (status === "done") return "完了";
+      if (status === "active") return "進行中";
+      if (status === "waiting") return "待ち";
+      return "これから";
     };
 
     const eventItems = [
@@ -774,7 +997,7 @@
 
     document.getElementById("summary-grid").innerHTML = `
       <div class="stat"><strong>${data.summary.daysToEvent}日</strong><span>初日まで</span></div>
-      <div class="stat"><strong>${data.summary.phases}</strong><span>工程ブロック</span></div>
+      <div class="stat"><strong>${data.summary.milestones}件</strong><span>マイルストーン</span></div>
       <div class="stat"><strong>${data.summary.urgentActions}件</strong><span>重要アクション</span></div>
       <div class="stat"><strong>${data.summary.recommendedStaff}</strong><span>当日の推奨人数</span></div>
     `;
@@ -782,6 +1005,39 @@
     document.getElementById("completed-list").innerHTML = data.completed
       .map((item) => `<li>${item}</li>`)
       .join("");
+
+    const milestones = data.milestones || [];
+    document.getElementById("milestone-flow").innerHTML = milestones.map((ms) => `
+      <div class="milestone-chevron ${ms.status}" title="${ms.definition}">
+        <span class="ms-id">${ms.id}</span>
+        <span class="ms-title">${ms.title}</span>
+        <span class="ms-due">${ms.due}</span>
+      </div>
+    `).join("") + `
+      <div class="milestone-chevron goal">
+        <span class="ms-id">GOAL</span>
+        <span class="ms-title">本番</span>
+        <span class="ms-due">7/11–12</span>
+      </div>
+    `;
+
+    document.getElementById("milestone-details").innerHTML = milestones.map((ms) => `
+      <article class="milestone-detail ${ms.status}">
+        <div class="milestone-detail-top">
+          <h3>${ms.id} ${ms.title}</h3>
+          <span class="pill ${statusClass(ms.status)}">${milestoneStatusLabel(ms.status)}</span>
+        </div>
+        <div class="milestone-meta">
+          <span>期限 ${ms.due}</span>
+          <span>${ms.category}</span>
+          <span>担当 ${ms.owner}</span>
+        </div>
+        <p class="milestone-definition">
+          <strong>どこまで（完了条件）</strong>
+          ${ms.definition}
+        </p>
+      </article>
+    `).join("");
 
     const renderOrgCards = (items) => items.map((item) => `
       <article class="org-card">
@@ -892,6 +1148,6 @@
 
     document.getElementById("footer").textContent = `最終更新: ${data.updatedAt}`;
   </script>
-  <script src="./attendance.js"></script>
+  <script src="./attendance.js?v=20260523"></script>
 </body>
 </html>
