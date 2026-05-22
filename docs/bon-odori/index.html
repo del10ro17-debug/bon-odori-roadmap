@@ -6,7 +6,7 @@
   <title>晴海ふ頭公園盆踊り大会2026 出店工程表</title>
   <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店に向けた準備工程表です。">
   <meta name="theme-color" content="#1a5282">
-  <script src="./data.js?v=20260523"></script>
+  <script src="./data.js?v=20260523b"></script>
   <style>
     :root {
       /* HARUMI FLAG 自治会サイト（青×白）に合わせた配色 */
@@ -791,7 +791,90 @@
       margin-bottom: 4px;
     }
 
+    .tab-bar-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin-top: 18px;
+      background: linear-gradient(180deg, var(--bg) 70%, transparent);
+      padding-bottom: 8px;
+    }
+
+    .tab-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 6px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(26, 82, 130, 0.08);
+    }
+
+    .tab-btn {
+      flex: 1 1 auto;
+      min-width: 7.5rem;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .tab-btn:hover {
+      background: var(--surface-highlight);
+      color: var(--accent-dark);
+    }
+
+    .tab-btn[aria-selected="true"] {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent-dark);
+    }
+
+    .tab-btn .tab-desc {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      opacity: 0.88;
+      margin-top: 2px;
+    }
+
+    .tab-panel {
+      display: none;
+      margin-top: 14px;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .tab-panel .section:first-child {
+      margin-top: 0;
+    }
+
+    .panel-lead {
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      background: var(--surface-highlight);
+      border-radius: 12px;
+      border-left: 4px solid var(--accent);
+      font-size: 14px;
+      color: var(--ink);
+    }
+
     @media (max-width: 640px) {
+      .tab-btn {
+        min-width: calc(50% - 4px);
+        flex: 1 1 calc(50% - 4px);
+        padding: 8px 10px;
+        font-size: 13px;
+      }
       th,
       td {
         padding: 8px;
@@ -810,32 +893,51 @@
       <div class="event-grid" id="event-grid"></div>
     </header>
 
-    <section class="section">
-      <h2>全体サマリー</h2>
-      <div class="grid" id="summary-grid"></div>
-      <div class="notice">
-        5月末までに参加可否と会場レイアウトを押さえ、6月に運営設計・調達、7月に本番運営へ進みます。参加登録は下の「参加可否」セクションから入力できます。
-      </div>
-    </section>
+    <div class="tab-bar-wrap">
+      <nav class="tab-bar" role="tablist" aria-label="工程表の表示切替">
+        <button type="button" class="tab-btn" role="tab" id="tab-btn-summary" aria-selected="true" aria-controls="tab-panel-summary" data-tab="summary">
+          サマリー
+          <span class="tab-desc">全体の状況</span>
+        </button>
+        <button type="button" class="tab-btn" role="tab" id="tab-btn-input" aria-selected="false" aria-controls="tab-panel-input" data-tab="input">
+          参加・回答
+          <span class="tab-desc">入力が必要</span>
+        </button>
+        <button type="button" class="tab-btn" role="tab" id="tab-btn-schedule" aria-selected="false" aria-controls="tab-panel-schedule" data-tab="schedule">
+          スケジュール
+          <span class="tab-desc">工程・マイルストーン</span>
+        </button>
+        <button type="button" class="tab-btn" role="tab" id="tab-btn-ops" aria-selected="false" aria-controls="tab-panel-ops" data-tab="ops">
+          体制・当日
+          <span class="tab-desc">チーム・シフト</span>
+        </button>
+      </nav>
+    </div>
 
-    <section class="section">
-      <h2>ここまで完了</h2>
-      <ul id="completed-list"></ul>
-    </section>
+    <div id="tab-panel-summary" class="tab-panel active" role="tabpanel" aria-labelledby="tab-btn-summary">
+      <p class="panel-lead">いまの進捗と、完了済みの項目を確認できます。参加可否の入力は「参加・回答」タブへ。</p>
+      <section class="section">
+        <h2>全体サマリー</h2>
+        <div class="grid" id="summary-grid"></div>
+        <div class="notice">
+          5月末までに参加可否と会場レイアウトを押さえ、6月に運営設計・調達、7月に本番運営へ進みます。
+        </div>
+      </section>
 
-    <section class="section" id="milestones">
-      <h2>マイルストーン（矢羽根）</h2>
-      <p class="milestone-intro">
-        本番（7/11–12）に向けて、いつまでに「何を」「どこまで」完成させるかを示しています。調理は<strong>電源のみ</strong>（火気不使用）で進めます。
-      </p>
-      <div class="milestone-track">
-        <div class="milestone-flow" id="milestone-flow"></div>
-      </div>
-      <h3>マイルストーン詳細</h3>
-      <div class="milestone-detail-grid" id="milestone-details"></div>
-    </section>
+      <section class="section">
+        <h2>ここまで完了</h2>
+        <ul id="completed-list"></ul>
+      </section>
 
-    <section class="section" id="attendance">
+      <section class="section">
+        <h2>主要リスクと先回り</h2>
+        <div id="risk-table"></div>
+      </section>
+    </div>
+
+    <div id="tab-panel-input" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-input" hidden>
+      <p class="panel-lead">7/11・7/12の参加可否と、定例ミーティングの希望を入力・確認してください。</p>
+      <section class="section" id="attendance">
       <h2>参加可否（7/11・7/12）</h2>
       <p class="attendance-hint">
         各家族の方が参加・不可・未定を入力できます。集計はこのページに表示されます。スタッフ募集は坂倉が担当します。
@@ -915,51 +1017,65 @@
         <button class="btn-primary" type="button" id="att-import-run">取り込む</button>
       </div>
       <p class="form-status" id="att-tool-status"></p>
-    </section>
+      </section>
 
-    <section class="section" id="teams">
-      <h2>プロジェクト体制</h2>
-      <p class="attendance-hint">
-        各チームは「リーダー ＋ メンバー」の形式です。シフトに組み入れる人が増えたら、リーダーの下にメンバーを追加していきます。
-      </p>
-      <div class="project-teams" id="project-teams"></div>
-    </section>
+      <section class="section" id="weekly-sync">
+        <h2>定例の話し合い（週1回）</h2>
+        <div class="sync-box" id="weekly-sync"></div>
+      </section>
+    </div>
 
-    <section class="section" id="weekly-sync">
-      <h2>定例の話し合い（週1回）</h2>
-      <div class="sync-box" id="weekly-sync"></div>
-    </section>
+    <div id="tab-panel-schedule" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-schedule" hidden>
+      <p class="panel-lead">マイルストーン・工程表・今週の優先タスクを時系列で確認できます。</p>
+      <section class="section" id="milestones">
+        <h2>マイルストーン（矢羽根）</h2>
+        <p class="milestone-intro">
+          本番（7/11–12）に向けて、いつまでに「何を」「どこまで」完成させるかを示しています。調理は<strong>電源のみ</strong>（火気不使用）で進めます。
+        </p>
+        <div class="milestone-track">
+          <div class="milestone-flow" id="milestone-flow"></div>
+        </div>
+        <h3>マイルストーン詳細</h3>
+        <div class="milestone-detail-grid" id="milestone-details"></div>
+      </section>
 
-    <section class="section">
-      <h2>当日の体制（シフト単位）</h2>
-      <div class="org-chart" id="day-of-organization"></div>
-    </section>
+      <section class="section">
+        <h2>今週から着手する順番</h2>
+        <div id="urgent-table"></div>
+      </section>
 
-    <section class="section">
-      <h2>必要メンバー数の目安</h2>
-      <div class="notice" id="staffing-summary"></div>
-      <h3>シフト別の目安</h3>
-      <div id="shift-table"></div>
-      <h3>1シフトあたりの役割</h3>
-      <div id="role-table"></div>
-      <h3>交代・引き継ぎルール</h3>
-      <ul id="handover-rules"></ul>
-    </section>
+      <section class="section">
+        <h2>当日までの工程表</h2>
+        <div class="timeline" id="timeline"></div>
+      </section>
+    </div>
 
-    <section class="section">
-      <h2>当日までの工程表</h2>
-      <div class="timeline" id="timeline"></div>
-    </section>
+    <div id="tab-panel-ops" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-ops" hidden>
+      <p class="panel-lead">プロジェクト体制・当日の役割分担・必要人数の目安です。</p>
+      <section class="section" id="teams">
+        <h2>プロジェクト体制</h2>
+        <p class="attendance-hint">
+          各チームは「リーダー ＋ メンバー」の形式です。シフトに組み入れる人が増えたら、リーダーの下にメンバーを追加していきます。
+        </p>
+        <div class="project-teams" id="project-teams"></div>
+      </section>
 
-    <section class="section">
-      <h2>今週から着手する順番</h2>
-      <div id="urgent-table"></div>
-    </section>
+      <section class="section">
+        <h2>当日の体制（シフト単位）</h2>
+        <div class="org-chart" id="day-of-organization"></div>
+      </section>
 
-    <section class="section">
-      <h2>主要リスクと先回り</h2>
-      <div id="risk-table"></div>
-    </section>
+      <section class="section">
+        <h2>必要メンバー数の目安</h2>
+        <div class="notice" id="staffing-summary"></div>
+        <h3>シフト別の目安</h3>
+        <div id="shift-table"></div>
+        <h3>1シフトあたりの役割</h3>
+        <div id="role-table"></div>
+        <h3>交代・引き継ぎルール</h3>
+        <ul id="handover-rules"></ul>
+      </section>
+    </div>
 
     <p class="footer" id="footer"></p>
   </main>
@@ -1147,6 +1263,42 @@
     );
 
     document.getElementById("footer").textContent = `最終更新: ${data.updatedAt}`;
+
+    const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+    const tabPanels = {
+      summary: document.getElementById("tab-panel-summary"),
+      input: document.getElementById("tab-panel-input"),
+      schedule: document.getElementById("tab-panel-schedule"),
+      ops: document.getElementById("tab-panel-ops"),
+    };
+
+    const activateTab = (tabId) => {
+      const panel = tabPanels[tabId] || tabPanels.summary;
+      tabButtons.forEach((btn) => {
+        const selected = btn.dataset.tab === tabId;
+        btn.setAttribute("aria-selected", selected ? "true" : "false");
+      });
+      Object.entries(tabPanels).forEach(([id, el]) => {
+        if (!el) return;
+        const on = id === tabId;
+        el.classList.toggle("active", on);
+        el.hidden = !on;
+      });
+      if (history.replaceState) {
+        history.replaceState(null, "", tabId === "summary" ? location.pathname : `#${tabId}`);
+      }
+    };
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+    });
+
+    const hashTab = location.hash.replace("#", "");
+    if (tabPanels[hashTab]) {
+      activateTab(hashTab);
+    } else if (location.hash === "#attendance") {
+      activateTab("input");
+    }
   </script>
   <script src="./attendance.js?v=20260523"></script>
 </body>
