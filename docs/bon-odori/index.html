@@ -243,11 +243,223 @@
       padding: 14px;
     }
 
+    .org-chart {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+    }
+
+    .org-card {
+      background: #fffdf9;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .org-card strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+
+    .org-card .headcount {
+      display: inline-flex;
+      margin: 4px 0 8px;
+      border-radius: 999px;
+      padding: 2px 9px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
     .footer {
       margin-top: 20px;
       color: var(--muted);
       font-size: 13px;
       text-align: center;
+    }
+
+    .attendance-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .attendance-stat {
+      background: #fffdf9;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .attendance-stat h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .attendance-stat .num {
+      font-size: 22px;
+    }
+
+    .attendance-stat .num.yes { color: var(--ok); }
+    .attendance-stat .num.no { color: var(--danger); }
+    .attendance-stat .num.maybe { color: var(--warn); }
+
+    .progress-bar {
+      margin-top: 8px;
+      height: 8px;
+      background: #efe7df;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+
+    .attendance-form {
+      display: grid;
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      background: #fffdf9;
+    }
+
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .radio-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: #fffdf9;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .radio-chip input {
+      margin: 0;
+    }
+
+    .radio-chip:has(input[value="yes"]:checked) {
+      border-color: #9fd4b6;
+      background: #eaf8f0;
+    }
+
+    .radio-chip:has(input[value="no"]:checked) {
+      border-color: #efb0b0;
+      background: #fdeeee;
+    }
+
+    .radio-chip:has(input[value="maybe"]:checked) {
+      border-color: #efd39a;
+      background: #fff8ea;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #fff3ed;
+      color: var(--accent);
+      border: 1px solid var(--accent-soft);
+    }
+
+    .form-status {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .form-status.ok { color: var(--ok); }
+    .form-status.warn { color: var(--warn); }
+    .form-status.error { color: var(--danger); }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    .attendance-table td.muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status-badge.yes { background: #def5e8; color: var(--ok); }
+    .status-badge.no { background: #fde2e2; color: var(--danger); }
+    .status-badge.maybe { background: #fff0d6; color: var(--warn); }
+
+    .attendance-empty {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .attendance-hint {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0 0 12px;
     }
 
     @media (max-width: 640px) {
@@ -272,13 +484,116 @@
       <h2>全体サマリー</h2>
       <div class="grid" id="summary-grid"></div>
       <div class="notice">
-        5月中に「火気使用申請の要否」「スタッフ候補」「会場レイアウト」を押さえ、6月に運営設計・調達・試作、7月に最終確認と本番運営へ進みます。
+        5月末までに参加可否と会場レイアウトを押さえ、6月に運営設計・調達、7月に本番運営へ進みます。参加登録は下の「参加可否」セクションから入力できます。
       </div>
     </section>
 
     <section class="section">
       <h2>ここまで完了</h2>
       <ul id="completed-list"></ul>
+    </section>
+
+    <section class="section" id="attendance">
+      <h2>参加可否（7/11・7/12）</h2>
+      <p class="attendance-hint">
+        各家族の方が参加・不可・未定を入力できます。集計はこのページ下部に表示されます（竹山家はエクスポート／取り込みで統合できます）。
+      </p>
+      <div id="attendance-summary"></div>
+      <div id="attendance-matrix"></div>
+
+      <h3>回答を入力</h3>
+      <form class="attendance-form" id="attendance-form">
+        <div class="form-grid">
+          <div>
+            <label for="att-name">名前</label>
+            <input id="att-name" name="name" type="text" list="att-name-suggestions" required placeholder="例: 青島 のぞみ">
+            <datalist id="att-name-suggestions"></datalist>
+          </div>
+          <div>
+            <label for="att-family">家族</label>
+            <select id="att-family" name="family" required>
+              <option value="">選択してください</option>
+              <option value="坂倉家">坂倉家</option>
+              <option value="竹山家">竹山家</option>
+              <option value="青島家">青島家</option>
+              <option value="中澤家">中澤家</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label>7/11（土）</label>
+            <div class="radio-group">
+              <label class="radio-chip"><input type="radio" name="day11" value="yes" required> 参加</label>
+              <label class="radio-chip"><input type="radio" name="day11" value="no"> 不可</label>
+              <label class="radio-chip"><input type="radio" name="day11" value="maybe" checked> 未定</label>
+            </div>
+          </div>
+          <div>
+            <label>7/12（日）</label>
+            <div class="radio-group">
+              <label class="radio-chip"><input type="radio" name="day12" value="yes" required> 参加</label>
+              <label class="radio-chip"><input type="radio" name="day12" value="no"> 不可</label>
+              <label class="radio-chip"><input type="radio" name="day12" value="maybe" checked> 未定</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label for="att-time">参加できる時間帯（任意）</label>
+            <input id="att-time" type="text" placeholder="例: 11-17時、前半のみ">
+          </div>
+          <div>
+            <label for="att-role">できそうな担当（任意）</label>
+            <input id="att-role" type="text" placeholder="例: 調理、会計、搬入">
+          </div>
+        </div>
+        <div>
+          <label for="att-equipment">持ってこられるもの（任意）</label>
+          <input id="att-equipment" type="text" placeholder="例: 台車、クーラーボックス">
+        </div>
+        <div>
+          <label for="att-note">メモ（任意）</label>
+          <textarea id="att-note" placeholder="連絡事項があれば"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" type="submit">回答を保存</button>
+        </div>
+        <p class="form-status" id="attendance-form-status"></p>
+      </form>
+
+      <h3>竹山家向け：データの統合</h3>
+      <p class="attendance-hint">複数端末の回答を1つにまとめるときに使います。</p>
+      <div class="btn-row">
+        <button class="btn-secondary" type="button" id="att-export">JSONをエクスポート</button>
+        <button class="btn-secondary" type="button" id="att-import">JSONを取り込む</button>
+      </div>
+      <textarea id="att-import-area" hidden placeholder='{"responses":[...]}'></textarea>
+      <div class="btn-row" id="att-import-actions" hidden>
+        <button class="btn-primary" type="button" id="att-import-run">取り込む</button>
+      </div>
+      <p class="form-status" id="att-tool-status"></p>
+    </section>
+
+    <section class="section">
+      <h2>全体の体制図（準備期間）</h2>
+      <div class="org-chart" id="prep-organization"></div>
+    </section>
+
+    <section class="section">
+      <h2>当日の体制図（シフト単位）</h2>
+      <div class="org-chart" id="day-of-organization"></div>
+    </section>
+
+    <section class="section">
+      <h2>必要メンバー数の目安</h2>
+      <div class="notice" id="staffing-summary"></div>
+      <h3>シフト別の目安</h3>
+      <div id="shift-table"></div>
+      <h3>1シフトあたりの役割</h3>
+      <div id="role-table"></div>
+      <h3>交代・引き継ぎルール</h3>
+      <ul id="handover-rules"></ul>
     </section>
 
     <section class="section">
@@ -334,6 +649,26 @@
       .map((item) => `<li>${item}</li>`)
       .join("");
 
+    const renderOrgCards = (items) => items.map((item) => `
+      <article class="org-card">
+        <strong>${item.team}</strong>
+        <p class="owner">${item.lead}</p>
+        <span class="headcount">${item.headcount}</span>
+        <p>${item.mission}</p>
+      </article>
+    `).join("");
+
+    document.getElementById("prep-organization").innerHTML = renderOrgCards(data.prepOrganization);
+    document.getElementById("day-of-organization").innerHTML = renderOrgCards(data.dayOfOrganization);
+
+    document.getElementById("staffing-summary").innerHTML = `
+      <strong>${data.staffing.targetMembers}</strong><br>
+      ${data.staffing.baseline}
+      <ul>
+        ${data.staffing.assumptions.map((item) => `<li>${item}</li>`).join("")}
+      </ul>
+    `;
+
     document.getElementById("timeline").innerHTML = data.phases.map((phase, index) => `
       <article class="phase ${index === 0 ? "current" : ""}">
         <div class="phase-top">
@@ -365,6 +700,20 @@
       data.urgentActions.map((item) => [item.priority, item.action, item.owner, item.due, item.status])
     );
 
+    document.getElementById("shift-table").innerHTML = renderTable(
+      ["シフト", "必要人数", "主な役割"],
+      data.staffing.shiftRows
+    );
+
+    document.getElementById("role-table").innerHTML = renderTable(
+      ["役割", "人数", "内容"],
+      data.staffing.roleRows
+    );
+
+    document.getElementById("handover-rules").innerHTML = data.staffing.handoverRules
+      .map((item) => `<li>${item}</li>`)
+      .join("");
+
     document.getElementById("risk-table").innerHTML = renderTable(
       ["リスク", "影響", "先回り"],
       data.risks.map((item) => [item.risk, item.impact, item.action])
@@ -372,5 +721,6 @@
 
     document.getElementById("footer").textContent = `最終更新: ${data.updatedAt}`;
   </script>
+  <script src="./attendance.js"></script>
 </body>
 </html>
