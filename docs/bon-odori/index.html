@@ -8,13 +8,17 @@
   <script src="./data.js"></script>
   <style>
     :root {
-      --bg: #fff8f0;
+      /* HARUMI FLAG 自治会サイト（青×白）に合わせた配色 */
+      --bg: #f0f5fa;
       --card: #ffffff;
-      --ink: #242424;
-      --muted: #666666;
-      --accent: #d64b2a;
-      --accent-soft: #ffe2d9;
-      --line: #ead8cc;
+      --surface: #f8fbfe;
+      --surface-highlight: #e8f2fa;
+      --ink: #1a2b3c;
+      --muted: #5c7086;
+      --accent: #1a5282;
+      --accent-dark: #123d61;
+      --accent-soft: #dce9f5;
+      --line: #c5d8eb;
       --ok: #1f7a4d;
       --warn: #a15c00;
       --danger: #a33131;
@@ -26,7 +30,7 @@
 
     body {
       margin: 0;
-      background: var(--bg);
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 120px, var(--bg) 100%);
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
       line-height: 1.75;
@@ -41,8 +45,10 @@
     header {
       background: var(--card);
       border: 1px solid var(--line);
+      border-top: 4px solid var(--accent);
       border-radius: 22px;
       padding: 24px;
+      box-shadow: 0 8px 24px rgba(26, 82, 130, 0.06);
     }
 
     h1 {
@@ -78,8 +84,10 @@
     }
 
     .meta {
-      color: var(--muted);
+      color: var(--accent);
       font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
     .section {
@@ -97,7 +105,7 @@
     }
 
     .stat {
-      background: #fffdf9;
+      background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 14px;
@@ -123,7 +131,7 @@
     }
 
     .event-item {
-      background: #fffdf9;
+      background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 12px;
@@ -147,7 +155,7 @@
     }
 
     .phase {
-      background: #fffdf9;
+      background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 16px;
       padding: 14px;
@@ -156,7 +164,7 @@
 
     .phase.current {
       border-color: var(--accent);
-      background: #fff3ed;
+      background: var(--surface-highlight);
     }
 
     .phase-top {
@@ -216,7 +224,7 @@
       overflow: hidden;
       border-radius: 14px;
       border: 1px solid var(--line);
-      background: #fffdf9;
+      background: var(--surface);
     }
 
     th,
@@ -228,8 +236,9 @@
     }
 
     th {
-      background: #fff3ed;
+      background: var(--surface-highlight);
       font-size: 13px;
+      color: var(--accent-dark);
     }
 
     tr:last-child td {
@@ -237,10 +246,40 @@
     }
 
     .notice {
-      border-left: 6px solid var(--warn);
-      background: #fff8ea;
+      border-left: 6px solid var(--accent);
+      background: var(--surface-highlight);
       border-radius: 14px;
       padding: 14px;
+    }
+
+    .org-chart {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+    }
+
+    .org-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .org-card strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+
+    .org-card .headcount {
+      display: inline-flex;
+      margin: 4px 0 8px;
+      border-radius: 999px;
+      padding: 2px 9px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
     }
 
     .footer {
@@ -248,6 +287,305 @@
       color: var(--muted);
       font-size: 13px;
       text-align: center;
+    }
+
+    .attendance-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .attendance-stat {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .attendance-stat h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .attendance-stat .num {
+      font-size: 22px;
+    }
+
+    .attendance-stat .num.yes { color: var(--ok); }
+    .attendance-stat .num.no { color: var(--danger); }
+    .attendance-stat .num.maybe { color: var(--warn); }
+
+    .progress-bar {
+      margin-top: 8px;
+      height: 8px;
+      background: var(--accent-soft);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+
+    .attendance-form {
+      display: grid;
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      background: var(--surface);
+    }
+
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .radio-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .radio-chip input {
+      margin: 0;
+    }
+
+    .radio-chip:has(input[value="yes"]:checked) {
+      border-color: #9fd4b6;
+      background: #eaf8f0;
+    }
+
+    .radio-chip:has(input[value="no"]:checked) {
+      border-color: #efb0b0;
+      background: #fdeeee;
+    }
+
+    .radio-chip:has(input[value="maybe"]:checked) {
+      border-color: #efd39a;
+      background: #fff8ea;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--surface-highlight);
+      color: var(--accent-dark);
+      border: 1px solid var(--line);
+    }
+
+    .form-status {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .form-status.ok { color: var(--ok); }
+    .form-status.warn { color: var(--warn); }
+    .form-status.error { color: var(--danger); }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    .attendance-table td.muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status-badge.yes { background: #def5e8; color: var(--ok); }
+    .status-badge.no { background: #fde2e2; color: var(--danger); }
+    .status-badge.maybe { background: #fff0d6; color: var(--warn); }
+
+    .attendance-empty {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .attendance-hint {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
+    .project-teams {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .project-team {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .project-team h3 {
+      margin: 0;
+      font-size: 17px;
+      color: var(--accent);
+    }
+
+    .project-mission {
+      margin: 0;
+      font-size: 14px;
+      color: var(--ink);
+    }
+
+    .project-note {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      border-left: 3px solid var(--accent-soft);
+      padding-left: 8px;
+    }
+
+    .project-lead-box {
+      background: var(--surface-highlight);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .project-lead-box .label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .project-lead-box strong {
+      font-size: 16px;
+    }
+
+    .project-members-title {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .project-members {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .project-members li {
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 14px;
+    }
+
+    .project-members.empty::after {
+      content: "（メンバーは随時追加）";
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .sync-box {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .sync-candidates {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .sync-option {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--card);
+    }
+
+    .sync-option strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .sync-option span {
+      font-size: 13px;
+      color: var(--muted);
     }
 
     @media (max-width: 640px) {
@@ -272,13 +610,124 @@
       <h2>全体サマリー</h2>
       <div class="grid" id="summary-grid"></div>
       <div class="notice">
-        5月中に「火気使用申請の要否」「スタッフ候補」「会場レイアウト」を押さえ、6月に運営設計・調達・試作、7月に最終確認と本番運営へ進みます。
+        5月末までに参加可否と会場レイアウトを押さえ、6月に運営設計・調達、7月に本番運営へ進みます。参加登録は下の「参加可否」セクションから入力できます。
       </div>
     </section>
 
     <section class="section">
       <h2>ここまで完了</h2>
       <ul id="completed-list"></ul>
+    </section>
+
+    <section class="section" id="attendance">
+      <h2>参加可否（7/11・7/12）</h2>
+      <p class="attendance-hint">
+        各家族の方が参加・不可・未定を入力できます。集計はこのページに表示されます。スタッフ募集は坂倉が担当します。
+      </p>
+      <div id="attendance-summary"></div>
+      <div id="attendance-matrix"></div>
+
+      <h3>回答を入力</h3>
+      <form class="attendance-form" id="attendance-form">
+        <div class="form-grid">
+          <div>
+            <label for="att-name">名前</label>
+            <input id="att-name" name="name" type="text" list="att-name-suggestions" required placeholder="例: 青島 のぞみ">
+            <datalist id="att-name-suggestions"></datalist>
+          </div>
+          <div>
+            <label for="att-family">家族</label>
+            <select id="att-family" name="family" required>
+              <option value="">選択してください</option>
+              <option value="坂倉家">坂倉家</option>
+              <option value="竹山家">竹山家</option>
+              <option value="青島家">青島家</option>
+              <option value="中澤家">中澤家</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label>7/11（土）</label>
+            <div class="radio-group">
+              <label class="radio-chip"><input type="radio" name="day11" value="yes" required> 参加</label>
+              <label class="radio-chip"><input type="radio" name="day11" value="no"> 不可</label>
+              <label class="radio-chip"><input type="radio" name="day11" value="maybe" checked> 未定</label>
+            </div>
+          </div>
+          <div>
+            <label>7/12（日）</label>
+            <div class="radio-group">
+              <label class="radio-chip"><input type="radio" name="day12" value="yes" required> 参加</label>
+              <label class="radio-chip"><input type="radio" name="day12" value="no"> 不可</label>
+              <label class="radio-chip"><input type="radio" name="day12" value="maybe" checked> 未定</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label for="att-time">参加できる時間帯（任意）</label>
+            <input id="att-time" type="text" placeholder="例: 11-17時、前半のみ">
+          </div>
+          <div>
+            <label for="att-role">できそうな担当（任意）</label>
+            <input id="att-role" type="text" placeholder="例: 調理、会計、搬入">
+          </div>
+        </div>
+        <div>
+          <label for="att-equipment">持ってこられるもの（任意）</label>
+          <input id="att-equipment" type="text" placeholder="例: 台車、クーラーボックス">
+        </div>
+        <div>
+          <label for="att-note">メモ（任意）</label>
+          <textarea id="att-note" placeholder="連絡事項があれば"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" type="submit">回答を保存</button>
+        </div>
+        <p class="form-status" id="attendance-form-status"></p>
+      </form>
+
+      <h3>データのエクスポート（任意）</h3>
+      <p class="attendance-hint">坂倉・竹山家が、回答データをまとめるときに使います。</p>
+      <div class="btn-row">
+        <button class="btn-secondary" type="button" id="att-export">JSONをエクスポート</button>
+        <button class="btn-secondary" type="button" id="att-import">JSONを取り込む</button>
+      </div>
+      <textarea id="att-import-area" hidden placeholder='{"responses":[...]}'></textarea>
+      <div class="btn-row" id="att-import-actions" hidden>
+        <button class="btn-primary" type="button" id="att-import-run">取り込む</button>
+      </div>
+      <p class="form-status" id="att-tool-status"></p>
+    </section>
+
+    <section class="section" id="teams">
+      <h2>プロジェクト体制</h2>
+      <p class="attendance-hint">
+        各チームは「リーダー ＋ メンバー」の形式です。シフトに組み入れる人が増えたら、リーダーの下にメンバーを追加していきます。
+      </p>
+      <div class="project-teams" id="project-teams"></div>
+    </section>
+
+    <section class="section" id="weekly-sync">
+      <h2>定例の話し合い（週1回）</h2>
+      <div class="sync-box" id="weekly-sync"></div>
+    </section>
+
+    <section class="section">
+      <h2>当日の体制（シフト単位）</h2>
+      <div class="org-chart" id="day-of-organization"></div>
+    </section>
+
+    <section class="section">
+      <h2>必要メンバー数の目安</h2>
+      <div class="notice" id="staffing-summary"></div>
+      <h3>シフト別の目安</h3>
+      <div id="shift-table"></div>
+      <h3>1シフトあたりの役割</h3>
+      <div id="role-table"></div>
+      <h3>交代・引き継ぎルール</h3>
+      <ul id="handover-rules"></ul>
     </section>
 
     <section class="section">
@@ -334,6 +783,63 @@
       .map((item) => `<li>${item}</li>`)
       .join("");
 
+    const renderOrgCards = (items) => items.map((item) => `
+      <article class="org-card">
+        <strong>${item.team}</strong>
+        <p class="owner">${item.lead}</p>
+        <span class="headcount">${item.headcount}</span>
+        <p>${item.mission}</p>
+      </article>
+    `).join("");
+
+    const renderProjectTeams = (teams) => teams.map((team) => {
+      const members = team.members || [];
+      const memberHtml = members.length
+        ? `<ul class="project-members">${members.map((name) => `<li>${name}</li>`).join("")}</ul>`
+        : `<ul class="project-members empty"></ul>`;
+      const noteHtml = team.note ? `<p class="project-note">${team.note}</p>` : "";
+      return `
+        <article class="project-team">
+          <h3>${team.name}</h3>
+          <p class="project-mission">${team.mission}</p>
+          ${noteHtml}
+          <div class="project-lead-box">
+            <span class="label">リーダー</span>
+            <strong>${team.lead}</strong>
+          </div>
+          <p class="project-members-title">メンバー</p>
+          ${memberHtml}
+        </article>
+      `;
+    }).join("");
+
+    document.getElementById("project-teams").innerHTML = renderProjectTeams(data.projectTeams || []);
+    document.getElementById("day-of-organization").innerHTML = renderOrgCards(data.dayOfOrganization);
+
+    const sync = data.weeklySync || {};
+    const candidatesHtml = (sync.candidates || []).map((item) => `
+      <div class="sync-option">
+        <strong>${item.label}</strong>
+        <span>${item.note || ""}</span>
+      </div>
+    `).join("");
+    document.getElementById("weekly-sync").innerHTML = `
+      <p><strong>頻度:</strong> ${sync.frequency || "週1回"}（${sync.duration || "30分"}） / ${sync.channel || ""}</p>
+      <p><strong>目的:</strong> ${sync.purpose || ""}</p>
+      <p><strong>状態:</strong> <span class="pill waiting">${sync.status || "日程調整中"}</span>
+      ${sync.decided ? ` → 決定: <strong>${sync.decided}</strong>` : ""}</p>
+      <p class="attendance-hint">候補のうち参加しやすい時間をLINEで教えてください。決まり次第このページを更新します。</p>
+      <div class="sync-candidates">${candidatesHtml}</div>
+    `;
+
+    document.getElementById("staffing-summary").innerHTML = `
+      <strong>${data.staffing.targetMembers}</strong><br>
+      ${data.staffing.baseline}
+      <ul>
+        ${data.staffing.assumptions.map((item) => `<li>${item}</li>`).join("")}
+      </ul>
+    `;
+
     document.getElementById("timeline").innerHTML = data.phases.map((phase, index) => `
       <article class="phase ${index === 0 ? "current" : ""}">
         <div class="phase-top">
@@ -365,6 +871,20 @@
       data.urgentActions.map((item) => [item.priority, item.action, item.owner, item.due, item.status])
     );
 
+    document.getElementById("shift-table").innerHTML = renderTable(
+      ["シフト", "必要人数", "主な役割"],
+      data.staffing.shiftRows
+    );
+
+    document.getElementById("role-table").innerHTML = renderTable(
+      ["役割", "人数", "内容"],
+      data.staffing.roleRows
+    );
+
+    document.getElementById("handover-rules").innerHTML = data.staffing.handoverRules
+      .map((item) => `<li>${item}</li>`)
+      .join("");
+
     document.getElementById("risk-table").innerHTML = renderTable(
       ["リスク", "影響", "先回り"],
       data.risks.map((item) => [item.risk, item.impact, item.action])
@@ -372,5 +892,6 @@
 
     document.getElementById("footer").textContent = `最終更新: ${data.updatedAt}`;
   </script>
+  <script src="./attendance.js"></script>
 </body>
 </html>
