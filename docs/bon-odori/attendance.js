@@ -238,7 +238,7 @@
         statusEl.className = "form-status ok";
         refreshView();
       } catch {
-        statusEl.textContent = "この端末には保存しました。共有APIへの送信に失敗した場合は、エクスポートを竹山家へ送ってください。";
+        statusEl.textContent = "この端末には保存しました。共有APIへの送信に失敗した場合は、エクスポートを坂倉または竹山家へ送ってください。";
         statusEl.className = "form-status warn";
         refreshView();
       }
@@ -272,7 +272,7 @@
       const text = JSON.stringify(payload, null, 2);
       navigator.clipboard.writeText(text).then(
         () => {
-          toolStatus.textContent = "JSONをクリップボードにコピーしました。竹山家へLINEで送れます。";
+          toolStatus.textContent = "JSONをクリップボードにコピーしました。坂倉または竹山家へLINEで送れます。";
           toolStatus.className = "form-status ok";
         },
         () => {
