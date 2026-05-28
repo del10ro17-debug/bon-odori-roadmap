@@ -1,6 +1,7 @@
 window.BON_ODORI_DATA = {
   updatedAt: "2026-05-29",
   attendanceApiUrl: "",
+  attendanceSyncKey: "",
   attendanceGithubRepo: "del10ro17-debug/bon-odori-roadmap",
   attendanceGithubBranch: "main",
   attendanceGithubPath: "docs/bon-odori/attendance.json",

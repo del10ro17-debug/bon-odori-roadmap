@@ -33,6 +33,7 @@
 
   const data = window.BON_ODORI_DATA || {};
   const apiUrl = (data.attendanceApiUrl || "").trim();
+  const syncKey = (data.attendanceSyncKey || "").trim();
   const githubRepo = data.attendanceGithubRepo || "del10ro17-debug/bon-odori-roadmap";
   const githubBranch = data.attendanceGithubBranch || "main";
   const githubPath = data.attendanceGithubPath || "docs/bon-odori/attendance.json";
@@ -213,7 +214,7 @@
     }
     if (!hasSharedWrite()) {
       el.textContent =
-        "他の人の回答は自動で表示されます。保存を全員に反映するには、坂倉さんがリポジトリ直下の open_bon_odori_sync_setup.command を1回実行してください。";
+        "他の人の回答は自動で表示されます。保存を全員に反映するには、坂倉さんが open_bon_odori_sync_setup.command を1回実行し、表示どおり push してください。";
       el.className = "form-status warn";
       if (state === "ok") {
         const when = formatSyncTime(lastSyncAt);
@@ -682,10 +683,11 @@
   async function postToApi(row) {
     if (!apiUrl) return null;
     updateSyncStatus("syncing", "回答を共有中…");
+    const payload = syncKey ? { syncKey, row } : row;
     const res = await fetch(apiUrl, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(row),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
       mode: "cors",
     });
     if (!res.ok) throw new Error(`POST ${res.status}`);
