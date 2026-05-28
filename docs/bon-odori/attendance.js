@@ -32,9 +32,13 @@
   const SHIFT_TARGET = 7;
 
   const data = window.BON_ODORI_DATA || {};
-  const apiUrl = data.attendanceApiUrl || "";
+  const apiUrl = (data.attendanceApiUrl || "").trim();
 
   let fileResponses = [];
+  let apiResponses = [];
+  let lastSyncAt = "";
+  let pollTimer = null;
+  const POLL_MS = 30000;
 
   function loadFileResponses() {
     return fetch("./attendance.json", { cache: "no-store" })
@@ -95,17 +99,113 @@
     };
   }
 
+  function rowUpdatedAt(row) {
+    const t = Date.parse(row?.updatedAt || "");
+    return Number.isFinite(t) ? t : 0;
+  }
+
   function mergeResponses() {
     const map = new Map();
-    fileResponses.forEach((row) => {
-      if (row && row.name) map.set(row.name.trim(), normalizeRow(row));
-    });
-    Object.values(loadLocalMap()).forEach((row) => {
-      if (row && row.name) map.set(row.name.trim(), normalizeRow(row));
-    });
+    const upsert = (row) => {
+      if (!row?.name) return;
+      const key = row.name.trim();
+      const next = normalizeRow(row);
+      const prev = map.get(key);
+      if (!prev || rowUpdatedAt(next) >= rowUpdatedAt(prev)) {
+        map.set(key, next);
+      }
+    };
+    fileResponses.forEach(upsert);
+    apiResponses.forEach(upsert);
+    Object.values(loadLocalMap()).forEach(upsert);
     return [...map.values()].sort((a, b) =>
       (a.name || "").localeCompare(b.name || "", "ja")
     );
+  }
+
+  function formatSyncTime(iso) {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toLocaleString("ja-JP", {
+        month: "numeric",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "";
+    }
+  }
+
+  function updateSyncStatus(state, detail) {
+    const el = document.getElementById("att-sync-status");
+    if (!el) return;
+    if (!apiUrl) {
+      el.textContent =
+        "自動同期は未設定です。回答はこの端末のみ保存されます（全員に見せるには JSON 取り込みが必要）。";
+      el.className = "form-status warn";
+      return;
+    }
+    if (state === "syncing") {
+      el.textContent = detail || "クラウドと同期中…";
+      el.className = "form-status";
+      return;
+    }
+    if (state === "error") {
+      el.textContent =
+        detail ||
+        "クラウド同期に失敗しました。この端末の保存は残っています。しばらくして再読み込みしてください。";
+      el.className = "form-status warn";
+      return;
+    }
+    const when = formatSyncTime(lastSyncAt);
+    el.textContent = when
+      ? `自動同期: 有効（最終取得 ${when}・約30秒ごとに更新）`
+      : "自動同期: 有効";
+    el.className = "form-status ok";
+  }
+
+  function applyApiPayload(json) {
+    if (!json || typeof json !== "object") return;
+    if (Array.isArray(json.responses)) {
+      apiResponses = json.responses.map((row) => normalizeRow(row));
+    }
+    if (json.updatedAt) lastSyncAt = json.updatedAt;
+  }
+
+  async function loadApiResponses() {
+    if (!apiUrl) return apiResponses;
+    try {
+      const res = await fetch(apiUrl, { cache: "no-store", method: "GET" });
+      if (!res.ok) throw new Error(`GET ${res.status}`);
+      const json = await res.json();
+      applyApiPayload(json);
+      updateSyncStatus("ok");
+      return apiResponses;
+    } catch (err) {
+      updateSyncStatus("error");
+      return apiResponses;
+    }
+  }
+
+  function startPolling() {
+    if (!apiUrl || pollTimer) return;
+    pollTimer = setInterval(() => {
+      if (document.hidden) return;
+      loadApiResponses().then(() => refreshView());
+    }, POLL_MS);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        loadApiResponses().then(() => refreshView());
+      }
+    });
+  }
+
+  function stopPolling() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
   }
 
   function countByDay(responses, dayKey) {
@@ -454,14 +554,27 @@
 
   async function postToApi(row) {
     if (!apiUrl) return null;
+    updateSyncStatus("syncing", "回答を共有中…");
     const res = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(row),
       mode: "cors",
     });
-    if (!res.ok) throw new Error("API error");
-    return res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`POST ${res.status}`);
+    const json = await res.json();
+    applyApiPayload(json);
+    updateSyncStatus("ok");
+    return json;
+  }
+
+  function ensureSyncStatusEl() {
+    const form = document.getElementById("attendance-form");
+    if (!form || document.getElementById("att-sync-status")) return;
+    const el = document.createElement("p");
+    el.id = "att-sync-status";
+    el.className = "form-status";
+    form.parentElement.insertBefore(el, form);
   }
 
   function renderSlotGrid(dayKey) {
@@ -533,13 +646,18 @@
 
       try {
         upsertLocal(row);
-        if (apiUrl) await postToApi(row);
-        statusEl.textContent = `${row.name} さんの回答を保存しました。`;
+        if (apiUrl) {
+          await postToApi(row);
+          statusEl.textContent = `${row.name} さんの回答を保存し、全員に共有しました。`;
+        } else {
+          statusEl.textContent = `${row.name} さんの回答をこの端末に保存しました。`;
+        }
         statusEl.className = "form-status ok";
         refreshView();
       } catch {
-        statusEl.textContent =
-          "この端末には保存しました。共有APIへの送信に失敗した場合は、エクスポートを坂倉または竹山家へ送ってください。";
+        statusEl.textContent = apiUrl
+          ? "この端末には保存しましたが、クラウド共有に失敗しました。通信を確認して再保存してください。"
+          : "この端末には保存しました。全員に見せるには JSON を坂倉または竹山家へ送ってください。";
         statusEl.className = "form-status warn";
         refreshView();
       }
@@ -622,10 +740,14 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    loadFileResponses().finally(() => {
-      bindForm();
-      bindTools();
-      refreshView();
-    });
+    ensureSyncStatusEl();
+    updateSyncStatus(apiUrl ? "syncing" : "off");
+    Promise.all([loadFileResponses(), loadApiResponses()])
+      .finally(() => {
+        bindForm();
+        bindTools();
+        refreshView();
+        startPolling();
+      });
   });
 })();

@@ -1466,7 +1466,7 @@
       <section class="section" id="attendance">
       <h2>参加可否（7/11・7/12）</h2>
       <p class="attendance-hint">
-        <strong>個人名</strong>で登録してください。各日の参加可否に加え、11時〜22時の1時間枠で入れる時間を選べます。担当は「調理・店頭業務・子供のケア・全般」から選択します（未定も可）。
+        <strong>個人名</strong>で登録してください。各日の参加可否に加え、11時〜22時の1時間枠で入れる時間を選べます。担当は「調理・店頭業務・子供のケア・全般」から選択します（未定も可）。<strong>回答を保存</strong>すると、自動共有が有効なときは全員の画面に反映されます（約30秒ごとに更新）。
       </p>
       <div id="attendance-summary"></div>
 
@@ -1643,8 +1643,10 @@
         ["電源", venue.powerNote || "—"],
         ["本部・救護", venue.hq || "—"],
       ];
-      const mapImage = venue.mapImage || "";
-      const mapPdf = venue.mapPdf || "";
+      const mapImage =
+        venue.mapImage || "./assets/venue-map.png";
+      const mapPdf =
+        venue.mapPdf || "./assets/venue-map.pdf";
       const mapBlock = mapImage
         ? `<figure class="venue-map-frame">
             <img src="${mapImage}" alt="晴海ふ頭公園盆踊り大会2026 会場配置図" width="1200" height="800" loading="lazy" decoding="async">
@@ -1872,6 +1874,6 @@
     applyHashNav();
     window.addEventListener("hashchange", applyHashNav);
   </script>
-  <script src="./attendance.js?v=20260529"></script>
+  <script src="./attendance.js?v=20260530"></script>
 </body>
 </html>
