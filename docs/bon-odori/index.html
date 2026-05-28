@@ -805,8 +805,9 @@
     }
 
     .gcal-event[data-role="調理"] { background: linear-gradient(135deg, #1a5282, #2d7ab8); }
-    .gcal-event[data-role="会計"] { background: linear-gradient(135deg, #0f766e, #14a89d); }
-    .gcal-event[data-role="搬入"] { background: linear-gradient(135deg, #5c4d7a, #7b6b9a); }
+    .gcal-event[data-role="店頭業務"] { background: linear-gradient(135deg, #0f766e, #14a89d); }
+    .gcal-event[data-role="子供のケア"] { background: linear-gradient(135deg, #c2410c, #e07a3a); }
+    .gcal-event[data-role="全般"] { background: linear-gradient(135deg, #5c4d7a, #7b6b9a); }
 
     .gcal-unavailable {
       align-self: center;
@@ -1371,7 +1372,7 @@
       <section class="section" id="attendance">
       <h2>参加可否（7/11・7/12）</h2>
       <p class="attendance-hint">
-        <strong>個人名</strong>で登録してください。各日の参加可否に加え、11時〜22時の1時間枠で入れる時間を選べます。担当は「調理・会計・搬入」から選択します。
+        <strong>個人名</strong>で登録してください。各日の参加可否に加え、11時〜22時の1時間枠で入れる時間を選べます。担当は「調理・店頭業務・子供のケア・全般」から選択します（未定も可）。
       </p>
       <div id="attendance-summary"></div>
 
@@ -1418,8 +1419,9 @@
           <div class="radio-group">
             <label class="radio-chip"><input type="radio" name="role" value="" checked> 未定</label>
             <label class="radio-chip"><input type="radio" name="role" value="調理"> 調理</label>
-            <label class="radio-chip"><input type="radio" name="role" value="会計"> 会計</label>
-            <label class="radio-chip"><input type="radio" name="role" value="搬入"> 搬入</label>
+            <label class="radio-chip"><input type="radio" name="role" value="店頭業務"> 店頭業務</label>
+            <label class="radio-chip"><input type="radio" name="role" value="子供のケア"> 子供のケア</label>
+            <label class="radio-chip"><input type="radio" name="role" value="全般"> 全般</label>
           </div>
         </div>
         <div>
@@ -1714,6 +1716,6 @@
       activateTab("input");
     }
   </script>
-  <script src="./attendance.js?v=20260528"></script>
+  <script src="./attendance.js?v=20260529"></script>
 </body>
 </html>

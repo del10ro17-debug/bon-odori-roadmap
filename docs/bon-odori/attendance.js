@@ -21,7 +21,14 @@
   ];
 
   const SLOT_IDS = new Set(TIME_SLOTS.map((s) => s.id));
-  const ROLE_OPTIONS = ["調理", "会計", "搬入"];
+  const ROLE_OPTIONS = ["調理", "店頭業務", "子供のケア", "全般"];
+  const LEGACY_ROLE_MAP = { 会計: "店頭業務", 搬入: "全般" };
+
+  function normalizeRole(role) {
+    const r = (role || "").trim();
+    if (LEGACY_ROLE_MAP[r]) return LEGACY_ROLE_MAP[r];
+    return ROLE_OPTIONS.includes(r) ? r : "";
+  }
   const SHIFT_TARGET = 7;
 
   const data = window.BON_ODORI_DATA || {};
@@ -81,7 +88,7 @@
         day11: normalizeSlotList(slots.day11 ?? row.day11Slots),
         day12: normalizeSlotList(slots.day12 ?? row.day12Slots),
       },
-      role: ROLE_OPTIONS.includes(row.role) ? row.role : "",
+      role: normalizeRole(row.role),
       equipment: row.equipment || "",
       note: row.note || "",
       updatedAt: row.updatedAt || "",
