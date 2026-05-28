@@ -14,11 +14,17 @@
 const DATA_CELL = "A1";
 const SHEET_NAME = "attendance";
 
-function getStoreSheet_() {
-  const id = PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
+function ensureStore_() {
+  let id = PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
   if (!id) {
-    throw new Error("SPREADSHEET_ID が未設定です。setup() を実行してください。");
+    setup();
+    id = PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
   }
+  return id;
+}
+
+function getStoreSheet_() {
+  const id = ensureStore_();
   const ss = SpreadsheetApp.openById(id);
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
