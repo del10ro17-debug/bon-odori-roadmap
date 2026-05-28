@@ -182,6 +182,93 @@
       font-size: 16px;
     }
 
+    .venue-booth-card {
+      background: linear-gradient(135deg, var(--accent-soft), #fff);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+    }
+
+    .venue-booth-card h3 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      color: var(--accent);
+    }
+
+    .venue-booth-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .venue-facts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .venue-fact {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .venue-fact span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .venue-fact strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .venue-map-frame {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: auto;
+      background: #f4f8fb;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .venue-map-frame img {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 480px;
+    }
+
+    .venue-map-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .venue-map-actions a {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .venue-map-actions a:hover {
+      background: var(--accent-soft);
+    }
+
     .timeline {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -1348,6 +1435,13 @@
 
     <div id="tab-panel-summary" class="tab-panel active" role="tabpanel" aria-labelledby="tab-btn-summary">
       <p class="panel-lead">いまの進捗と、完了済みの項目を確認できます。参加可否の入力は「参加・回答」タブへ。</p>
+
+      <section class="section" id="venue-map">
+        <h2>会場レイアウト</h2>
+        <p class="attendance-hint">事務局確定の会場図です。スマホでは横にスクロールして全体を確認できます。</p>
+        <div id="venue-map-root"></div>
+      </section>
+
       <section class="section">
         <h2>全体サマリー</h2>
         <div class="grid" id="summary-grid"></div>
@@ -1483,7 +1577,7 @@
     </div>
 
     <div id="tab-panel-ops" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-ops" hidden>
-      <p class="panel-lead">プロジェクト体制・当日の役割分担・必要人数の目安です。</p>
+      <p class="panel-lead">プロジェクト体制・当日の役割分担・必要人数の目安です。<a href="#venue">会場レイアウト</a>はサマリータブで確認できます。</p>
       <section class="section" id="teams">
         <h2>プロジェクト体制</h2>
         <p class="attendance-hint">
@@ -1535,6 +1629,49 @@
       ["出店者", data.event.vendor],
       ["販売商材", data.event.product],
     ];
+
+    const renderVenueMap = (venue) => {
+      if (!venue) return "<p>会場図データがありません。</p>";
+      const neighbors = venue.neighbors || {};
+      const facts = [
+        ["ブース", `${venue.boothNumber}番「${venue.label}」`],
+        ["エリア", venue.zone || "—"],
+        ["目印", venue.landmark || "—"],
+        ["西隣", neighbors.west || "—"],
+        ["東隣", neighbors.east || "—"],
+        ["搬入", venue.loadIn || "—"],
+        ["電源", venue.powerNote || "—"],
+        ["本部・救護", venue.hq || "—"],
+      ];
+      const mapImage = venue.mapImage || "";
+      const mapPdf = venue.mapPdf || "";
+      const mapBlock = mapImage
+        ? `<figure class="venue-map-frame">
+            <img src="${mapImage}" alt="晴海ふ頭公園盆踊り大会2026 会場配置図" width="1200" height="800" loading="lazy" decoding="async">
+          </figure>
+          <div class="venue-map-actions">
+            ${mapPdf ? `<a href="${mapPdf}" target="_blank" rel="noopener noreferrer">PDFで開く（拡大・印刷向け）</a>` : ""}
+            <a href="${mapImage}" target="_blank" rel="noopener noreferrer">画像だけを開く</a>
+          </div>`
+        : `<p class="attendance-hint">会場図ファイルが未設定です。坂倉まで連絡してください。</p>`;
+      return `
+        <div class="venue-booth-card">
+          <h3>${venue.boothNumber}番「${venue.label}」</h3>
+          <p>${venue.zone || ""} · ${venue.landmark || ""}</p>
+        </div>
+        <div class="venue-facts">
+          ${facts.map(([label, value]) => `
+            <div class="venue-fact">
+              <span>${label}</span>
+              <strong>${value}</strong>
+            </div>
+          `).join("")}
+        </div>
+        ${mapBlock}
+      `;
+    };
+
+    document.getElementById("venue-map-root").innerHTML = renderVenueMap(data.event.venue);
 
     document.getElementById("event-grid").innerHTML = eventItems.map(([label, value]) => `
       <div class="event-item">
@@ -1709,12 +1846,31 @@
       btn.addEventListener("click", () => activateTab(btn.dataset.tab));
     });
 
-    const hashTab = location.hash.replace("#", "");
-    if (tabPanels[hashTab]) {
-      activateTab(hashTab);
-    } else if (location.hash === "#attendance") {
-      activateTab("input");
-    }
+    const scrollToVenue = () => {
+      requestAnimationFrame(() => {
+        document.getElementById("venue-map")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    };
+
+    const applyHashNav = () => {
+      const hash = location.hash;
+      const hashTab = hash.replace("#", "");
+      if (tabPanels[hashTab]) {
+        activateTab(hashTab);
+        return;
+      }
+      if (hash === "#attendance") {
+        activateTab("input");
+        return;
+      }
+      if (hash === "#venue" || hash === "#venue-map") {
+        activateTab("summary");
+        scrollToVenue();
+      }
+    };
+
+    applyHashNav();
+    window.addEventListener("hashchange", applyHashNav);
   </script>
   <script src="./attendance.js?v=20260529"></script>
 </body>

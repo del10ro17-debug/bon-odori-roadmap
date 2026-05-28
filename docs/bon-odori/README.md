@@ -8,6 +8,7 @@
 - `data.js`: 表示データ。更新は基本的にこのファイルを編集する
 - `attendance.js`: 参加可否の入力・集計UI
 - `attendance.json`: 共有用の参加可否データ（GitHubへコミットすると全員に反映）
+- `assets/venue-map.png`, `assets/venue-map.pdf`: 事務局確定の会場図（サマリータブで表示）
 
 ## 更新方法
 
