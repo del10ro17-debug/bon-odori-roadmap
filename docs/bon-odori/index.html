@@ -483,6 +483,391 @@
       min-width: 10rem;
     }
 
+    .schedule-board {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .schedule-block h3 {
+      margin: 0 0 10px;
+      font-size: 17px;
+      color: var(--accent-dark);
+    }
+
+    .schedule-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
+    .schedule-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .schedule-legend i {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+    }
+
+    .schedule-legend .lv-0 { background: #f4f7fb; }
+    .schedule-legend .lv-1 { background: #fff8ea; }
+    .schedule-legend .lv-2 { background: #dce9f5; }
+    .schedule-legend .lv-3 { background: #b8d4ef; }
+
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .schedule-table th {
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      padding: 8px 6px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .schedule-table th.time-col {
+      background: var(--accent-dark);
+      text-align: left;
+      min-width: 6.5rem;
+    }
+
+    .schedule-table td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    .schedule-cell {
+      min-width: 5.5rem;
+      text-align: center;
+    }
+
+    .schedule-cell.level-0 {
+      background: #f4f7fb;
+      color: var(--muted);
+    }
+
+    .schedule-cell.level-1 {
+      background: #fff8ea;
+    }
+
+    .schedule-cell.level-2 {
+      background: #e8f2fa;
+    }
+
+    .schedule-cell.level-3 {
+      background: #c5d9eb;
+    }
+
+    .schedule-cell .count {
+      display: block;
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--accent-dark);
+      margin-bottom: 4px;
+    }
+
+    .schedule-cell.level-0 .count {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .schedule-names {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      text-align: left;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .schedule-names li + li {
+      margin-top: 3px;
+    }
+
+    .role-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(26, 82, 130, 0.12);
+      color: var(--accent-dark);
+      margin-left: 4px;
+    }
+
+    .person-schedule-wrap {
+      overflow-x: auto;
+    }
+
+    .person-schedule-table th.slot-head {
+      font-size: 11px;
+      padding: 6px 4px;
+      min-width: 2.4rem;
+    }
+
+    .person-schedule-table td.name-col {
+      font-weight: 700;
+      white-space: nowrap;
+      background: var(--surface);
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      border-right: 2px solid var(--line);
+    }
+
+    .person-schedule-table td.mark {
+      text-align: center;
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .person-schedule-table td.mark.empty {
+      color: #ccc;
+    }
+
+    .schedule-note {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .schedule-warnings {
+      margin: 0;
+      padding-left: 1.2em;
+      font-size: 13px;
+      color: var(--warn);
+    }
+
+    .cal-root {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cal-day-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .cal-day-tab {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      background: var(--card);
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .cal-day-tab.active {
+      background: var(--accent);
+      border-color: var(--accent-dark);
+      color: #fff;
+    }
+
+    .gcal-day-panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 12px 16px;
+      overflow: hidden;
+    }
+
+    .gcal-day-title {
+      margin: 0 0 12px;
+      font-size: 16px;
+      color: var(--accent-dark);
+    }
+
+    .gcal-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
+
+    .gcal-sheet {
+      min-width: 520px;
+    }
+
+    .gcal-head {
+      display: grid;
+      grid-template-columns: 5.5rem repeat(11, minmax(2.25rem, 1fr));
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+
+    .gcal-head .gcal-corner {
+      font-size: 11px;
+      color: var(--muted);
+      align-self: end;
+      padding-bottom: 4px;
+    }
+
+    .gcal-hour {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 4px 0;
+      border-bottom: 2px solid var(--line);
+    }
+
+    .gcal-row {
+      display: grid;
+      grid-template-columns: 5.5rem repeat(11, minmax(2.25rem, 1fr));
+      gap: 2px;
+      align-items: stretch;
+      min-height: 44px;
+      margin-top: 4px;
+    }
+
+    .gcal-name {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      padding-right: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.3;
+      word-break: keep-all;
+    }
+
+    .gcal-name .gcal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .gcal-track,
+    .gcal-unavailable {
+      grid-column: 2 / -1;
+    }
+
+    .gcal-track {
+      display: grid;
+      grid-template-columns: repeat(11, minmax(2.25rem, 1fr));
+      gap: 2px;
+      position: relative;
+      min-height: 36px;
+      align-self: center;
+      background: repeating-linear-gradient(
+        to right,
+        var(--surface) 0,
+        var(--surface) calc(100% / 11 - 2px),
+        #e8eef5 calc(100% / 11 - 2px),
+        #e8eef5 calc(100% / 11)
+      );
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .gcal-row-unavailable .gcal-track {
+      background: #f4f4f4;
+    }
+
+    .gcal-event {
+      grid-row: 1;
+      min-height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent) 0%, #2a6fa8 100%);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 2px 6px rgba(26, 82, 130, 0.25);
+      z-index: 1;
+    }
+
+    .gcal-event[data-role="調理"] { background: linear-gradient(135deg, #1a5282, #2d7ab8); }
+    .gcal-event[data-role="会計"] { background: linear-gradient(135deg, #0f766e, #14a89d); }
+    .gcal-event[data-role="搬入"] { background: linear-gradient(135deg, #5c4d7a, #7b6b9a); }
+
+    .gcal-unavailable {
+      align-self: center;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px;
+      background: #f4f4f4;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .gcal-empty-day {
+      margin: 0;
+      padding: 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .gcal-heatmap-row {
+      display: grid;
+      grid-template-columns: 5.5rem repeat(11, minmax(2.25rem, 1fr));
+      gap: 2px;
+      margin-top: 4px;
+      align-items: stretch;
+    }
+
+    .gcal-heat-cell {
+      border-radius: 6px;
+      min-height: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 2px;
+      line-height: 1.2;
+    }
+
+    .gcal-heat-cell.lv-0 { background: #f4f7fb; color: var(--muted); }
+    .gcal-heat-cell.lv-1 { background: #fff8ea; color: #8a5a00; }
+    .gcal-heat-cell.lv-2 { background: #dce9f5; color: var(--accent-dark); }
+    .gcal-heat-cell.lv-3 { background: #1a5282; color: #fff; }
+
+    @media (max-width: 640px) {
+      .gcal-sheet {
+        min-width: 480px;
+      }
+
+      .gcal-name {
+        font-size: 12px;
+      }
+
+      .gcal-head,
+      .gcal-row,
+      .gcal-heatmap-row {
+        grid-template-columns: 4.5rem repeat(11, minmax(2rem, 1fr));
+      }
+    }
+
     .btn-row {
       display: flex;
       flex-wrap: wrap;
@@ -989,7 +1374,14 @@
         <strong>個人名</strong>で登録してください。各日の参加可否に加え、11時〜22時の1時間枠で入れる時間を選べます。担当は「調理・会計・搬入」から選択します。
       </p>
       <div id="attendance-summary"></div>
-      <div id="attendance-matrix"></div>
+
+      <h3>稼働可能スケジュール（集計）</h3>
+      <p class="attendance-hint">時間ごとに入れる人数です（上段の「合計」行）。濃い青ほど人数が多いです（目安: 1シフト7〜8名）。</p>
+      <div id="attendance-schedule" class="schedule-board"></div>
+
+      <h3>回答一覧（カレンダー表示）</h3>
+      <p class="attendance-hint">横軸が時間（11時〜22時）です。色の付いたバーが入れる時間帯です。スマホでは横にスクロールできます。</p>
+      <div id="attendance-matrix" class="cal-root"></div>
 
       <h3>回答を入力</h3>
       <form class="attendance-form" id="attendance-form">
@@ -1065,6 +1457,11 @@
 
     <div id="tab-panel-schedule" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-schedule" hidden>
       <p class="panel-lead">マイルストーン・工程表・今週の優先タスクを時系列で確認できます。</p>
+      <section class="section" id="schedule-availability-section">
+        <h2>7/11・7/12 稼働可能スケジュール</h2>
+        <p class="attendance-hint">「参加・回答」タブで登録された時間枠の集計です。シフト組みの参考にしてください。</p>
+        <div id="schedule-availability" class="schedule-board"></div>
+      </section>
       <section class="section" id="milestones">
         <h2>マイルストーン（矢羽根）</h2>
         <p class="milestone-intro">
@@ -1338,6 +1735,6 @@
       activateTab("input");
     }
   </script>
-  <script src="./attendance.js?v=20260524"></script>
+  <script src="./attendance.js?v=20260528"></script>
 </body>
 </html>

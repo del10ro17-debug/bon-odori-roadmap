@@ -22,6 +22,7 @@
 
   const SLOT_IDS = new Set(TIME_SLOTS.map((s) => s.id));
   const ROLE_OPTIONS = ["調理", "会計", "搬入"];
+  const SHIFT_TARGET = 7;
 
   const data = window.BON_ODORI_DATA || {};
   const apiUrl = data.attendanceApiUrl || "";
@@ -118,6 +119,222 @@
     return slots.map(slotLabel).join("、");
   }
 
+  function isAvailableOnDay(row, dayKey) {
+    return row[dayKey] !== "no";
+  }
+
+  function peopleForSlot(responses, dayKey, slotId) {
+    return responses
+      .filter((row) => isAvailableOnDay(row, dayKey))
+      .filter((row) => (row.slots?.[dayKey] || []).includes(slotId))
+      .sort((a, b) => (a.name || "").localeCompare(b.name || "", "ja"));
+  }
+
+  function countLevel(count) {
+    if (count === 0) return 0;
+    if (count <= 2) return 1;
+    if (count < SHIFT_TARGET) return 2;
+    return 3;
+  }
+
+  function renderScheduleWarnings(responses) {
+    const warnings = [];
+    responses.forEach((row) => {
+      if (row.day11 !== "no" && !(row.slots?.day11 || []).length) {
+        warnings.push(`${row.name} さん（7/11）: 参加または未定ですが時間枠未選択`);
+      }
+      if (row.day12 !== "no" && !(row.slots?.day12 || []).length) {
+        warnings.push(`${row.name} さん（7/12）: 参加または未定ですが時間枠未選択`);
+      }
+    });
+    if (!warnings.length) return "";
+    return `
+      <ul class="schedule-warnings">
+        ${warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}
+      </ul>
+    `;
+  }
+
+  function slotIndices(slotIds) {
+    return TIME_SLOTS.map((slot, index) => (slotIds.includes(slot.id) ? index : -1)).filter(
+      (index) => index >= 0
+    );
+  }
+
+  function mergeSlotRanges(indices) {
+    if (!indices.length) return [];
+    const ranges = [];
+    let start = indices[0];
+    let end = indices[0];
+    for (let i = 1; i < indices.length; i += 1) {
+      if (indices[i] === end + 1) {
+        end = indices[i];
+      } else {
+        ranges.push({ start, end });
+        start = indices[i];
+        end = indices[i];
+      }
+    }
+    ranges.push({ start, end });
+    return ranges;
+  }
+
+  function rangeLabel(start, end) {
+    const from = TIME_SLOTS[start].label.split("〜")[0];
+    const to = TIME_SLOTS[end].label.split("〜")[1];
+    return `${from}〜${to}`;
+  }
+
+  function renderGcalHourHead() {
+    return TIME_SLOTS.map((slot) => {
+      const hour = slot.id.split("-")[0];
+      return `<div class="gcal-hour">${hour}</div>`;
+    }).join("");
+  }
+
+  function renderGcalEventBar(row, dayKey) {
+    const slots = row.slots?.[dayKey] || [];
+    const ranges = mergeSlotRanges(slotIndices(slots));
+    if (!ranges.length) return "";
+
+    return ranges
+      .map((range) => {
+        const roleAttr = row.role ? ` data-role="${escapeHtml(row.role)}"` : "";
+        return `
+          <div class="gcal-event"${roleAttr}
+            style="grid-column:${range.start + 1} / ${range.end + 2}"
+            title="${escapeHtml(rangeLabel(range.start, range.end))}${row.role ? ` · ${row.role}` : ""}">
+            ${escapeHtml(rangeLabel(range.start, range.end))}
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  function renderGcalPersonRow(row, dayKey) {
+    if (row[dayKey] === "no") {
+      return `
+        <div class="gcal-row gcal-row-unavailable">
+          <div class="gcal-name">
+            <span>${escapeHtml(row.name)}</span>
+            <span class="gcal-meta">${renderStatusBadge("no")}</span>
+          </div>
+          <div class="gcal-unavailable">この日は不可</div>
+        </div>
+      `;
+    }
+
+    const roleHtml = row.role
+      ? `<span class="role-tag">${escapeHtml(row.role)}</span>`
+      : "";
+    const events = renderGcalEventBar(row, dayKey);
+    const emptyHint = events
+      ? ""
+      : `<div class="gcal-event" style="grid-column:1/-1;opacity:0.55;background:#94a3b8">時間枠未選択</div>`;
+
+    return `
+      <div class="gcal-row">
+        <div class="gcal-name">
+          <span>${escapeHtml(row.name)}</span>
+          <span class="gcal-meta">${renderStatusBadge(row[dayKey])}${roleHtml}</span>
+        </div>
+        <div class="gcal-track">
+          ${events}${emptyHint}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderGcalHeatmapRow(responses, dayKey) {
+    const cells = TIME_SLOTS.map((slot) => {
+      const people = peopleForSlot(responses, dayKey, slot.id);
+      const level = countLevel(people.length);
+      return `
+        <div class="gcal-heat-cell lv-${level}" title="${slot.label}">
+          <span>${people.length}</span>
+          <span style="font-size:9px;font-weight:500">名</span>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="gcal-heatmap-row">
+        <div class="gcal-name"><span>合計</span><span class="gcal-meta" style="font-size:11px;font-weight:500;color:var(--muted)">人数/枠</span></div>
+        ${cells}
+      </div>
+    `;
+  }
+
+  function renderGcalDayPanel(responses, dayKey, dayLabel) {
+    const people = responses.filter((row) => row[dayKey] !== "no");
+    if (!people.length) {
+      return `
+        <section class="gcal-day-panel" data-day="${dayKey}">
+          <h4 class="gcal-day-title">${dayLabel}</h4>
+          <p class="gcal-empty-day">この日に参加可能な登録はまだありません。</p>
+        </section>
+      `;
+    }
+
+    const rows = people.map((row) => renderGcalPersonRow(row, dayKey)).join("");
+
+    return `
+      <section class="gcal-day-panel" data-day="${dayKey}">
+        <h4 class="gcal-day-title">${dayLabel}</h4>
+        <div class="gcal-scroll">
+          <div class="gcal-sheet">
+            <div class="gcal-head">
+              <div class="gcal-corner">名前</div>
+              ${renderGcalHourHead()}
+            </div>
+            ${renderGcalHeatmapRow(responses, dayKey)}
+            ${rows}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderCalendarView(responses) {
+    if (!responses.length) {
+      return `<p class="attendance-empty">まだ登録がありません。下のフォームから入力してください。</p>`;
+    }
+
+    return `
+      <div class="cal-day-tabs" role="tablist" aria-label="表示する日">
+        <button type="button" class="cal-day-tab active" data-day="all" aria-selected="true">両日</button>
+        <button type="button" class="cal-day-tab" data-day="day11" aria-selected="false">7/11（土）</button>
+        <button type="button" class="cal-day-tab" data-day="day12" aria-selected="false">7/12（日）</button>
+      </div>
+      ${renderScheduleWarnings(responses)}
+      ${renderGcalDayPanel(responses, "day11", "7/11（土）")}
+      ${renderGcalDayPanel(responses, "day12", "7/12（日）")}
+    `;
+  }
+
+  function renderScheduleBoard(responses) {
+    if (!responses.length) {
+      return `<p class="attendance-empty">回答があると、ここにスケジュール表が表示されます。</p>`;
+    }
+
+    const legend = `
+      <div class="schedule-legend">
+        <span><i class="lv-0"></i> 0名</span>
+        <span><i class="lv-1"></i> 1〜2名</span>
+        <span><i class="lv-2"></i> 3〜${SHIFT_TARGET - 1}名</span>
+        <span><i class="lv-3"></i> ${SHIFT_TARGET}名以上（目安達成）</span>
+      </div>
+    `;
+
+    return `
+      ${legend}
+      ${renderScheduleWarnings(responses)}
+      <p class="schedule-note">各時間枠に入れる人数（シフト組みの参考）</p>
+      ${renderGcalDayPanel(responses, "day11", "7/11（土）")}
+      ${renderGcalDayPanel(responses, "day12", "7/12（日）")}
+    `;
+  }
+
   function renderStatusBadge(value) {
     const item = STATUS[value] || STATUS.maybe;
     return `<span class="status-badge ${item.className}">${item.label}</span>`;
@@ -156,45 +373,30 @@
     `;
   }
 
-  function renderMatrix(responses) {
-    if (!responses.length) {
-      return `<p class="attendance-empty">まだ登録がありません。下のフォームから入力してください。</p>`;
-    }
+  function bindCalendarDayTabs() {
+    const root = document.getElementById("attendance-matrix");
+    if (!root) return;
 
-    const rows = responses
-      .map(
-        (row) => `
-      <tr>
-        <td><strong>${escapeHtml(row.name)}</strong></td>
-        <td>${renderStatusBadge(row.day11)}</td>
-        <td class="slot-cell">${escapeHtml(formatSlots(row.slots?.day11))}</td>
-        <td>${renderStatusBadge(row.day12)}</td>
-        <td class="slot-cell">${escapeHtml(formatSlots(row.slots?.day12))}</td>
-        <td>${escapeHtml(row.role || "—")}</td>
-        <td class="muted">${escapeHtml(row.updatedAt ? formatTime(row.updatedAt) : "—")}</td>
-      </tr>
-    `
-      )
-      .join("");
+    const tabs = root.querySelectorAll(".cal-day-tab");
+    const panels = root.querySelectorAll(".gcal-day-panel");
 
-    return `
-      <div class="table-wrap">
-        <table class="attendance-table">
-          <thead>
-            <tr>
-              <th>名前</th>
-              <th>7/11</th>
-              <th>7/11 時間枠</th>
-              <th>7/12</th>
-              <th>7/12 時間枠</th>
-              <th>担当</th>
-              <th>更新</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    `;
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const day = tab.dataset.day;
+        tabs.forEach((btn) => {
+          const on = btn === tab;
+          btn.classList.toggle("active", on);
+          btn.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        panels.forEach((panel) => {
+          if (day === "all") {
+            panel.hidden = false;
+          } else {
+            panel.hidden = panel.dataset.day !== day;
+          }
+        });
+      });
+    });
   }
 
   function escapeHtml(value) {
@@ -220,8 +422,21 @@
 
   function refreshView() {
     const responses = mergeResponses();
+    const scheduleHtml = renderScheduleBoard(responses);
+
     document.getElementById("attendance-summary").innerHTML = renderSummary(responses);
-    document.getElementById("attendance-matrix").innerHTML = renderMatrix(responses);
+
+    const scheduleEl = document.getElementById("attendance-schedule");
+    if (scheduleEl) scheduleEl.innerHTML = scheduleHtml;
+
+    const scheduleTabEl = document.getElementById("schedule-availability");
+    if (scheduleTabEl) scheduleTabEl.innerHTML = scheduleHtml;
+
+    const matrixEl = document.getElementById("attendance-matrix");
+    if (matrixEl) {
+      matrixEl.innerHTML = renderCalendarView(responses);
+      bindCalendarDayTabs();
+    }
   }
 
   function upsertLocal(row) {
