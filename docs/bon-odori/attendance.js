@@ -743,11 +743,13 @@
   }
 
   function ensureSyncStatusEl() {
+    if (document.getElementById("att-sync-status")) return;
     const form = document.getElementById("attendance-form");
-    if (!form || document.getElementById("att-sync-status")) return;
+    if (!form) return;
     const el = document.createElement("p");
     el.id = "att-sync-status";
     el.className = "form-status";
+    el.setAttribute("aria-live", "polite");
     form.parentElement.insertBefore(el, form);
   }
 
