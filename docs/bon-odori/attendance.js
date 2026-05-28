@@ -38,6 +38,7 @@
   const githubBranch = data.attendanceGithubBranch || "main";
   const githubPath = data.attendanceGithubPath || "docs/bon-odori/attendance.json";
   const githubToken = (data.attendanceGithubToken || "").trim();
+  const WRITE_TOKEN_KEY = "bon-odori-gh-write-token";
 
   let fileResponses = [];
   let sharedResponses = [];
@@ -49,8 +50,12 @@
     return Boolean(apiUrl || githubRepo);
   }
 
+  function getWriteToken() {
+    return (localStorage.getItem(WRITE_TOKEN_KEY) || githubToken || "").trim();
+  }
+
   function hasSharedWrite() {
-    return Boolean(githubToken || apiUrl);
+    return Boolean(getWriteToken() || apiUrl);
   }
 
   function rawGithubUrl() {
@@ -66,7 +71,8 @@
       Accept: "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
     };
-    if (githubToken) headers.Authorization = `Bearer ${githubToken}`;
+    const token = getWriteToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
     if (json) headers["Content-Type"] = "application/json";
     return headers;
   }
@@ -214,7 +220,7 @@
     }
     if (!hasSharedWrite()) {
       el.textContent =
-        "他の人の回答は自動で表示されます。保存を全員に反映するには、坂倉さんが open_bon_odori_sync_setup.command を1回実行し、表示どおり push してください。";
+        "他の人の回答は自動で表示されます。この端末で保存を共有するには、下の「共有設定」でトークンを入れるか、坂倉さんに open_bon_odori_sync_setup.command の実行を依頼してください。";
       el.className = "form-status warn";
       if (state === "ok") {
         const when = formatSyncTime(lastSyncAt);
@@ -281,7 +287,7 @@
   }
 
   async function postToGithub(row) {
-    if (!githubToken) throw new Error("no github token");
+    if (!getWriteToken()) throw new Error("no github token");
     updateSyncStatus("syncing", "GitHub に保存中…（10〜30秒かかることがあります）");
     const getRes = await fetch(`${githubApiUrl()}?ref=${encodeURIComponent(githubBranch)}`, {
       headers: githubHeaders(),
@@ -311,9 +317,48 @@
   }
 
   async function postToShared(row) {
-    if (githubToken) return postToGithub(row);
+    if (getWriteToken()) return postToGithub(row);
     if (apiUrl) return postToApi(row);
     throw new Error("shared write not configured");
+  }
+
+  function applySetupTokenFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("setup_token");
+    if (!token) return;
+    localStorage.setItem(WRITE_TOKEN_KEY, token);
+    params.delete("setup_token");
+    const q = params.toString();
+    history.replaceState({}, "", location.pathname + (q ? `?${q}` : "") + location.hash);
+  }
+
+  function bindTokenSetup() {
+    const form = document.getElementById("attendance-form");
+    if (!form || document.getElementById("att-token-setup") || getWriteToken()) return;
+    const box = document.createElement("div");
+    box.id = "att-token-setup";
+    box.className = "slot-section";
+    box.innerHTML = `
+      <label>共有設定（この端末で初回のみ）</label>
+      <p class="slot-hint">保存を全員に反映するには、坂倉さんが <code>open_bon_odori_sync_setup.command</code> 実行後に LINE で送るトークンを貼り付けて「保存」してください。入れた端末だけ書き込みできます。</p>
+      <input type="password" id="att-token-input" placeholder="トークンを貼り付け" style="width:100%;padding:10px;margin-bottom:8px;">
+      <button type="button" class="btn-secondary" id="att-token-save">トークンをこの端末に保存</button>
+      <p class="form-status" id="att-token-status"></p>
+    `;
+    form.parentElement.insertBefore(box, form);
+    document.getElementById("att-token-save").addEventListener("click", () => {
+      const status = document.getElementById("att-token-status");
+      const value = document.getElementById("att-token-input").value.trim();
+      if (!value) {
+        status.textContent = "トークンを入力してください。";
+        status.className = "form-status error";
+        return;
+      }
+      localStorage.setItem(WRITE_TOKEN_KEY, value);
+      status.textContent = "保存しました。この端末から回答を共有できます。";
+      status.className = "form-status ok";
+      updateSyncStatus("ok");
+    });
   }
 
   function startPolling() {
@@ -869,7 +914,9 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    applySetupTokenFromUrl();
     ensureSyncStatusEl();
+    bindTokenSetup();
     updateSyncStatus(hasSharedRead() ? "syncing" : "off");
     Promise.all([loadFileResponses(), loadSharedResponses()])
       .finally(() => {

@@ -1,42 +1,31 @@
 # 参加可否の自動共有
 
-**やりたいこと**: 誰かが「回答を保存」→ 全員のウェブページに反映。  
-**JSONエクスポートは不要**（バックアップ用に残しています）。
+**やりたいこと**: 誰かが「回答を保存」→ 全員のページに反映。
 
-## いちばん簡単な方法（推奨・GAS不要）
+## 坂倉さん（1回だけ）
 
-リポジトリ直下の **`open_bon_odori_sync_setup.command`** をダブルクリック（1回だけ）。
+リポジトリ直下の **`open_bon_odori_sync_setup.command`** をダブルクリック。
 
-1. GitHub にログインするよう求められたらブラウザで許可
-2. `data.js` に書き込み権限が設定される
-3. 表示どおり `git add` → `commit` → `push`
+1. GitHub ログイン（未済なら）
+2. ブラウザが開く → 自動でこの端末にトークン保存
+3. ターミナルに出たトークンを LINE で家族に送る（各端末の「共有設定」に貼っても可）
 
-### 手動でやる場合
+## 家族（各端末・初回のみ）
 
-```bash
-brew install gh   # 未インストールなら
-gh auth login
-chmod +x tools/bon_odori_attendance/setup-github-sync.sh
-./tools/bon_odori_attendance/setup-github-sync.sh
-git add docs/bon-odori/data.js && git commit -m "Enable attendance auto-sync" && git push
-```
+1. [公開ページ](https://del10ro17-debug.github.io/bon-odori-roadmap/bon-odori/) →「参加・回答」
+2. フォーム上の **「共有設定」** に坂倉さんからもらったトークンを貼る → **トークンをこの端末に保存**
+3. 以降は **回答を保存** だけで全員に反映
 
-### 動き方
+## 動き方
 
 | 操作 | 結果 |
 |------|------|
-| 誰かが「回答を保存」 | GitHub 上の `attendance.json` を更新 |
-| 全員の画面 | 約30秒ごとに自動取得（保存直後は自分の画面に即反映） |
-| 反映まで | GitHub の更新後、通常 **10〜60秒**（Pages のキャッシュ） |
+| 保存 | GitHub の `attendance.json` を更新 |
+| 他の人の画面 | 約30秒ごとに自動取得 |
 
-### 注意
+JSONエクスポートは不要です。
 
-- 設定用トークンは `data.js` に入ります（公開リポジトリ上は見えます）。**bon-odori-roadmap だけ**書き込みできる PAT を使ってください。
-- 読み取りは誰でも可能（公開ページのため）。
+## 注意
 
----
-
-## 別案: Google Apps Script（使わなくてOK）
-
-`attendance-api.gs` を script.google.com に貼り付けてデプロイする方法もあります。  
-GitHub 方式の方が手順が少ないため、通常は上記だけで足ります。
+- トークンは **リポジトリには入れません**（GitHub が push を拒否するため）
+- トークンを知っている人は書き込みできます（家族向けの簡易運用）
