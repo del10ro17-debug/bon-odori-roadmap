@@ -1367,7 +1367,7 @@
     </div>
 
     <div id="tab-panel-input" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-input" hidden>
-      <p class="panel-lead">7/11・7/12の参加可否と、定例ミーティングの希望を入力・確認してください。</p>
+      <p class="panel-lead">7/11・7/12の参加可否と、入れる時間帯を入力・確認してください。</p>
       <section class="section" id="attendance">
       <h2>参加可否（7/11・7/12）</h2>
       <p class="attendance-hint">
@@ -1447,11 +1447,6 @@
         <button class="btn-primary" type="button" id="att-import-run">取り込む</button>
       </div>
       <p class="form-status" id="att-tool-status"></p>
-      </section>
-
-      <section class="section" id="weekly-sync">
-        <h2>定例の話し合い（週1回）</h2>
-        <div class="sync-box" id="weekly-sync"></div>
       </section>
     </div>
 
@@ -1622,22 +1617,6 @@
 
     document.getElementById("project-teams").innerHTML = renderProjectTeams(data.projectTeams || []);
     document.getElementById("day-of-organization").innerHTML = renderOrgCards(data.dayOfOrganization);
-
-    const sync = data.weeklySync || {};
-    const candidatesHtml = (sync.candidates || []).map((item) => `
-      <div class="sync-option">
-        <strong>${item.label}</strong>
-        <span>${item.note || ""}</span>
-      </div>
-    `).join("");
-    document.getElementById("weekly-sync").innerHTML = `
-      <p><strong>頻度:</strong> ${sync.frequency || "週1回"}（${sync.duration || "30分"}） / ${sync.channel || ""}</p>
-      <p><strong>目的:</strong> ${sync.purpose || ""}</p>
-      <p><strong>状態:</strong> <span class="pill waiting">${sync.status || "日程調整中"}</span>
-      ${sync.decided ? ` → 決定: <strong>${sync.decided}</strong>` : ""}</p>
-      <p class="attendance-hint">候補のうち参加しやすい時間をLINEで教えてください。決まり次第このページを更新します。</p>
-      <div class="sync-candidates">${candidatesHtml}</div>
-    `;
 
     document.getElementById("staffing-summary").innerHTML = `
       <strong>${data.staffing.targetMembers}</strong><br>
