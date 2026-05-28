@@ -220,11 +220,11 @@
     }
     if (!hasSharedWrite()) {
       el.textContent =
-        "他の人の回答は自動で表示されます。この端末で保存を共有するには、下の「共有設定」でトークンを入れるか、坂倉さんに open_bon_odori_sync_setup.command の実行を依頼してください。";
+        "いまは「見るだけ」共有です。誰かが保存した内容を全員に反映するには、坂倉さんが一度だけ共有の設定（約5分）を完了してください。詳細は docs/bon-odori/共有の始め方.md";
       el.className = "form-status warn";
       if (state === "ok") {
         const when = formatSyncTime(lastSyncAt);
-        if (when) el.textContent += `（最終取得 ${when}）`;
+        if (when) el.textContent += `（他の人の回答を取得 ${when}）`;
       }
       return;
     }
@@ -242,8 +242,8 @@
     }
     const when = formatSyncTime(lastSyncAt);
     el.textContent = when
-      ? `自動同期: 有効（保存すると全員に反映・最終取得 ${when}）`
-      : "自動同期: 有効（保存すると全員に反映）";
+      ? `自動共有: オン（回答を保存すると全員に反映・更新 ${when}）`
+      : "自動共有: オン（回答を保存すると全員に反映）";
     el.className = "form-status ok";
   }
 
@@ -822,16 +822,16 @@
         upsertLocal(row);
         if (hasSharedWrite()) {
           await postToShared(row);
-          statusEl.textContent = `${row.name} さんの回答を保存し、全員に共有しました。`;
+          statusEl.textContent = `${row.name} さんの回答を保存しました。全員の画面に反映されます（30秒ほど）。`;
         } else {
-          statusEl.textContent = `${row.name} さんの回答をこの端末に保存しました（共有設定が完了すると全員に反映されます）。`;
+          statusEl.textContent = `${row.name} さんの回答をこの端末に保存しました（共有の設定が終わると全員に見えます）。`;
         }
         statusEl.className = "form-status ok";
         refreshView();
       } catch {
         statusEl.textContent = hasSharedWrite()
-          ? "この端末には保存しましたが、クラウド共有に失敗しました。通信を確認して再保存してください。"
-          : "この端末には保存しました。全員に見せるには同期設定が必要です（坂倉さんへ連絡）。";
+          ? "保存に失敗しました。通信を確認して、もう一度「回答を保存」を押してください。"
+          : "この端末には保存しました。全員に見せるには坂倉さんが共有の設定を完了する必要があります。";
         statusEl.className = "form-status warn";
         refreshView();
       }
