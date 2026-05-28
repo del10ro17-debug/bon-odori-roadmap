@@ -729,17 +729,30 @@
     if (!apiUrl) return null;
     updateSyncStatus("syncing", "回答を共有中…");
     const payload = syncKey ? { syncKey, row } : row;
-    const res = await fetch(apiUrl, {
+    const body = JSON.stringify(payload);
+
+    // GAS は POST 後にリダイレクトし CORS で JSON が読めないため、
+    // text/plain + no-cors で送信し、GET で保存確認する（simple request で preflight 回避）
+    await fetch(apiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      mode: "cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body,
+      mode: "no-cors",
+      keepalive: true,
     });
-    if (!res.ok) throw new Error(`POST ${res.status}`);
-    const json = await res.json();
-    applySharedPayload(json);
+
+    await loadApiResponses();
+    const saved = sharedResponses.find(
+      (r) => r && String(r.name).trim() === String(row.name).trim()
+    );
+    if (!saved) {
+      throw new Error("cloud verify: name not found");
+    }
+    if (rowUpdatedAt(saved) + 2000 < rowUpdatedAt(row)) {
+      throw new Error("cloud verify: stale");
+    }
     updateSyncStatus("ok");
-    return json;
+    return { responses: sharedResponses, updatedAt: lastSyncAt };
   }
 
   function ensureSyncStatusEl() {

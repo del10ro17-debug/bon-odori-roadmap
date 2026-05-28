@@ -100,7 +100,25 @@ function jsonOutput_(payload) {
   );
 }
 
-function doGet() {
+function doGet(e) {
+  const action = e && e.parameter ? e.parameter.action : "";
+  const data = e && e.parameter ? e.parameter.data : "";
+  if (action === "save" && data) {
+    try {
+      const row = JSON.parse(data);
+      let store = loadData_();
+      store = upsertRow_(store, row);
+      store = saveData_(store);
+      return jsonOutput_(store);
+    } catch (err) {
+      return jsonOutput_({
+        ok: false,
+        error: String(err),
+        updatedAt: new Date().toISOString(),
+        responses: [],
+      });
+    }
+  }
   return jsonOutput_(loadData_());
 }
 
