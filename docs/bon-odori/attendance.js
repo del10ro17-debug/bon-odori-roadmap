@@ -176,10 +176,14 @@
     return Number.isFinite(t) ? t : 0;
   }
 
+  function isTestAttendanceName(name) {
+    return /テスト|CORS|POSTノーリダイレクト|^x$/i.test(String(name || "").trim());
+  }
+
   function mergeResponses() {
     const map = new Map();
     const upsert = (row) => {
-      if (!row?.name) return;
+      if (!row?.name || isTestAttendanceName(row.name)) return;
       const key = row.name.trim();
       const next = normalizeRow(row);
       const prev = map.get(key);
@@ -250,7 +254,9 @@
   function applySharedPayload(json) {
     if (!json || typeof json !== "object") return;
     if (Array.isArray(json.responses)) {
-      sharedResponses = json.responses.map((row) => normalizeRow(row));
+      sharedResponses = json.responses
+        .filter((row) => row && row.name && !isTestAttendanceName(row.name))
+        .map((row) => normalizeRow(row));
     }
     if (json.updatedAt) lastSyncAt = json.updatedAt;
   }

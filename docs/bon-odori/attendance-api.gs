@@ -100,9 +100,84 @@ function jsonOutput_(payload) {
   );
 }
 
+function productionResponses_() {
+  return [
+    {
+      name: "坂倉 遥",
+      day11: "yes",
+      day12: "yes",
+      slots: {
+        day11: [
+          "11-12",
+          "12-13",
+          "13-14",
+          "14-15",
+          "15-16",
+          "16-17",
+          "17-18",
+          "18-19",
+          "19-20",
+          "20-21",
+          "21-22",
+        ],
+        day12: [
+          "11-12",
+          "12-13",
+          "13-14",
+          "14-15",
+          "15-16",
+          "16-17",
+          "17-18",
+          "18-19",
+          "19-20",
+          "20-21",
+          "21-22",
+        ],
+      },
+      role: "",
+      equipment: "",
+      note: "",
+      updatedAt: "2026-05-28T03:10:33.987Z",
+    },
+    {
+      name: "坂倉 翔",
+      day11: "yes",
+      day12: "yes",
+      slots: { day11: [], day12: [] },
+      role: "",
+      equipment: "",
+      note: "",
+      updatedAt: "2026-05-22T22:57:33.926Z",
+    },
+  ];
+}
+
+function resetProductionResponses_() {
+  let data = { updatedAt: new Date().toISOString(), responses: [] };
+  productionResponses_().forEach((row) => {
+    data = upsertRow_(data, row);
+  });
+  return saveData_(data);
+}
+
+/** テスト用の名前を削除（エディタから1回実行） */
+function cleanupTestResponses() {
+  const testName = /テスト|CORS|POSTノーリダイレクト|^x$/i;
+  let data = loadData_();
+  const before = (data.responses || []).length;
+  data.responses = (data.responses || []).filter(
+    (r) => r && r.name && !testName.test(String(r.name).trim())
+  );
+  saveData_(data);
+  Logger.log("cleanup: " + before + " -> " + data.responses.length);
+}
+
 function doGet(e) {
   const action = e && e.parameter ? e.parameter.action : "";
   const data = e && e.parameter ? e.parameter.data : "";
+  if (action === "resetProduction") {
+    return jsonOutput_(resetProductionResponses_());
+  }
   if (action === "save" && data) {
     try {
       const row = JSON.parse(data);
@@ -125,7 +200,15 @@ function doGet(e) {
 function doPost(e) {
   try {
     const body = e && e.postData && e.postData.contents ? e.postData.contents : "{}";
-    const row = JSON.parse(body);
+    const parsed = JSON.parse(body);
+    if (parsed && parsed.__reset && Array.isArray(parsed.responses)) {
+      let data = { updatedAt: new Date().toISOString(), responses: [] };
+      parsed.responses.forEach((row) => {
+        data = upsertRow_(data, row);
+      });
+      return jsonOutput_(saveData_(data));
+    }
+    const row = parsed;
     let data = loadData_();
     data = upsertRow_(data, row);
     data = saveData_(data);
@@ -169,57 +252,7 @@ function seedFromEditor_(responsesJson) {
   Logger.log("seeded " + data.responses.length + " rows");
 }
 
-/** 2026-05-28 時点の attendance.json を投入（setup 後に1回実行） */
+/** 本番データのみに戻す（setup 後・テスト削除時） */
 function seedCurrentResponses() {
-  seedFromEditor_(
-    JSON.stringify([
-      {
-        name: "坂倉 遥",
-        day11: "yes",
-        day12: "yes",
-        slots: {
-          day11: [
-            "11-12",
-            "12-13",
-            "13-14",
-            "14-15",
-            "15-16",
-            "16-17",
-            "17-18",
-            "18-19",
-            "19-20",
-            "20-21",
-            "21-22",
-          ],
-          day12: [
-            "11-12",
-            "12-13",
-            "13-14",
-            "14-15",
-            "15-16",
-            "16-17",
-            "17-18",
-            "18-19",
-            "19-20",
-            "20-21",
-            "21-22",
-          ],
-        },
-        role: "",
-        equipment: "",
-        note: "",
-        updatedAt: "2026-05-28T03:10:33.987Z",
-      },
-      {
-        name: "坂倉 翔",
-        day11: "yes",
-        day12: "yes",
-        slots: { day11: [], day12: [] },
-        role: "",
-        equipment: "",
-        note: "",
-        updatedAt: "2026-05-22T22:57:33.926Z",
-      },
-    ])
-  );
+  seedFromEditor_(JSON.stringify(productionResponses_()));
 }
