@@ -33,12 +33,77 @@
 
   const data = window.BON_ODORI_DATA || {};
   const apiUrl = (data.attendanceApiUrl || "").trim();
+  const githubRepo = data.attendanceGithubRepo || "del10ro17-debug/bon-odori-roadmap";
+  const githubBranch = data.attendanceGithubBranch || "main";
+  const githubPath = data.attendanceGithubPath || "docs/bon-odori/attendance.json";
+  const githubToken = (data.attendanceGithubToken || "").trim();
 
   let fileResponses = [];
-  let apiResponses = [];
+  let sharedResponses = [];
   let lastSyncAt = "";
   let pollTimer = null;
   const POLL_MS = 30000;
+
+  function hasSharedRead() {
+    return Boolean(apiUrl || githubRepo);
+  }
+
+  function hasSharedWrite() {
+    return Boolean(githubToken || apiUrl);
+  }
+
+  function rawGithubUrl() {
+    return `https://raw.githubusercontent.com/${githubRepo}/${githubBranch}/${githubPath}`;
+  }
+
+  function githubApiUrl() {
+    return `https://api.github.com/repos/${githubRepo}/contents/${githubPath}`;
+  }
+
+  function githubHeaders(json) {
+    const headers = {
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    };
+    if (githubToken) headers.Authorization = `Bearer ${githubToken}`;
+    if (json) headers["Content-Type"] = "application/json";
+    return headers;
+  }
+
+  function decodeGithubContent(content) {
+    const binary = atob(String(content).replace(/\n/g, ""));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function encodeGithubContent(text) {
+    const bytes = new TextEncoder().encode(text);
+    let binary = "";
+    bytes.forEach((b) => {
+      binary += String.fromCharCode(b);
+    });
+    return btoa(binary);
+  }
+
+  function upsertRowInPayload(payload, row) {
+    const normalized = normalizeRow(row);
+    if (!normalized.name) return payload;
+    const list = Array.isArray(payload.responses) ? payload.responses : [];
+    const idx = list.findIndex((r) => r && r.name === normalized.name);
+    if (idx >= 0) {
+      const prevAt = rowUpdatedAt(list[idx]);
+      const nextAt = rowUpdatedAt(normalized);
+      if (nextAt >= prevAt) list[idx] = normalized;
+    } else {
+      list.push(normalized);
+    }
+    payload.responses = list.sort((a, b) =>
+      (a.name || "").localeCompare(b.name || "", "ja")
+    );
+    payload.updatedAt = new Date().toISOString();
+    return payload;
+  }
 
   function loadFileResponses() {
     return fetch("./attendance.json", { cache: "no-store" })
@@ -116,7 +181,7 @@
       }
     };
     fileResponses.forEach(upsert);
-    apiResponses.forEach(upsert);
+    sharedResponses.forEach(upsert);
     Object.values(loadLocalMap()).forEach(upsert);
     return [...map.values()].sort((a, b) =>
       (a.name || "").localeCompare(b.name || "", "ja")
@@ -140,10 +205,20 @@
   function updateSyncStatus(state, detail) {
     const el = document.getElementById("att-sync-status");
     if (!el) return;
-    if (!apiUrl) {
+    if (!hasSharedRead()) {
       el.textContent =
-        "自動同期は未設定です。回答はこの端末のみ保存されます（全員に見せるには JSON 取り込みが必要）。";
+        "自動同期は未設定です。回答はこの端末のみ保存されます。";
       el.className = "form-status warn";
+      return;
+    }
+    if (!hasSharedWrite()) {
+      el.textContent =
+        "他の人の回答は自動で表示されます。保存を全員に反映するには、坂倉さんがリポジトリ直下の open_bon_odori_sync_setup.command を1回実行してください。";
+      el.className = "form-status warn";
+      if (state === "ok") {
+        const when = formatSyncTime(lastSyncAt);
+        if (when) el.textContent += `（最終取得 ${when}）`;
+      }
       return;
     }
     if (state === "syncing") {
@@ -154,49 +229,101 @@
     if (state === "error") {
       el.textContent =
         detail ||
-        "クラウド同期に失敗しました。この端末の保存は残っています。しばらくして再読み込みしてください。";
+        "クラウド同期に失敗しました。この端末の保存は残っています。しばらくして再保存してください。";
       el.className = "form-status warn";
       return;
     }
     const when = formatSyncTime(lastSyncAt);
     el.textContent = when
-      ? `自動同期: 有効（最終取得 ${when}・約30秒ごとに更新）`
-      : "自動同期: 有効";
+      ? `自動同期: 有効（保存すると全員に反映・最終取得 ${when}）`
+      : "自動同期: 有効（保存すると全員に反映）";
     el.className = "form-status ok";
   }
 
-  function applyApiPayload(json) {
+  function applySharedPayload(json) {
     if (!json || typeof json !== "object") return;
     if (Array.isArray(json.responses)) {
-      apiResponses = json.responses.map((row) => normalizeRow(row));
+      sharedResponses = json.responses.map((row) => normalizeRow(row));
     }
     if (json.updatedAt) lastSyncAt = json.updatedAt;
   }
 
+  async function loadGithubResponses() {
+    const res = await fetch(`${rawGithubUrl()}?t=${Date.now()}`, {
+      cache: "no-store",
+      method: "GET",
+    });
+    if (!res.ok) throw new Error(`GitHub raw ${res.status}`);
+    const json = await res.json();
+    applySharedPayload(json);
+    return sharedResponses;
+  }
+
   async function loadApiResponses() {
-    if (!apiUrl) return apiResponses;
+    const res = await fetch(apiUrl, { cache: "no-store", method: "GET" });
+    if (!res.ok) throw new Error(`GET ${res.status}`);
+    const json = await res.json();
+    applySharedPayload(json);
+    return sharedResponses;
+  }
+
+  async function loadSharedResponses() {
+    if (!hasSharedRead()) return sharedResponses;
     try {
-      const res = await fetch(apiUrl, { cache: "no-store", method: "GET" });
-      if (!res.ok) throw new Error(`GET ${res.status}`);
-      const json = await res.json();
-      applyApiPayload(json);
+      if (apiUrl) await loadApiResponses();
+      else await loadGithubResponses();
       updateSyncStatus("ok");
-      return apiResponses;
     } catch (err) {
       updateSyncStatus("error");
-      return apiResponses;
     }
+    return sharedResponses;
+  }
+
+  async function postToGithub(row) {
+    if (!githubToken) throw new Error("no github token");
+    updateSyncStatus("syncing", "GitHub に保存中…（10〜30秒かかることがあります）");
+    const getRes = await fetch(`${githubApiUrl()}?ref=${encodeURIComponent(githubBranch)}`, {
+      headers: githubHeaders(),
+    });
+    if (!getRes.ok) throw new Error(`GitHub GET ${getRes.status}`);
+    const file = await getRes.json();
+    let payload = { updatedAt: new Date().toISOString(), responses: [] };
+    if (file.content) {
+      payload = JSON.parse(decodeGithubContent(file.content));
+    }
+    payload = upsertRowInPayload(payload, row);
+    const body = {
+      message: `Update attendance: ${row.name}`,
+      content: encodeGithubContent(JSON.stringify(payload, null, 2)),
+      branch: githubBranch,
+    };
+    if (file.sha) body.sha = file.sha;
+    const putRes = await fetch(githubApiUrl(), {
+      method: "PUT",
+      headers: githubHeaders(true),
+      body: JSON.stringify(body),
+    });
+    if (!putRes.ok) throw new Error(`GitHub PUT ${putRes.status}`);
+    applySharedPayload(payload);
+    updateSyncStatus("ok");
+    return payload;
+  }
+
+  async function postToShared(row) {
+    if (githubToken) return postToGithub(row);
+    if (apiUrl) return postToApi(row);
+    throw new Error("shared write not configured");
   }
 
   function startPolling() {
-    if (!apiUrl || pollTimer) return;
+    if (!hasSharedRead() || pollTimer) return;
     pollTimer = setInterval(() => {
       if (document.hidden) return;
-      loadApiResponses().then(() => refreshView());
+      loadSharedResponses().then(() => refreshView());
     }, POLL_MS);
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
-        loadApiResponses().then(() => refreshView());
+        loadSharedResponses().then(() => refreshView());
       }
     });
   }
@@ -563,7 +690,7 @@
     });
     if (!res.ok) throw new Error(`POST ${res.status}`);
     const json = await res.json();
-    applyApiPayload(json);
+    applySharedPayload(json);
     updateSyncStatus("ok");
     return json;
   }
@@ -646,18 +773,18 @@
 
       try {
         upsertLocal(row);
-        if (apiUrl) {
-          await postToApi(row);
+        if (hasSharedWrite()) {
+          await postToShared(row);
           statusEl.textContent = `${row.name} さんの回答を保存し、全員に共有しました。`;
         } else {
-          statusEl.textContent = `${row.name} さんの回答をこの端末に保存しました。`;
+          statusEl.textContent = `${row.name} さんの回答をこの端末に保存しました（共有設定が完了すると全員に反映されます）。`;
         }
         statusEl.className = "form-status ok";
         refreshView();
       } catch {
-        statusEl.textContent = apiUrl
+        statusEl.textContent = hasSharedWrite()
           ? "この端末には保存しましたが、クラウド共有に失敗しました。通信を確認して再保存してください。"
-          : "この端末には保存しました。全員に見せるには JSON を坂倉または竹山家へ送ってください。";
+          : "この端末には保存しました。全員に見せるには同期設定が必要です（坂倉さんへ連絡）。";
         statusEl.className = "form-status warn";
         refreshView();
       }
@@ -741,8 +868,8 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     ensureSyncStatusEl();
-    updateSyncStatus(apiUrl ? "syncing" : "off");
-    Promise.all([loadFileResponses(), loadApiResponses()])
+    updateSyncStatus(hasSharedRead() ? "syncing" : "off");
+    Promise.all([loadFileResponses(), loadSharedResponses()])
       .finally(() => {
         bindForm();
         bindTools();

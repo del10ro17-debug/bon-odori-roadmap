@@ -1,6 +1,10 @@
 window.BON_ODORI_DATA = {
   updatedAt: "2026-05-29",
   attendanceApiUrl: "",
+  attendanceGithubRepo: "del10ro17-debug/bon-odori-roadmap",
+  attendanceGithubBranch: "main",
+  attendanceGithubPath: "docs/bon-odori/attendance.json",
+  attendanceGithubToken: "",
   event: {
     title: "晴海ふ頭公園盆踊り大会2026",
     dates: "2026年7月11日（土）・12日（日）",

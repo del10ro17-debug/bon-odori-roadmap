@@ -1,61 +1,42 @@
-# 参加可否の自動共有（Google Apps Script）
+# 参加可否の自動共有
 
-保存すると全員のブラウザに反映されます（約30秒ごとに自動取得、保存直後は即時）。
+**やりたいこと**: 誰かが「回答を保存」→ 全員のウェブページに反映。  
+**JSONエクスポートは不要**（バックアップ用に残しています）。
 
-## 初回セットアップ（坂倉さん・5〜10分）
+## いちばん簡単な方法（推奨・GAS不要）
 
-### 1. Apps Script プロジェクトを作る
+リポジトリ直下の **`open_bon_odori_sync_setup.command`** をダブルクリック（1回だけ）。
 
-1. https://script.google.com/ を開く
-2. 「新しいプロジェクト」
-3. `attendance-api.gs` の内容をすべて貼り付け（既存の `function myFunction` は削除してOK）
+1. GitHub にログインするよう求められたらブラウザで許可
+2. `data.js` に書き込み権限が設定される
+3. 表示どおり `git add` → `commit` → `push`
 
-### 2. 保存用シートを作る
+### 手動でやる場合
 
-1. エディタ上部の関数一覧で **`setup`** を選択 → **実行**
-2. 権限の承認（Googleアカウントで「許可」）
-3. **実行ログ** に `SPREADSHEET_ID=...` とスプレッドシートURLが出ればOK
-
-### 3. いまの回答を投入（任意）
-
-関数 **`seedCurrentResponses`** を実行すると、GitHub に載せている2件の回答がクラウドに入ります。
-
-### 4. ウェブアプリとして公開
-
-1. **デプロイ** → **新しいデプロイ**
-2. 種類: **ウェブアプリ**
-3. 設定:
-   - 説明: `bon-odori attendance`
-   - 実行ユーザー: **自分**
-   - アクセスできるユーザー: **全員**
-4. **デプロイ** → 表示された **ウェブアプリ URL** をコピー  
-   （`https://script.google.com/macros/s/....../exec`）
-
-### 5. 公開ページに URL を設定
-
-`docs/bon-odori/data.js` の `attendanceApiUrl` にコピーした URL を入れる:
-
-```javascript
-attendanceApiUrl: "https://script.google.com/macros/s/xxxxx/exec",
+```bash
+brew install gh   # 未インストールなら
+gh auth login
+chmod +x tools/bon_odori_attendance/setup-github-sync.sh
+./tools/bon_odori_attendance/setup-github-sync.sh
+git add docs/bon-odori/data.js && git commit -m "Enable attendance auto-sync" && git push
 ```
 
-GitHub に push → 1〜2分後、全員のページで「自動同期: 有効」になります。
+### 動き方
 
-## 使い方（メンバー）
-
-- これまでどおり「参加・回答」で入力 → **回答を保存** のみでOK
-- JSONエクスポートは不要（バックアップ用に残しています）
-
-## トラブルシュート
-
-| 症状 | 対処 |
+| 操作 | 結果 |
 |------|------|
-| 「自動同期: 未設定」 | `data.js` の URL と push を確認 |
-| 保存できない / 同期エラー | GAS のデプロイが「全員」になっているか確認。再デプロイ |
-| 古いデータのまま | スーパーリロード。30秒待つ |
-| スプレッドシートで中身を見たい | `setup` ログの URL から `attendance` シートの A1 |
+| 誰かが「回答を保存」 | GitHub 上の `attendance.json` を更新 |
+| 全員の画面 | 約30秒ごとに自動取得（保存直後は自分の画面に即反映） |
+| 反映まで | GitHub の更新後、通常 **10〜60秒**（Pages のキャッシュ） |
 
-## セキュリティ
+### 注意
 
-- URL を知っている人は読み書きできます（家族・チーム向けの簡易運用）
-- 個人情報・連絡先は入力しない運用を維持してください
+- 設定用トークンは `data.js` に入ります（公開リポジトリ上は見えます）。**bon-odori-roadmap だけ**書き込みできる PAT を使ってください。
+- 読み取りは誰でも可能（公開ページのため）。
+
+---
+
+## 別案: Google Apps Script（使わなくてOK）
+
+`attendance-api.gs` を script.google.com に貼り付けてデプロイする方法もあります。  
+GitHub 方式の方が手順が少ないため、通常は上記だけで足ります。
