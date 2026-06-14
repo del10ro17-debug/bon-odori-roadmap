@@ -53,10 +53,10 @@ window.BON_ODORI_DATA = {
       drink: {
         note: "仕入単価は仮（100円/本）。6/15までにゆうやさんが確定予定",
         breakdown: [
-          { item: "ラムネ", cost: 100 },
-          { item: "コーラ", cost: 100 },
-          { item: "お茶", cost: 100 },
-          { item: "リンゴジュース", cost: 100 },
+          { item: "ラムネ", cost: 100, price: 300 },
+          { item: "コーラ", cost: 100, price: 300 },
+          { item: "お茶", cost: 100, price: 300 },
+          { item: "リンゴジュース", cost: 100, price: 300 },
         ],
       },
     },

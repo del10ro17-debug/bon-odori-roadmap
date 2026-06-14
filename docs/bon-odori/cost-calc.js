@@ -18,6 +18,12 @@
     return rows.reduce((sum, row) => sum + (Number(row.cost) || 0), 0) / rows.length;
   };
 
+  const avgDrinkPrice = (breakdown) => {
+    const rows = breakdown || [];
+    if (!rows.length) return 0;
+    return rows.reduce((sum, row) => sum + (Number(row.price) || 0), 0) / rows.length;
+  };
+
   const solveUnitsForRevenue = (target, kebabUnitSharePct, kebabPrice, drinkPrice) => {
     const targetNum = Math.max(0, Number(target) || 0);
     const unitShare = Math.min(100, Math.max(0, Number(kebabUnitSharePct) || 0)) / 100;
@@ -115,6 +121,7 @@
     parseQty,
     sumKebabCogs,
     avgDrinkCogs,
+    avgDrinkPrice,
     solveUnitsForRevenue,
     calcProcurement,
   };
