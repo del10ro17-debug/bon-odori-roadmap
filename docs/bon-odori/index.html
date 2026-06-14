@@ -6,7 +6,8 @@
   <title>晴海ふ頭公園盆踊り大会2026 出店工程表</title>
   <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店に向けた準備工程表です。">
   <meta name="theme-color" content="#1a5282">
-  <script src="./data.js?v=20260529"></script>
+  <script src="./data.js?v=20260614"></script>
+  <script src="./cost-calc.js?v=20260614"></script>
   <style>
     :root {
       /* HARUMI FLAG 自治会サイト（青×白）に合わせた配色 */
@@ -437,6 +438,162 @@
     .attendance-stat .num.yes { color: var(--ok); }
     .attendance-stat .num.no { color: var(--danger); }
     .attendance-stat .num.maybe { color: var(--warn); }
+
+    .sim-scenario-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .sim-scenario-btn {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .sim-scenario-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .sim-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .sim-stat {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .sim-stat span {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .sim-stat strong {
+      font-size: 20px;
+      color: var(--accent-dark);
+    }
+
+    .menu-price-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .menu-price-item {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .menu-price-item strong {
+      display: block;
+      font-size: 18px;
+      color: var(--accent-dark);
+    }
+
+    .resource-card {
+      display: grid;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .resource-card a {
+      color: var(--accent);
+      font-weight: 700;
+      word-break: break-all;
+    }
+
+    .resource-meta {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .ops-flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .ops-flow-step {
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .sim-calc-form {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .sim-calc-mode {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sim-calc-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .sim-calc-fields label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .sim-calc-fields input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fffef5;
+    }
+
+    .cogs-cost-input {
+      width: 80px;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffef5;
+      text-align: right;
+    }
+
+    h4 {
+      margin: 20px 0 10px;
+      font-size: 16px;
+      color: var(--accent-dark);
+    }
 
     .progress-bar {
       margin-top: 8px;
@@ -1436,6 +1593,11 @@
     <div id="tab-panel-summary" class="tab-panel active" role="tabpanel" aria-labelledby="tab-btn-summary">
       <p class="panel-lead">いまの進捗と、完了済みの項目を確認できます。参加可否の入力は「参加・回答」タブへ。</p>
 
+      <section class="section" id="key-resources">
+        <h2>重要資料</h2>
+        <div id="key-resources-root"></div>
+      </section>
+
       <section class="section" id="venue-map">
         <h2>会場レイアウト</h2>
         <p class="attendance-hint">事務局確定の会場図です。スマホでは横にスクロールして全体を確認できます。</p>
@@ -1453,6 +1615,61 @@
       <section class="section">
         <h2>ここまで完了</h2>
         <ul id="completed-list"></ul>
+      </section>
+
+      <section class="section" id="menu-simulation">
+        <h2>メニュー・売上シミュレーション</h2>
+        <p class="attendance-hint">
+          確定メニューと原価（ケバブ162円/食）をもとに、売上<strong>100万円</strong>に必要な販売数と仕入れ量を試算します。ドリンク原価は未確定のため<strong>100円/本（仮）</strong>で計算しています。
+        </p>
+        <h3>確定メニュー</h3>
+        <div class="menu-price-list" id="menu-price-list"></div>
+
+        <h3>原価計算ツール</h3>
+        <p class="attendance-hint">材料単価や目標売上を変えると、原価・販売数・仕入れ量がその場で再計算されます。</p>
+
+        <h4>ケバブ1食あたり原価（食材）</h4>
+        <div id="cogs-editor-table"></div>
+        <div class="sim-grid" id="cogs-summary-grid"></div>
+
+        <h4>売上・仕入れシミュレーション</h4>
+        <form class="sim-calc-form" id="sim-calc-form">
+          <div class="sim-calc-mode">
+            <label class="radio-chip"><input type="radio" name="calc-mode" value="revenue" checked> 目標売上から逆算</label>
+            <label class="radio-chip"><input type="radio" name="calc-mode" value="units"> 販売数を直接入力</label>
+          </div>
+          <div class="sim-calc-fields" id="sim-calc-fields-revenue">
+            <div><label for="sim-target-revenue">目標売上（円）</label><input id="sim-target-revenue" type="number" min="0" step="10000" value="1000000"></div>
+            <div><label for="sim-kebab-share">ケバブ売上比率（%）</label><input id="sim-kebab-share" type="number" min="0" max="100" step="5" value="70"></div>
+          </div>
+          <div class="sim-calc-fields" id="sim-calc-fields-units" hidden>
+            <div><label for="sim-kebab-units">ケバブ販売数（食）</label><input id="sim-kebab-units" type="number" min="0" step="10" value="1300"></div>
+            <div><label for="sim-drink-units">ドリンク販売数（本）</label><input id="sim-drink-units" type="number" min="0" step="10" value="300"></div>
+          </div>
+          <div class="sim-calc-fields common">
+            <div><label for="sim-drink-cost">ドリンク原価/本（円・仮）</label><input id="sim-drink-cost" type="number" min="0" step="10" value="100"></div>
+            <div><label for="sim-buffer">仕入バッファ（%）</label><input id="sim-buffer" type="number" min="0" max="50" step="1" value="5"></div>
+            <div><label for="sim-event-days">営業日数</label><input id="sim-event-days" type="number" min="1" max="7" step="1" value="2"></div>
+          </div>
+        </form>
+        <div class="sim-grid" id="sim-calc-result-grid"></div>
+        <div id="sim-calc-sales-table"></div>
+        <div id="sim-calc-procurement-table"></div>
+
+        <h3>売上100万円 — 固定シナリオ</h3>
+        <div class="sim-scenario-tabs" id="sim-scenario-tabs" role="tablist"></div>
+        <p class="attendance-hint" id="sim-scenario-desc"></p>
+        <div class="sim-grid" id="sim-summary-grid"></div>
+        <h3>販売数（2日間合計）</h3>
+        <div id="sim-sales-table"></div>
+        <h3>仕入れ量（食材・ドリンク）</h3>
+        <p class="attendance-hint">ケバブ食材は確定原価に基づく必要量。カッコ内は破損・試食用に<strong>+5%バッファ</strong>を足した仕入目安です。</p>
+        <div id="sim-procurement-table"></div>
+        <div class="notice" id="sim-footnote"></div>
+        <p class="attendance-hint">
+          <a href="./assets/cost-simulation-2026-06-14.xlsx" download>原価シミュレーション（Excel）をダウンロード</a>
+          — LINE共有用。黄色セルを編集すると試算が変わります。
+        </p>
       </section>
 
       <section class="section">
@@ -1579,6 +1796,12 @@
 
     <div id="tab-panel-ops" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-ops" hidden>
       <p class="panel-lead">プロジェクト体制・当日の役割分担・必要人数の目安です。<a href="#venue">会場レイアウト</a>はサマリータブで確認できます。</p>
+
+      <section class="section" id="operations-manual">
+        <h2>オペレーションマニュアル</h2>
+        <div id="operations-manual-root"></div>
+      </section>
+
       <section class="section" id="teams">
         <h2>プロジェクト体制</h2>
         <p class="attendance-hint">
@@ -1683,6 +1906,54 @@
       </div>
     `).join("");
 
+    const renderTable = (headers, rows) => `
+      <table>
+        <thead>
+          <tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}
+        </tbody>
+      </table>
+    `;
+
+    const renderOperationsManual = (manual) => {
+      if (!manual) return "";
+      const flow = (manual.flow || [])
+        .map((step, i) => `<span class="ops-flow-step">${i + 1}. ${step}</span>`)
+        .join("");
+      const positions = renderTable(
+        ["ポジション", "リーダー", "人数"],
+        (manual.positions || []).map((p) => [p.role, p.lead, p.count])
+      );
+      const notes = (manual.notes || []).map((n) => `<li>${n}</li>`).join("");
+      const themes = (manual.theme || []).map((t) => `<li>${t}</li>`).join("");
+      return `
+        <div class="resource-card">
+          <p class="resource-meta">${manual.author} 作成 · Ver.${manual.version}</p>
+          <p><a href="${manual.viewUrl}" target="_blank" rel="noopener noreferrer">${manual.title}（Googleスライドを開く）</a></p>
+          <p><strong>2026オペレーションテーマ</strong></p>
+          <ul>${themes}</ul>
+          <p><strong>お客様の流れ</strong></p>
+          <div class="ops-flow">${flow}</div>
+          <p><strong>当日ポジション（マニュアル記載）</strong></p>
+          ${positions}
+          <p><strong>運営メモ</strong></p>
+          <ul>${notes}</ul>
+        </div>
+      `;
+    };
+
+    const manual = data.operationsManual;
+    document.getElementById("key-resources-root").innerHTML = manual
+      ? `<div class="resource-card">
+          <p><strong>${manual.title}</strong> — ${manual.author}（Ver.${manual.version}）</p>
+          <p><a href="${manual.viewUrl}" target="_blank" rel="noopener noreferrer">Googleスライドで開く</a></p>
+          <p class="resource-meta">番号札方式・レジ3名体制など当日オペレーションの詳細はこちら。詳細は「体制・当日」タブにも要約あり。</p>
+        </div>`
+      : "<p>資料リンクは準備中です。</p>";
+    document.getElementById("operations-manual-root").innerHTML = renderOperationsManual(manual);
+
     document.getElementById("summary-grid").innerHTML = `
       <div class="stat"><strong>${data.summary.daysToEvent}日</strong><span>初日まで</span></div>
       <div class="stat"><strong>${data.summary.milestones}件</strong><span>マイルストーン</span></div>
@@ -1693,6 +1964,259 @@
     document.getElementById("completed-list").innerHTML = data.completed
       .map((item) => `<li>${item}</li>`)
       .join("");
+
+    const yen = (n) => `${Math.round(n).toLocaleString("ja-JP")}円`;
+    const num = (n) => Math.round(n).toLocaleString("ja-JP");
+
+    const parseQty = (qty) => {
+      const m = String(qty).match(/([\d.]+)\s*(\D*)/);
+      if (!m) return { amount: 1, unit: "個" };
+      return { amount: parseFloat(m[1]), unit: m[2] || "個" };
+    };
+
+    const formatQty = (amount, unit) => {
+      if (unit === "g" && amount >= 1000) return `${(amount / 1000).toFixed(1)}kg`;
+      return `${num(amount)}${unit}`;
+    };
+
+    const renderMenuSimulation = () => {
+      const calc = window.BonOdoriCostCalc;
+      const menu = data.menu || {};
+      const sim = data.salesSimulation || {};
+      const kebabCogs = menu.cogs?.kebab || {};
+      const items = menu.items || [];
+      const scenarios = sim.scenarios || [];
+      let activeId = scenarios[0]?.id;
+
+      const breakdownState = (kebabCogs.breakdown || []).map((row) => ({
+        item: row.item,
+        qty: row.qty,
+        cost: Number(row.cost) || 0,
+      }));
+
+      document.getElementById("menu-price-list").innerHTML = items.map((item) => `
+        <div class="menu-price-item">
+          <span>${item.name}</span>
+          <strong>${item.price}円</strong>
+        </div>
+      `).join("");
+
+      const getKebabUnitCost = () => calc.sumKebabCogs(breakdownState);
+
+      const readCalcInputs = () => {
+        const mode = document.querySelector('input[name="calc-mode"]:checked')?.value || "revenue";
+        const drinkCost = Number(document.getElementById("sim-drink-cost").value) || 0;
+        const bufferRate = (Number(document.getElementById("sim-buffer").value) || 0) / 100;
+        const eventDays = Number(document.getElementById("sim-event-days").value) || 2;
+        let kebabUnits = 0;
+        let drinkUnits = 0;
+        if (mode === "units") {
+          kebabUnits = Number(document.getElementById("sim-kebab-units").value) || 0;
+          drinkUnits = Number(document.getElementById("sim-drink-units").value) || 0;
+        } else {
+          const target = Number(document.getElementById("sim-target-revenue").value) || 0;
+          const share = Number(document.getElementById("sim-kebab-share").value) || 70;
+          const solved = calc.solveUnitsForRevenue(target, share, 700, 300);
+          kebabUnits = solved.kebabUnits;
+          drinkUnits = solved.drinkUnits;
+        }
+        return { kebabUnits, drinkUnits, drinkCost, bufferRate, eventDays, mode };
+      };
+
+      const buildResult = (kebabUnits, drinkUnits, drinkCost, bufferRate, eventDays) =>
+        calc.calcProcurement({
+          kebabUnits,
+          drinkUnits,
+          breakdown: breakdownState,
+          kebabUnitCost: getKebabUnitCost(),
+          drinkUnitCost: drinkCost,
+          bufferRate,
+          eventDays,
+        });
+
+      const renderCogsEditor = () => {
+        const total = getKebabUnitCost();
+        const sellPrice = items.find((i) => i.type === "food")?.price || 700;
+        const margin = sellPrice - total;
+        const marginPct = sellPrice > 0 ? (margin / sellPrice) * 100 : 0;
+        document.getElementById("cogs-editor-table").innerHTML = renderTable(
+          ["材料", "1食数量", "原価（円）"],
+          breakdownState.map((row, idx) => [
+            row.item,
+            row.qty,
+            `<input class="cogs-cost-input" type="number" min="0" step="1" data-cogs-idx="${idx}" value="${row.cost}">`,
+          ]).concat([["合計", "—", `<strong>${yen(total)}</strong>`]])
+        );
+        document.getElementById("cogs-summary-grid").innerHTML = `
+          <div class="sim-stat"><span>ケバブ1食原価</span><strong>${yen(total)}</strong></div>
+          <div class="sim-stat"><span>販売価格</span><strong>${yen(sellPrice)}</strong></div>
+          <div class="sim-stat"><span>粗利（食材）</span><strong>${yen(margin)}</strong></div>
+          <div class="sim-stat"><span>粗利率</span><strong>${marginPct.toFixed(1)}%</strong></div>
+        `;
+        document.querySelectorAll(".cogs-cost-input").forEach((input) => {
+          input.addEventListener("input", () => {
+            const idx = Number(input.dataset.cogsIdx);
+            breakdownState[idx].cost = Number(input.value) || 0;
+            renderCogsEditor();
+            renderCalcResults();
+            renderActive();
+          });
+        });
+      };
+
+      const renderCalcResults = () => {
+        const { kebabUnits, drinkUnits, drinkCost, bufferRate, eventDays, mode } = readCalcInputs();
+        const r = buildResult(kebabUnits, drinkUnits, drinkCost, bufferRate, eventDays);
+        const gapNote =
+          mode === "revenue"
+            ? `（目標との差 ${yen(Math.abs(r.revenue - (Number(document.getElementById("sim-target-revenue").value) || 0)))}）`
+            : "";
+        document.getElementById("sim-calc-result-grid").innerHTML = `
+          <div class="sim-stat"><span>売上合計${gapNote}</span><strong>${yen(r.revenue)}</strong></div>
+          <div class="sim-stat"><span>仕入原価合計</span><strong>${yen(r.totalCost)}</strong></div>
+          <div class="sim-stat"><span>粗利</span><strong>${yen(r.grossProfit)}</strong></div>
+          <div class="sim-stat"><span>粗利率</span><strong>${r.grossMarginPct.toFixed(1)}%</strong></div>
+        `;
+        document.getElementById("sim-calc-sales-table").innerHTML = renderTable(
+          ["品目", `${eventDays}日間販売数`, "1日あたり", "売上"],
+          [
+            ["ケバブ", `${num(r.kebabUnits)}食`, `${num(r.perDayKebab)}食`, yen(r.kebabRevenue)],
+            ["ドリンク", `${num(r.drinkUnits)}本`, `${num(r.perDayDrink)}本`, yen(r.drinkRevenue)],
+          ]
+        );
+        const bufferPct = Math.round(bufferRate * 100);
+        const procRows = r.ingredients.map((row) => [
+          row.item,
+          formatQty(row.need, row.unit),
+          formatQty(row.buffered, row.unit),
+          yen(row.lineCost),
+        ]);
+        procRows.push([
+          "ドリンク（4種合算）",
+          `${num(r.drinkUnits)}本`,
+          `${num(r.drinkBuffered)}本`,
+          yen(r.drinkFoodCost),
+        ]);
+        procRows.push(["仕入合計", "—", "—", yen(r.totalCost)]);
+        document.getElementById("sim-calc-procurement-table").innerHTML = renderTable(
+          ["材料", "必要量", `仕入目安（+${bufferPct}%）`, "原価"],
+          procRows
+        );
+      };
+
+      const calcScenario = (scenario) => {
+        const inputs = readCalcInputs();
+        return buildResult(
+          scenario.kebabUnits,
+          scenario.drinkUnits,
+          inputs.drinkCost,
+          inputs.bufferRate,
+          inputs.eventDays
+        );
+      };
+
+      const renderActive = () => {
+        const scenario = scenarios.find((s) => s.id === activeId) || scenarios[0];
+        if (!scenario) return;
+        const r = calcScenario(scenario);
+        const inputs = readCalcInputs();
+        document.getElementById("sim-scenario-desc").textContent = scenario.description || "";
+        document.getElementById("sim-summary-grid").innerHTML = `
+          <div class="sim-stat"><span>売上合計</span><strong>${yen(r.revenue)}</strong></div>
+          <div class="sim-stat"><span>仕入原価</span><strong>${yen(r.totalCost)}</strong></div>
+          <div class="sim-stat"><span>粗利</span><strong>${yen(r.grossProfit)}</strong></div>
+          <div class="sim-stat"><span>1日あたりケバブ</span><strong>${num(r.perDayKebab)}食</strong></div>
+        `;
+        document.getElementById("sim-sales-table").innerHTML = renderTable(
+          ["品目", `${inputs.eventDays}日間販売数`, "1日あたり", "売上"],
+          [
+            ["ケバブ", `${num(r.kebabUnits)}食`, `${num(r.perDayKebab)}食`, yen(r.kebabRevenue)],
+            ["ドリンク（合計）", `${num(r.drinkUnits)}本`, `${num(r.perDayDrink)}本`, yen(r.drinkRevenue)],
+          ]
+        );
+        const bufferPct = Math.round(inputs.bufferRate * 100);
+        const procRows = r.ingredients.map((row) => [
+          row.item,
+          formatQty(row.need, row.unit),
+          formatQty(row.buffered, row.unit),
+          yen(row.lineCost),
+        ]);
+        procRows.push([
+          "ドリンク（4種合算）",
+          `${num(r.drinkUnits)}本`,
+          `${num(r.drinkBuffered)}本`,
+          yen(r.drinkFoodCost),
+        ]);
+        procRows.push(["仕入合計", "—", "—", yen(r.totalCost)]);
+        document.getElementById("sim-procurement-table").innerHTML = renderTable(
+          ["材料", "必要量", `仕入目安（+${bufferPct}%）`, "原価"],
+          procRows
+        );
+        document.getElementById("sim-footnote").innerHTML = `
+          <strong>前提</strong><br>
+          ・ケバブ原価 ${yen(getKebabUnitCost())}/食（上の原価計算ツールで編集可）<br>
+          ・${sim.drinkCostNote || "ドリンク原価は仮"}<br>
+          ・${inputs.eventDays}日間での合計販売数<br>
+          ・粗利には人件費・テント・備品・決済手数料は含みません<br>
+          ・Excel版: <code>company/projects/bon-odori-harumi-2026/assets/cost-simulation-2026-06-14.xlsx</code>
+        `;
+      };
+
+      document.getElementById("sim-scenario-tabs").innerHTML = scenarios.map((s) => `
+        <button type="button" class="sim-scenario-btn ${s.id === activeId ? "active" : ""}" data-scenario="${s.id}">
+          ${s.label}
+        </button>
+      `).join("");
+
+      document.getElementById("sim-scenario-tabs").querySelectorAll(".sim-scenario-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activeId = btn.dataset.scenario;
+          document.querySelectorAll(".sim-scenario-btn").forEach((b) => {
+            b.classList.toggle("active", b.dataset.scenario === activeId);
+          });
+          renderActive();
+        });
+      });
+
+      const bindCalcForm = () => {
+        const modeInputs = document.querySelectorAll('input[name="calc-mode"]');
+        const revFields = document.getElementById("sim-calc-fields-revenue");
+        const unitFields = document.getElementById("sim-calc-fields-units");
+        const onChange = () => {
+          renderCalcResults();
+          renderActive();
+        };
+        modeInputs.forEach((radio) => {
+          radio.addEventListener("change", () => {
+            const isRevenue = radio.value === "revenue" && radio.checked;
+            if (radio.checked) {
+              revFields.hidden = radio.value !== "revenue";
+              unitFields.hidden = radio.value !== "units";
+            }
+            onChange();
+          });
+        });
+        [
+          "sim-target-revenue",
+          "sim-kebab-share",
+          "sim-kebab-units",
+          "sim-drink-units",
+          "sim-drink-cost",
+          "sim-buffer",
+          "sim-event-days",
+        ].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.addEventListener("input", onChange);
+        });
+      };
+
+      renderCogsEditor();
+      bindCalcForm();
+      renderCalcResults();
+      renderActive();
+    };
+
+    renderMenuSimulation();
 
     const milestones = data.milestones || [];
     document.getElementById("milestone-flow").innerHTML = milestones.map((ms) => `
@@ -1782,17 +2306,6 @@
         </ul>
       </article>
     `).join("");
-
-    const renderTable = (headers, rows) => `
-      <table>
-        <thead>
-          <tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>
-        </thead>
-        <tbody>
-          ${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}
-        </tbody>
-      </table>
-    `;
 
     document.getElementById("urgent-table").innerHTML = renderTable(
       ["優先", "アクション", "担当", "期限", "状態"],

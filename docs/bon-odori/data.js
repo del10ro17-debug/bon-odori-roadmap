@@ -1,5 +1,5 @@
 window.BON_ODORI_DATA = {
-  updatedAt: "2026-05-29",
+  updatedAt: "2026-06-14",
   attendanceApiUrl:
     "https://script.google.com/macros/s/AKfycbzjEZdccMcKy8xDL3A0m3mb-BLU4MFuIdzflVsAA6yxAoFZ_OE3oRbll5nHOdtrWOgTaA/exec",
   attendanceSyncKey: "",
@@ -27,8 +27,102 @@ window.BON_ODORI_DATA = {
       hq: "会場右側（本部・来賓・音響・救護）",
     },
   },
+  menu: {
+    confirmedAt: "2026-06-14",
+    items: [
+      { name: "ケバブ", price: 700, type: "food" },
+      { name: "ラムネ", price: 300, type: "drink" },
+      { name: "コーラ", price: 300, type: "drink" },
+      { name: "お茶", price: 300, type: "drink" },
+      { name: "リンゴジュース", price: 300, type: "drink" },
+    ],
+    cogs: {
+      kebab: {
+        total: 162,
+        breakdown: [
+          { item: "ピタパン", qty: "1枚", cost: 70 },
+          { item: "鶏胸肉", qty: "70g", cost: 62 },
+          { item: "キャベツ", qty: "40g", cost: 8 },
+          { item: "ソース", qty: "23g", cost: 9 },
+          { item: "ほりにし", qty: "1g", cost: 8 },
+          { item: "ハラペーニョ", qty: "3枚", cost: 5 },
+        ],
+        grossMargin: 538,
+        note: "食材のみ。包材・ドリンク原価は別途",
+      },
+    },
+    pending: ["目標販数", "ドリンク原価", "包材原価", "仕入れ量"],
+  },
+  salesSimulation: {
+    targetRevenue: 1000000,
+    eventDays: 2,
+    drinkCostAssumed: 100,
+    drinkCostNote: "ドリンク原価は未確定のため100円/本で仮計算（6/15までにゆうやさんが確定）",
+    bufferRate: 0.05,
+    scenarios: [
+      {
+        id: "standard",
+        label: "基準（ケバブ7：ドリンク3）",
+        description: "売上構成をケバブ70%・ドリンク30%とした場合（盆踊り出店の現実的な目安）",
+        kebabUnits: 1300,
+        drinkUnits: 300,
+      },
+      {
+        id: "balanced",
+        label: "バランス（5：5）",
+        description: "ケバブとドリンクの売上を半々にした場合",
+        kebabUnits: 1000,
+        drinkUnits: 1000,
+      },
+      {
+        id: "kebab-heavy",
+        label: "ケバブ中心",
+        description: "ドリンク添えは最小限（ケバブ売上が約99%）",
+        kebabUnits: 1420,
+        drinkUnits: 20,
+      },
+    ],
+  },
+  operationsManual: {
+    title: "オペレーションマニュアル",
+    author: "河野さん",
+    version: "2026-06-13",
+    viewUrl:
+      "https://docs.google.com/presentation/d/1rx-3PD83P0VFTqL-8KUqBLBQna6OfY3T/view",
+    editUrl:
+      "https://docs.google.com/presentation/d/1rx-3PD83P0VFTqL-8KUqBLBQna6OfY3T/edit",
+    theme: [
+      "レジ滞留を極力少なくする",
+      "注文〜受け取りの間に時間が空いてもよい（番号呼び出し方式）",
+      "空いている店に見せて「並んでいるからやめよう」を防ぐ",
+      "回転率を上げて販売数を最大化する",
+    ],
+    flow: [
+      "メニュー案内・入金準備",
+      "レジで注文・会計",
+      "番号札配布",
+      "調理開始",
+      "商品完成",
+      "番号呼び出し",
+      "商品お渡し",
+    ],
+    positions: [
+      { role: "メニュー案内・入金準備", lead: "竹山P", count: "1名" },
+      { role: "レジ（注文・会計・番号札）", lead: "青島P", count: "3名" },
+      { role: "調理・皮担当", lead: "いっさP", count: "1名" },
+      { role: "調理・具材担当", lead: "のぞみ", count: "1名" },
+      { role: "調理・ラッピング", lead: "りさ", count: "1名" },
+      { role: "商品渡し・呼び出し", lead: "はるか", count: "1名" },
+    ],
+    notes: [
+      "ケバブ1個につき番号札1枚。半券はお客様、残り半券は調理係へ",
+      "ドリンクはドリンクチケット（受け取りカウンター付近で先渡し可）",
+      "呼び出しは順不同OK（先に完成した番号から渡す）",
+      "スライド内の価格表記（800円）は旧案。販売価格はケバブ700円・ドリンク300円が確定",
+    ],
+  },
   summary: {
-    daysToEvent: 44,
+    daysToEvent: 27,
     milestones: 15,
     phases: 8,
     urgentActions: 8,
@@ -106,8 +200,8 @@ window.BON_ODORI_DATA = {
       due: "6/15",
       owner: "青島 ゆうや",
       category: "メニュー",
-      status: "upcoming",
-      definition: "販売単価・メニュー内容・2日間の目標販数・時間あたり提供ペースを確定",
+      status: "active",
+      definition: "販売単価・メニュー内容は確定（2026-06-14）。目標販数・時間あたり提供ペースは6/15まで",
     },
     {
       id: "M8",
@@ -361,6 +455,9 @@ window.BON_ODORI_DATA = {
     "チーム体制案：LINE共有済み（2026-05-23）",
     "会場図・搬入ルール：事務局案内受領（2026-05-27）",
     "自社ブース：37番「ケバブ」、南側飲食列（2026-05-28 会場図確認）",
+    "メニュー・価格確定：ケバブ700円、ドリンク300円×4種（2026-06-14）",
+    "ケバブ原価162円/食（食材内訳確定）（2026-06-14）",
+    "オペレーションマニュアル：河野さん作成（2026-06-13）— Googleスライド共有",
   ],
   phases: [
     {
@@ -396,9 +493,9 @@ window.BON_ODORI_DATA = {
       title: "調達と試作",
       owner: "調理 / 会計",
       status: "未着手",
-      focus: "価格、販売数、仕入れ、調理手順",
+      focus: "価格確定済。販売数・仕入れ・調理手順",
       tasks: [
-        "販売価格と販売数目標を決める",
+        "目標販数と時間あたり提供ペースを決める（6/15）",
         "仕込み、加熱、保冷、ラベル手順を試す",
       ],
     },
