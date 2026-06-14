@@ -6,8 +6,8 @@
   <title>晴海ふ頭公園盆踊り大会2026 ケバブ出店</title>
   <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店。準備状況・メニュー・原価試算・当日オペレーション。">
   <meta name="theme-color" content="#111111">
-  <script src="./data.js?v=20260614-7"></script>
-  <script src="./cost-calc.js?v=20260614-7"></script>
+  <script src="./data.js?v=20260614-8"></script>
+  <script src="./cost-calc.js?v=20260614-8"></script>
   <style>
     :root {
       --bg: #ffffff;
@@ -1703,23 +1703,28 @@
     </div>
 
     <div id="tab-panel-cost" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-cost" hidden>
-      <p class="panel-lead">ケバブの食材原価と、試算に使う前提（ドリンク原価・バッファなど）をここで管理します。</p>
+      <p class="panel-lead">ケバブ・ドリンクの原価を編集し、売上試算の前提（バッファ・営業日数）を設定します。</p>
       <section class="section">
         <h2>ケバブ原価（食材）</h2>
         <p class="attendance-hint">材料単価を変えると粗利と仕入れ試算がその場で再計算されます。</p>
         <div id="cogs-editor-table"></div>
         <div class="sim-grid" id="cogs-summary-grid"></div>
+      </section>
+      <section class="section">
+        <h2>ドリンク原価</h2>
+        <p class="attendance-hint">4種それぞれの仕入単価（円/本）を入力してください。売上試算では<strong>平均原価</strong>を使います（種類別の販売構成が未確定のため）。</p>
+        <div id="drink-cogs-editor-table"></div>
+        <div class="sim-grid" id="drink-cogs-summary-grid"></div>
+        <p class="attendance-hint" id="drink-cogs-note"></p>
         <p class="attendance-hint" id="menu-pending-note"></p>
       </section>
       <section class="section">
         <h2>試算の前提</h2>
         <p class="attendance-hint">「売上試算」タブの計算に使う設定です。</p>
         <div class="sim-calc-fields">
-          <div><label for="sim-drink-cost">ドリンク原価/本（円）</label><input id="sim-drink-cost" type="number" min="0" step="10" value="100"></div>
           <div><label for="sim-buffer">仕入バッファ（%）</label><input id="sim-buffer" type="number" min="0" max="50" step="1" value="5"></div>
           <div><label for="sim-event-days">営業日数</label><input id="sim-event-days" type="number" min="1" max="7" step="1" value="2"></div>
         </div>
-        <p class="attendance-hint" id="sim-premise-note"></p>
       </section>
     </div>
 
@@ -2070,6 +2075,7 @@
       const menu = data.menu || {};
       const sim = data.salesSimulation || {};
       const kebabCogs = menu.cogs?.kebab || {};
+      const drinkCogs = menu.cogs?.drink || {};
       const items = menu.items || [];
       const kebabPrice = items.find((i) => i.type === "food")?.price || 700;
       const drinkPrice = items.find((i) => i.type === "drink")?.price || 300;
@@ -2077,6 +2083,11 @@
       const breakdownState = (kebabCogs.breakdown || []).map((row) => ({
         item: row.item,
         qty: row.qty,
+        cost: Number(row.cost) || 0,
+      }));
+
+      const drinkBreakdownState = (drinkCogs.breakdown || []).map((row) => ({
+        item: row.item,
         cost: Number(row.cost) || 0,
       }));
 
@@ -2095,26 +2106,25 @@
           : "";
       }
 
-      const premiseNoteEl = document.getElementById("sim-premise-note");
-      if (premiseNoteEl) {
-        premiseNoteEl.textContent = sim.drinkCostNote || "";
+      const drinkNoteEl = document.getElementById("drink-cogs-note");
+      if (drinkNoteEl) {
+        drinkNoteEl.textContent = drinkCogs.note || sim.drinkCostNote || "";
       }
 
       const targetRevEl = document.getElementById("sim-target-revenue");
       if (targetRevEl && sim.targetRevenue) targetRevEl.value = sim.targetRevenue;
       const shareEl = document.getElementById("sim-kebab-share");
       if (shareEl && sim.kebabUnitSharePct != null) shareEl.value = sim.kebabUnitSharePct;
-      const drinkCostEl = document.getElementById("sim-drink-cost");
-      if (drinkCostEl && sim.drinkCostAssumed != null) drinkCostEl.value = sim.drinkCostAssumed;
       const bufferEl = document.getElementById("sim-buffer");
       if (bufferEl && sim.bufferRate != null) bufferEl.value = Math.round(sim.bufferRate * 100);
       const daysEl = document.getElementById("sim-event-days");
       if (daysEl && sim.eventDays) daysEl.value = sim.eventDays;
 
       const getKebabUnitCost = () => calc.sumKebabCogs(breakdownState);
+      const getDrinkUnitCost = () => calc.avgDrinkCogs(drinkBreakdownState);
 
       const readPremiseInputs = () => ({
-        drinkCost: Number(document.getElementById("sim-drink-cost")?.value) || 0,
+        drinkCost: getDrinkUnitCost(),
         bufferRate: (Number(document.getElementById("sim-buffer")?.value) || 0) / 100,
         eventDays: Number(document.getElementById("sim-event-days")?.value) || 2,
       });
@@ -2197,10 +2207,38 @@
         document.getElementById("sim-footnote").innerHTML = `
           <strong>計算の前提</strong><br>
           ・ケバブ原価 ${yen(getKebabUnitCost())}/食（「原価」タブで編集）<br>
-          ・ドリンク原価 ${yen(inputs.drinkCost)}/本（「原価」タブの試算前提）<br>
+          ・ドリンク原価 ${yen(inputs.drinkCost)}/本（4種の平均。「原価」タブで種類別に編集）<br>
           ・${inputs.eventDays}日間での合計販売数・仕入れ量<br>
           ・粗利には人件費・テント・備品・決済手数料は含みません
         `;
+      };
+
+      const renderDrinkCogsEditor = () => {
+        const avg = getDrinkUnitCost();
+        const margin = drinkPrice - avg;
+        const marginPct = drinkPrice > 0 ? (margin / drinkPrice) * 100 : 0;
+        document.getElementById("drink-cogs-editor-table").innerHTML = renderTable(
+          ["種類", "販売価格", "原価（円/本）"],
+          drinkBreakdownState.map((row, idx) => [
+            row.item,
+            `${drinkPrice}円`,
+            `<input class="cogs-cost-input" type="number" min="0" step="1" data-drink-cogs-idx="${idx}" value="${row.cost}">`,
+          ]).concat([["平均（試算に使用）", `${drinkPrice}円`, `<strong>${yen(avg)}</strong>`]])
+        );
+        document.getElementById("drink-cogs-summary-grid").innerHTML = `
+          <div class="sim-stat"><span>平均原価/本</span><strong>${yen(avg)}</strong></div>
+          <div class="sim-stat"><span>販売価格</span><strong>${yen(drinkPrice)}</strong></div>
+          <div class="sim-stat"><span>粗利（平均）</span><strong>${yen(margin)}</strong></div>
+          <div class="sim-stat"><span>粗利率</span><strong>${marginPct.toFixed(1)}%</strong></div>
+        `;
+        document.querySelectorAll("[data-drink-cogs-idx]").forEach((input) => {
+          input.addEventListener("input", () => {
+            const idx = Number(input.dataset.drinkCogsIdx);
+            drinkBreakdownState[idx].cost = Number(input.value) || 0;
+            renderDrinkCogsEditor();
+            renderSimulationResults();
+          });
+        });
       };
 
       const renderCogsEditor = () => {
@@ -2238,13 +2276,14 @@
           const el = document.getElementById(id);
           if (el) el.addEventListener("input", onChange);
         });
-        ["sim-drink-cost", "sim-buffer", "sim-event-days"].forEach((id) => {
+        ["sim-buffer", "sim-event-days"].forEach((id) => {
           const el = document.getElementById(id);
           if (el) el.addEventListener("input", onChange);
         });
       };
 
       renderCogsEditor();
+      renderDrinkCogsEditor();
       bindSimForm();
       renderSimulationResults();
     };

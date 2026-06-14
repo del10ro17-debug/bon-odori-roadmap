@@ -12,6 +12,12 @@
   const sumKebabCogs = (breakdown) =>
     (breakdown || []).reduce((sum, row) => sum + (Number(row.cost) || 0), 0);
 
+  const avgDrinkCogs = (breakdown) => {
+    const rows = breakdown || [];
+    if (!rows.length) return 0;
+    return rows.reduce((sum, row) => sum + (Number(row.cost) || 0), 0) / rows.length;
+  };
+
   const solveUnitsForRevenue = (target, kebabUnitSharePct, kebabPrice, drinkPrice) => {
     const targetNum = Math.max(0, Number(target) || 0);
     const unitShare = Math.min(100, Math.max(0, Number(kebabUnitSharePct) || 0)) / 100;
@@ -108,6 +114,7 @@
   global.BonOdoriCostCalc = {
     parseQty,
     sumKebabCogs,
+    avgDrinkCogs,
     solveUnitsForRevenue,
     calcProcurement,
   };

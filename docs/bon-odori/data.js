@@ -48,10 +48,19 @@ window.BON_ODORI_DATA = {
           { item: "ハラペーニョ", qty: "3枚", cost: 5 },
         ],
         grossMargin: 538,
-        note: "食材のみ。包材・ドリンク原価は別途",
+        note: "食材のみ。包材原価は別途",
+      },
+      drink: {
+        note: "仕入単価は仮（100円/本）。6/15までにゆうやさんが確定予定",
+        breakdown: [
+          { item: "ラムネ", cost: 100 },
+          { item: "コーラ", cost: 100 },
+          { item: "お茶", cost: 100 },
+          { item: "リンゴジュース", cost: 100 },
+        ],
       },
     },
-    pending: ["目標販数", "ドリンク原価", "包材原価", "仕入れ量"],
+    pending: ["目標販数", "包材原価", "仕入れ量"],
   },
   salesSimulation: {
     targetRevenue: 1000000,
