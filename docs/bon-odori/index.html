@@ -5,25 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>晴海ふ頭公園盆踊り大会2026 ケバブ出店</title>
   <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店。準備状況・メニュー・原価試算・当日オペレーション。">
-  <meta name="theme-color" content="#1a5282">
-  <script src="./data.js?v=20260614-4"></script>
-  <script src="./cost-calc.js?v=20260614-4"></script>
+  <meta name="theme-color" content="#111111">
+  <script src="./data.js?v=20260614-5"></script>
+  <script src="./cost-calc.js?v=20260614-5"></script>
   <style>
     :root {
-      /* HARUMI FLAG 自治会サイト（青×白）に合わせた配色 */
-      --bg: #f0f5fa;
+      --bg: #ffffff;
       --card: #ffffff;
-      --surface: #f8fbfe;
-      --surface-highlight: #e8f2fa;
-      --ink: #1a2b3c;
-      --muted: #5c7086;
-      --accent: #1a5282;
-      --accent-dark: #123d61;
-      --accent-soft: #dce9f5;
-      --line: #c5d8eb;
-      --ok: #1f7a4d;
-      --warn: #a15c00;
-      --danger: #a33131;
+      --surface: #fafafa;
+      --surface-highlight: #f5f5f5;
+      --ink: #111111;
+      --muted: #666666;
+      --accent: #111111;
+      --accent-dark: #000000;
+      --accent-soft: #f0f0f0;
+      --line: #e5e5e5;
+      --ok: #333333;
+      --warn: #555555;
+      --danger: #222222;
     }
 
     * {
@@ -32,20 +31,20 @@
 
     body {
       margin: 0;
-      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 120px, var(--bg) 100%);
+      background: var(--bg);
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
       line-height: 1.75;
     }
 
     .site-bar {
-      background: var(--accent);
+      background: var(--accent-dark);
       color: #fff;
       text-align: center;
       padding: 10px 16px;
       font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
+      font-weight: 600;
+      letter-spacing: 0.06em;
     }
 
     main {
@@ -55,35 +54,36 @@
     }
 
     header {
-      background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 55%, #2a6fa8 100%);
-      color: #fff;
-      border: none;
-      border-radius: 22px;
+      background: var(--card);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 16px;
       padding: 28px 24px;
-      box-shadow: 0 12px 32px rgba(18, 61, 97, 0.22);
+      box-shadow: none;
     }
 
     header h1,
     header p,
     header .meta {
-      color: #fff;
+      color: var(--ink);
     }
 
     header .meta {
-      opacity: 0.92;
+      opacity: 1;
+      color: var(--muted);
     }
 
     header .event-item {
-      background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(255, 255, 255, 0.28);
+      background: var(--surface);
+      border-color: var(--line);
     }
 
     header .event-item span {
-      color: rgba(255, 255, 255, 0.82);
+      color: var(--muted);
     }
 
     header .event-item strong {
-      color: #fff;
+      color: var(--ink);
     }
 
     h1 {
@@ -95,7 +95,7 @@
     h2 {
       margin: 0 0 14px;
       font-size: 22px;
-      border-left: 6px solid var(--accent);
+      border-left: 4px solid var(--accent);
       padding-left: 10px;
     }
 
@@ -119,9 +119,9 @@
     }
 
     .meta {
-      color: var(--accent);
+      color: var(--muted);
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: 0.02em;
     }
 
@@ -129,7 +129,7 @@
       margin-top: 18px;
       background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: 12px;
       padding: 20px;
     }
 
@@ -184,9 +184,9 @@
     }
 
     .venue-booth-card {
-      background: linear-gradient(135deg, var(--accent-soft), #fff);
-      border: 2px solid var(--accent);
-      border-radius: 16px;
+      background: var(--surface);
+      border: 1px solid var(--ink);
+      border-radius: 12px;
       padding: 16px 18px;
       margin-bottom: 14px;
     }
@@ -194,7 +194,7 @@
     .venue-booth-card h3 {
       margin: 0 0 6px;
       font-size: 22px;
-      color: var(--accent);
+      color: var(--ink);
     }
 
     .venue-booth-card p {
@@ -233,9 +233,9 @@
 
     .venue-map-frame {
       border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: 12px;
       overflow: auto;
-      background: #f4f8fb;
+      background: var(--surface);
       -webkit-overflow-scrolling: touch;
     }
 
@@ -257,17 +257,17 @@
       display: inline-flex;
       align-items: center;
       padding: 8px 14px;
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid var(--line);
-      background: var(--surface);
-      color: var(--accent);
+      background: var(--card);
+      color: var(--ink);
       font-weight: 600;
       font-size: 14px;
       text-decoration: none;
     }
 
     .venue-map-actions a:hover {
-      background: var(--accent-soft);
+      background: var(--surface-highlight);
     }
 
     .timeline {
@@ -315,18 +315,20 @@
     }
 
     .pill.waiting {
-      background: #fff0d6;
-      color: var(--warn);
+      background: #f5f5f5;
+      color: var(--muted);
+      border: 1px solid var(--line);
     }
 
     .pill.todo {
-      background: #efefef;
+      background: #fafafa;
       color: var(--muted);
+      border: 1px solid var(--line);
     }
 
     .pill.live {
-      background: #def5e8;
-      color: var(--ok);
+      background: var(--ink);
+      color: #fff;
     }
 
     .owner {
@@ -368,9 +370,9 @@
     }
 
     .notice {
-      border-left: 6px solid var(--accent);
-      background: var(--surface-highlight);
-      border-radius: 14px;
+      border-left: 4px solid var(--accent);
+      background: var(--surface);
+      border-radius: 12px;
       padding: 14px;
     }
 
@@ -435,9 +437,9 @@
       font-size: 22px;
     }
 
-    .attendance-stat .num.yes { color: var(--ok); }
-    .attendance-stat .num.no { color: var(--danger); }
-    .attendance-stat .num.maybe { color: var(--warn); }
+    .attendance-stat .num.yes { color: var(--ink); }
+    .attendance-stat .num.no { color: var(--muted); }
+    .attendance-stat .num.maybe { color: #888; }
 
     .sim-scenario-tabs {
       display: flex;
@@ -448,8 +450,8 @@
 
     .sim-scenario-btn {
       border: 1px solid var(--line);
-      background: var(--surface);
-      color: var(--text);
+      background: var(--card);
+      color: var(--ink);
       border-radius: 999px;
       padding: 8px 14px;
       font-size: 14px;
@@ -546,8 +548,8 @@
     }
 
     .status-tag.done {
-      background: #e6f4ec;
-      color: var(--ok);
+      background: var(--ink);
+      color: #fff;
     }
 
     .status-next-table {
@@ -575,8 +577,9 @@
     }
 
     .tab-link-hint a {
-      color: var(--accent);
+      color: var(--ink);
       font-weight: 700;
+      text-decoration: underline;
     }
 
     .resource-card {
@@ -584,14 +587,15 @@
       gap: 10px;
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: 16px;
+      border-radius: 12px;
       padding: 16px;
     }
 
     .resource-card a {
-      color: var(--accent);
+      color: var(--ink);
       font-weight: 700;
       word-break: break-all;
+      text-decoration: underline;
     }
 
     .resource-meta {
@@ -644,9 +648,9 @@
       width: 100%;
       padding: 10px 12px;
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 8px;
       font-size: 15px;
-      background: #fffef5;
+      background: var(--card);
     }
 
     .cogs-cost-input {
@@ -654,7 +658,7 @@
       padding: 6px 8px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fffef5;
+      background: var(--card);
       text-align: right;
     }
 
@@ -736,18 +740,18 @@
     }
 
     .radio-chip:has(input[value="yes"]:checked) {
-      border-color: #9fd4b6;
-      background: #eaf8f0;
+      border-color: var(--ink);
+      background: var(--surface-highlight);
     }
 
     .radio-chip:has(input[value="no"]:checked) {
-      border-color: #efb0b0;
-      background: #fdeeee;
+      border-color: #999;
+      background: #f0f0f0;
     }
 
     .radio-chip:has(input[value="maybe"]:checked) {
-      border-color: #efd39a;
-      background: #fff8ea;
+      border-color: #bbb;
+      background: #f8f8f8;
     }
 
     .slot-section {
@@ -831,10 +835,10 @@
       border: 1px solid var(--line);
     }
 
-    .schedule-legend .lv-0 { background: #f4f7fb; }
-    .schedule-legend .lv-1 { background: #fff8ea; }
-    .schedule-legend .lv-2 { background: #dce9f5; }
-    .schedule-legend .lv-3 { background: #b8d4ef; }
+    .schedule-legend .lv-0 { background: #fafafa; }
+    .schedule-legend .lv-1 { background: #f0f0f0; }
+    .schedule-legend .lv-2 { background: #e5e5e5; }
+    .schedule-legend .lv-3 { background: #cccccc; }
 
     .schedule-table {
       width: 100%;
@@ -869,20 +873,20 @@
     }
 
     .schedule-cell.level-0 {
-      background: #f4f7fb;
+      background: #fafafa;
       color: var(--muted);
     }
 
     .schedule-cell.level-1 {
-      background: #fff8ea;
+      background: #f0f0f0;
     }
 
     .schedule-cell.level-2 {
-      background: #e8f2fa;
+      background: #e5e5e5;
     }
 
     .schedule-cell.level-3 {
-      background: #c5d9eb;
+      background: #cccccc;
     }
 
     .schedule-cell .count {
@@ -917,8 +921,8 @@
       font-weight: 700;
       padding: 1px 6px;
       border-radius: 999px;
-      background: rgba(26, 82, 130, 0.12);
-      color: var(--accent-dark);
+      background: var(--accent-soft);
+      color: var(--ink);
       margin-left: 4px;
     }
 
@@ -1087,8 +1091,8 @@
         to right,
         var(--surface) 0,
         var(--surface) calc(100% / 11 - 2px),
-        #e8eef5 calc(100% / 11 - 2px),
-        #e8eef5 calc(100% / 11)
+        #ebebeb calc(100% / 11 - 2px),
+        #ebebeb calc(100% / 11)
       );
       border-radius: 8px;
       padding: 4px;
@@ -1102,7 +1106,7 @@
       grid-row: 1;
       min-height: 28px;
       border-radius: 6px;
-      background: linear-gradient(135deg, var(--accent) 0%, #2a6fa8 100%);
+      background: var(--ink);
       color: #fff;
       font-size: 10px;
       font-weight: 700;
@@ -1113,14 +1117,14 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      box-shadow: 0 2px 6px rgba(26, 82, 130, 0.25);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
       z-index: 1;
     }
 
-    .gcal-event[data-role="調理"] { background: linear-gradient(135deg, #1a5282, #2d7ab8); }
-    .gcal-event[data-role="店頭業務"] { background: linear-gradient(135deg, #0f766e, #14a89d); }
-    .gcal-event[data-role="子供のケア"] { background: linear-gradient(135deg, #c2410c, #e07a3a); }
-    .gcal-event[data-role="全般"] { background: linear-gradient(135deg, #5c4d7a, #7b6b9a); }
+    .gcal-event[data-role="調理"] { background: #111; }
+    .gcal-event[data-role="店頭業務"] { background: #333; }
+    .gcal-event[data-role="子供のケア"] { background: #555; }
+    .gcal-event[data-role="全般"] { background: #222; }
 
     .gcal-unavailable {
       align-self: center;
@@ -1161,10 +1165,10 @@
       line-height: 1.2;
     }
 
-    .gcal-heat-cell.lv-0 { background: #f4f7fb; color: var(--muted); }
-    .gcal-heat-cell.lv-1 { background: #fff8ea; color: #8a5a00; }
-    .gcal-heat-cell.lv-2 { background: #dce9f5; color: var(--accent-dark); }
-    .gcal-heat-cell.lv-3 { background: #1a5282; color: #fff; }
+    .gcal-heat-cell.lv-0 { background: #fafafa; color: var(--muted); }
+    .gcal-heat-cell.lv-1 { background: #f0f0f0; color: var(--muted); }
+    .gcal-heat-cell.lv-2 { background: #d9d9d9; color: var(--ink); }
+    .gcal-heat-cell.lv-3 { background: var(--ink); color: #fff; }
 
     @media (max-width: 640px) {
       .gcal-sheet {
@@ -1235,9 +1239,9 @@
       font-weight: 700;
     }
 
-    .status-badge.yes { background: #def5e8; color: var(--ok); }
-    .status-badge.no { background: #fde2e2; color: var(--danger); }
-    .status-badge.maybe { background: #fff0d6; color: var(--warn); }
+    .status-badge.yes { background: var(--ink); color: #fff; }
+    .status-badge.no { background: #f0f0f0; color: var(--muted); border: 1px solid var(--line); }
+    .status-badge.maybe { background: #e8e8e8; color: #444; }
 
     .attendance-empty {
       color: var(--muted);
@@ -1410,20 +1414,20 @@
     }
 
     .milestone-chevron.done {
-      background: #e8f5ee;
-      border-color: #9fd4b6;
-      color: var(--ok);
+      background: #f5f5f5;
+      border-color: var(--line);
+      color: var(--ink);
     }
 
     .milestone-chevron.active {
       background: var(--surface-highlight);
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(26, 82, 130, 0.15);
+      border-color: var(--ink);
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
     }
 
     .milestone-chevron.waiting {
-      background: #fff8ea;
-      border-color: #efd39a;
+      background: #fafafa;
+      border-color: var(--line);
     }
 
     .milestone-chevron.upcoming {
@@ -1480,18 +1484,18 @@
     }
 
     .milestone-detail.done {
-      border-color: #9fd4b6;
-      background: #f6fbf8;
+      border-color: var(--line);
+      background: var(--surface);
     }
 
     .milestone-detail.active {
-      border-color: var(--accent);
+      border-color: var(--ink);
       background: var(--surface-highlight);
     }
 
     .milestone-detail.waiting {
-      border-color: #efd39a;
-      background: #fffdf9;
+      border-color: var(--line);
+      background: #fafafa;
     }
 
     .milestone-detail-top {
@@ -1552,19 +1556,19 @@
       padding: 6px;
       background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: 0 4px 16px rgba(26, 82, 130, 0.08);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
     .tab-btn {
       flex: 1 1 auto;
       min-width: 7.5rem;
       border: 1px solid transparent;
-      border-radius: 10px;
+      border-radius: 8px;
       padding: 10px 14px;
       font: inherit;
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--muted);
       background: transparent;
       cursor: pointer;
@@ -1573,13 +1577,13 @@
 
     .tab-btn:hover {
       background: var(--surface-highlight);
-      color: var(--accent-dark);
+      color: var(--ink);
     }
 
     .tab-btn[aria-selected="true"] {
       background: var(--accent);
       color: #fff;
-      border-color: var(--accent-dark);
+      border-color: var(--accent);
     }
 
     .tab-btn .tab-desc {
@@ -1606,9 +1610,9 @@
     .panel-lead {
       margin: 0 0 14px;
       padding: 12px 14px;
-      background: var(--surface-highlight);
-      border-radius: 12px;
-      border-left: 4px solid var(--accent);
+      background: var(--surface);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
       font-size: 14px;
       color: var(--ink);
     }
@@ -1629,7 +1633,7 @@
   </style>
 </head>
 <body>
-  <p class="site-bar">HARUMI FLAG 自治会 · 出店チーム共有（公式カラー）</p>
+  <p class="site-bar">晴海盆踊り2026 · ケバブ出店チーム共有</p>
   <main>
     <header>
       <p class="meta">公開用サイト · GitHub Pages</p>
