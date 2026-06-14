@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>晴海ふ頭公園盆踊り大会2026 出店工程表</title>
-  <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店に向けた準備工程表です。">
+  <title>晴海ふ頭公園盆踊り大会2026 ケバブ出店</title>
+  <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店。準備状況・メニュー・原価試算・当日オペレーション。">
   <meta name="theme-color" content="#1a5282">
-  <script src="./data.js?v=20260614-3"></script>
-  <script src="./cost-calc.js?v=20260614-3"></script>
+  <script src="./data.js?v=20260614-4"></script>
+  <script src="./cost-calc.js?v=20260614-4"></script>
   <style>
     :root {
       /* HARUMI FLAG 自治会サイト（青×白）に合わせた配色 */
@@ -508,6 +508,75 @@
       display: block;
       font-size: 18px;
       color: var(--accent-dark);
+    }
+
+    .status-headline {
+      margin: 0 0 12px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-dark);
+    }
+
+    .status-focus-list {
+      margin: 0 0 16px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .status-focus-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .status-focus-list li:last-child {
+      border-bottom: none;
+    }
+
+    .status-tag {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+    }
+
+    .status-tag.done {
+      background: #e6f4ec;
+      color: var(--ok);
+    }
+
+    .status-next-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .status-next-table th,
+    .status-next-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .status-next-table th {
+      color: var(--muted);
+      font-weight: 600;
+      width: 4.5rem;
+    }
+
+    .tab-link-hint {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .tab-link-hint a {
+      color: var(--accent);
+      font-weight: 700;
     }
 
     .resource-card {
@@ -1563,25 +1632,29 @@
   <p class="site-bar">HARUMI FLAG 自治会 · 出店チーム共有（公式カラー）</p>
   <main>
     <header>
-      <p class="meta">公開用工程表 · GitHub Pages</p>
-      <h1 id="page-title">晴海ふ頭公園盆踊り大会2026 出店工程表</h1>
-      <p id="page-lead">ケバブ出店に向けた準備状況と、当日までの流れをまとめています。</p>
+      <p class="meta">公開用サイト · GitHub Pages</p>
+      <h1 id="page-title">晴海ふ頭公園盆踊り大会2026 ケバブ出店</h1>
+      <p id="page-lead">ケバブ出店の準備状況・メニュー・原価試算・当日オペレーションをまとめています。</p>
       <div class="event-grid" id="event-grid"></div>
     </header>
 
     <div class="tab-bar-wrap">
-      <nav class="tab-bar" role="tablist" aria-label="工程表の表示切替">
+      <nav class="tab-bar" role="tablist" aria-label="ページの表示切替">
         <button type="button" class="tab-btn" role="tab" id="tab-btn-summary" aria-selected="true" aria-controls="tab-panel-summary" data-tab="summary">
           サマリー
-          <span class="tab-desc">全体の状況</span>
+          <span class="tab-desc">いまの状況</span>
+        </button>
+        <button type="button" class="tab-btn" role="tab" id="tab-btn-cost" aria-selected="false" aria-controls="tab-panel-cost" data-tab="cost">
+          原価
+          <span class="tab-desc">材料・粗利</span>
+        </button>
+        <button type="button" class="tab-btn" role="tab" id="tab-btn-simulation" aria-selected="false" aria-controls="tab-panel-simulation" data-tab="simulation">
+          売上試算
+          <span class="tab-desc">販売数・仕入れ</span>
         </button>
         <button type="button" class="tab-btn" role="tab" id="tab-btn-input" aria-selected="false" aria-controls="tab-panel-input" data-tab="input">
           参加・回答
-          <span class="tab-desc">入力が必要</span>
-        </button>
-        <button type="button" class="tab-btn" role="tab" id="tab-btn-schedule" aria-selected="false" aria-controls="tab-panel-schedule" data-tab="schedule">
-          スケジュール
-          <span class="tab-desc">工程・マイルストーン</span>
+          <span class="tab-desc">可否入力</span>
         </button>
         <button type="button" class="tab-btn" role="tab" id="tab-btn-ops" aria-selected="false" aria-controls="tab-panel-ops" data-tab="ops">
           体制・当日
@@ -1591,7 +1664,27 @@
     </div>
 
     <div id="tab-panel-summary" class="tab-panel active" role="tabpanel" aria-labelledby="tab-btn-summary">
-      <p class="panel-lead">いまの進捗と、完了済みの項目を確認できます。参加可否の入力は「参加・回答」タブへ。</p>
+      <p class="panel-lead">いまの進捗と確定メニューを確認できます。</p>
+
+      <section class="section" id="current-status">
+        <h2>いまの状況</h2>
+        <div id="current-status-root"></div>
+      </section>
+
+      <section class="section">
+        <h2>全体サマリー</h2>
+        <div class="grid" id="summary-grid"></div>
+      </section>
+
+      <section class="section" id="menu-summary">
+        <h2>確定メニュー</h2>
+        <div class="menu-price-list" id="menu-price-list"></div>
+      </section>
+
+      <section class="section">
+        <h2>ここまで完了</h2>
+        <ul id="completed-list"></ul>
+      </section>
 
       <section class="section" id="key-resources">
         <h2>重要資料</h2>
@@ -1600,39 +1693,26 @@
 
       <section class="section" id="venue-map">
         <h2>会場レイアウト</h2>
-        <p class="attendance-hint">事務局確定の会場図です。スマホでは横にスクロールして全体を確認できます。</p>
+        <p class="attendance-hint">自社ブース <strong>37番「ケバブ」</strong>（南側飲食列）。横スクロールで全体を確認できます。</p>
         <div id="venue-map-root"></div>
       </section>
+    </div>
 
+    <div id="tab-panel-cost" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-cost" hidden>
+      <p class="panel-lead">ケバブ1食あたりの食材原価と粗利を編集・確認できます。ドリンク原価は「売上試算」タブで設定します。</p>
       <section class="section">
-        <h2>全体サマリー</h2>
-        <div class="grid" id="summary-grid"></div>
-        <div class="notice">
-          5月末までに参加可否と会場レイアウトを押さえ、6月に運営設計・調達、7月に本番運営へ進みます。
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>ここまで完了</h2>
-        <ul id="completed-list"></ul>
-      </section>
-
-      <section class="section" id="menu-simulation">
-        <h2>メニュー・売上シミュレーション</h2>
-        <p class="attendance-hint">
-          確定メニューと原価（ケバブ162円/食）をもとに、売上<strong>100万円</strong>に必要な販売数と仕入れ量を試算します。ドリンク原価は未確定のため<strong>100円/本（仮）</strong>で計算しています。
-        </p>
-        <h3>確定メニュー</h3>
-        <div class="menu-price-list" id="menu-price-list"></div>
-
-        <h3>原価計算ツール</h3>
-        <p class="attendance-hint">材料単価や目標売上を変えると、原価・販売数・仕入れ量がその場で再計算されます。</p>
-
-        <h4>ケバブ1食あたり原価（食材）</h4>
+        <h2>ケバブ原価（食材）</h2>
+        <p class="attendance-hint">材料単価を変えると粗利がその場で再計算されます。</p>
         <div id="cogs-editor-table"></div>
         <div class="sim-grid" id="cogs-summary-grid"></div>
+        <p class="attendance-hint" id="menu-pending-note"></p>
+      </section>
+    </div>
 
-        <h4>売上・仕入れシミュレーション</h4>
+    <div id="tab-panel-simulation" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-simulation" hidden>
+      <p class="panel-lead">目標売上や販売数から、必要な仕入れ量と粗利を試算します。ドリンク原価は未確定のため仮入力（100円/本）です。</p>
+      <section class="section" id="menu-simulation">
+        <h2>売上・仕入れシミュレーション</h2>
         <form class="sim-calc-form" id="sim-calc-form">
           <div class="sim-calc-mode">
             <label class="radio-chip"><input type="radio" name="calc-mode" value="revenue" checked> 目標売上から逆算</label>
@@ -1670,11 +1750,6 @@
           <a href="./assets/cost-simulation-2026-06-14.xlsx" download>原価シミュレーション（Excel）をダウンロード</a>
           — LINE共有用。黄色セルを編集すると試算が変わります。
         </p>
-      </section>
-
-      <section class="section">
-        <h2>主要リスクと先回り</h2>
-        <div id="risk-table"></div>
       </section>
     </div>
 
@@ -1764,36 +1839,6 @@
       </section>
     </div>
 
-    <div id="tab-panel-schedule" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-schedule" hidden>
-      <p class="panel-lead">マイルストーン・工程表・今週の優先タスクを時系列で確認できます。</p>
-      <section class="section" id="schedule-availability-section">
-        <h2>7/11・7/12 稼働可能スケジュール</h2>
-        <p class="attendance-hint">「参加・回答」タブで登録された時間枠の集計です。シフト組みの参考にしてください。</p>
-        <div id="schedule-availability" class="schedule-board"></div>
-      </section>
-      <section class="section" id="milestones">
-        <h2>マイルストーン（矢羽根）</h2>
-        <p class="milestone-intro">
-          本番（7/11–12）に向けて、いつまでに「何を」「どこまで」完成させるかを示しています。調理は<strong>電源のみ</strong>（火気不使用）で進めます。
-        </p>
-        <div class="milestone-track">
-          <div class="milestone-flow" id="milestone-flow"></div>
-        </div>
-        <h3>マイルストーン詳細</h3>
-        <div class="milestone-detail-grid" id="milestone-details"></div>
-      </section>
-
-      <section class="section">
-        <h2>今週から着手する順番</h2>
-        <div id="urgent-table"></div>
-      </section>
-
-      <section class="section">
-        <h2>当日までの工程表</h2>
-        <div class="timeline" id="timeline"></div>
-      </section>
-    </div>
-
     <div id="tab-panel-ops" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-ops" hidden>
       <p class="panel-lead">竹山さん作成の<strong>オペレーションマニュアル</strong>に基づく当日体制です。準備期間の6チーム体制は下段を参照。</p>
 
@@ -1814,17 +1859,6 @@
           各チームは「リーダー ＋ メンバー」の形式です。シフトに組み入れる人が増えたら、リーダーの下にメンバーを追加していきます。
         </p>
         <div class="project-teams" id="project-teams"></div>
-      </section>
-
-      <section class="section">
-        <h2>必要メンバー数の目安</h2>
-        <div class="notice" id="staffing-summary"></div>
-        <h3>シフト別の目安</h3>
-        <div id="shift-table"></div>
-        <h3>1シフトあたりの役割</h3>
-        <div id="role-table"></div>
-        <h3>交代・引き継ぎルール</h3>
-        <ul id="handover-rules"></ul>
       </section>
     </div>
 
@@ -1989,9 +2023,24 @@
 
     document.getElementById("summary-grid").innerHTML = `
       <div class="stat"><strong>${data.summary.daysToEvent}日</strong><span>初日まで</span></div>
-      <div class="stat"><strong>${data.summary.milestones}件</strong><span>マイルストーン</span></div>
-      <div class="stat"><strong>${data.summary.urgentActions}件</strong><span>重要アクション</span></div>
-      <div class="stat"><strong>${data.summary.recommendedStaff}</strong><span>当日の推奨人数</span></div>
+      <div class="stat"><strong>37番</strong><span>ブース</span></div>
+      <div class="stat"><strong>7/11-12</strong><span>本番</span></div>
+      <div class="stat"><strong>PayPay</strong><span>決済（基本）</span></div>
+    `;
+
+    const status = data.currentStatus || {};
+    const focusItems = (status.focus || []).map((row) => {
+      const tagClass = row.label === "確定" ? "status-tag done" : "status-tag";
+      return `<li><span class="${tagClass}">${row.label}</span><span>${row.text}</span></li>`;
+    }).join("");
+    const nextRows = (status.nextUp || []).map((row) => `
+      <tr><th>${row.due}</th><td>${row.task}</td></tr>
+    `).join("");
+    document.getElementById("current-status-root").innerHTML = `
+      <p class="status-headline">${status.headline || ""}</p>
+      <ul class="status-focus-list">${focusItems}</ul>
+      <h3>直近の期限</h3>
+      <table class="status-next-table"><tbody>${nextRows}</tbody></table>
     `;
 
     document.getElementById("completed-list").innerHTML = data.completed
@@ -2033,6 +2082,24 @@
           <strong>${item.price}円</strong>
         </div>
       `).join("");
+
+      const pending = menu.pending || [];
+      const pendingEl = document.getElementById("menu-pending-note");
+      if (pendingEl) {
+        pendingEl.innerHTML = pending.length
+          ? `<strong>未確定（${menu.confirmedAt || ""} 時点）</strong>：${pending.join("、")}`
+          : "";
+      }
+
+      const simDefaults = data.salesSimulation || {};
+      const targetRevEl = document.getElementById("sim-target-revenue");
+      if (targetRevEl && simDefaults.targetRevenue) targetRevEl.value = simDefaults.targetRevenue;
+      const drinkCostEl = document.getElementById("sim-drink-cost");
+      if (drinkCostEl && simDefaults.drinkCostAssumed != null) drinkCostEl.value = simDefaults.drinkCostAssumed;
+      const bufferEl = document.getElementById("sim-buffer");
+      if (bufferEl && simDefaults.bufferRate != null) bufferEl.value = Math.round(simDefaults.bufferRate * 100);
+      const daysEl = document.getElementById("sim-event-days");
+      if (daysEl && simDefaults.eventDays) daysEl.value = simDefaults.eventDays;
 
       const getKebabUnitCost = () => calc.sumKebabCogs(breakdownState);
 
@@ -2251,39 +2318,6 @@
 
     renderMenuSimulation();
 
-    const milestones = data.milestones || [];
-    document.getElementById("milestone-flow").innerHTML = milestones.map((ms) => `
-      <div class="milestone-chevron ${ms.status}" title="${ms.definition}">
-        <span class="ms-id">${ms.id}</span>
-        <span class="ms-title">${ms.title}</span>
-        <span class="ms-due">${ms.due}</span>
-      </div>
-    `).join("") + `
-      <div class="milestone-chevron goal">
-        <span class="ms-id">GOAL</span>
-        <span class="ms-title">本番</span>
-        <span class="ms-due">7/11–12</span>
-      </div>
-    `;
-
-    document.getElementById("milestone-details").innerHTML = milestones.map((ms) => `
-      <article class="milestone-detail ${ms.status}">
-        <div class="milestone-detail-top">
-          <h3>${ms.id} ${ms.title}</h3>
-          <span class="pill ${statusClass(ms.status)}">${milestoneStatusLabel(ms.status)}</span>
-        </div>
-        <div class="milestone-meta">
-          <span>期限 ${ms.due}</span>
-          <span>${ms.category}</span>
-          <span>担当 ${ms.owner}</span>
-        </div>
-        <p class="milestone-definition">
-          <strong>どこまで（完了条件）</strong>
-          ${ms.definition}
-        </p>
-      </article>
-    `).join("");
-
     const renderOrgCards = (items) => items.map((item) => `
       <article class="org-card">
         <strong>${item.team}</strong>
@@ -2317,60 +2351,14 @@
     document.getElementById("project-teams").innerHTML = renderProjectTeams(data.projectTeams || []);
     document.getElementById("day-of-organization").innerHTML = renderOrgCards(data.dayOfOrganization);
 
-    document.getElementById("staffing-summary").innerHTML = `
-      <strong>${data.staffing.targetMembers}</strong><br>
-      ${data.staffing.baseline}
-      <ul>
-        ${data.staffing.assumptions.map((item) => `<li>${item}</li>`).join("")}
-      </ul>
-    `;
-
-    document.getElementById("timeline").innerHTML = data.phases.map((phase, index) => `
-      <article class="phase ${index === 0 ? "current" : ""}">
-        <div class="phase-top">
-          <span class="period">${phase.period}</span>
-          <span class="pill ${statusClass(phase.status)}">${phase.status}</span>
-        </div>
-        <h3>${phase.title}</h3>
-        <p class="owner">担当: ${phase.owner}</p>
-        <p class="focus">${phase.focus}</p>
-        <ul>
-          ${phase.tasks.map((task) => `<li>${task}</li>`).join("")}
-        </ul>
-      </article>
-    `).join("");
-
-    document.getElementById("urgent-table").innerHTML = renderTable(
-      ["優先", "アクション", "担当", "期限", "状態"],
-      data.urgentActions.map((item) => [item.priority, item.action, item.owner, item.due, item.status])
-    );
-
-    document.getElementById("shift-table").innerHTML = renderTable(
-      ["シフト", "必要人数", "主な役割"],
-      data.staffing.shiftRows
-    );
-
-    document.getElementById("role-table").innerHTML = renderTable(
-      ["役割", "人数", "内容"],
-      data.staffing.roleRows
-    );
-
-    document.getElementById("handover-rules").innerHTML = data.staffing.handoverRules
-      .map((item) => `<li>${item}</li>`)
-      .join("");
-
-    document.getElementById("risk-table").innerHTML = renderTable(
-      ["リスク", "影響", "先回り"],
-      data.risks.map((item) => [item.risk, item.impact, item.action])
-    );
-
     document.getElementById("footer").textContent = `最終更新: ${data.updatedAt}`;
 
     const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
     const tabPanels = {
       summary: document.getElementById("tab-panel-summary"),
+      cost: document.getElementById("tab-panel-cost"),
+      simulation: document.getElementById("tab-panel-simulation"),
       input: document.getElementById("tab-panel-input"),
-      schedule: document.getElementById("tab-panel-schedule"),
       ops: document.getElementById("tab-panel-ops"),
     };
 
