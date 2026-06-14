@@ -85,7 +85,7 @@ window.BON_ODORI_DATA = {
   },
   operationsManual: {
     title: "オペレーションマニュアル",
-    author: "河野さん",
+    author: "竹山さん",
     version: "2026-06-13",
     viewUrl:
       "https://docs.google.com/presentation/d/1rx-3PD83P0VFTqL-8KUqBLBQna6OfY3T/view",
@@ -457,7 +457,7 @@ window.BON_ODORI_DATA = {
     "自社ブース：37番「ケバブ」、南側飲食列（2026-05-28 会場図確認）",
     "メニュー・価格確定：ケバブ700円、ドリンク300円×4種（2026-06-14）",
     "ケバブ原価162円/食（食材内訳確定）（2026-06-14）",
-    "オペレーションマニュアル：河野さん作成（2026-06-13）— Googleスライド共有",
+    "オペレーションマニュアル：竹山さん作成（2026-06-13）— Googleスライド共有",
   ],
   phases: [
     {
