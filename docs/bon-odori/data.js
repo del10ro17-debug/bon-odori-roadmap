@@ -55,33 +55,11 @@ window.BON_ODORI_DATA = {
   },
   salesSimulation: {
     targetRevenue: 1000000,
+    kebabSharePct: 70,
     eventDays: 2,
     drinkCostAssumed: 100,
     drinkCostNote: "ドリンク原価は未確定のため100円/本で仮計算（6/15までにゆうやさんが確定）",
     bufferRate: 0.05,
-    scenarios: [
-      {
-        id: "standard",
-        label: "基準（ケバブ7：ドリンク3）",
-        description: "売上構成をケバブ70%・ドリンク30%とした場合（盆踊り出店の現実的な目安）",
-        kebabUnits: 1300,
-        drinkUnits: 300,
-      },
-      {
-        id: "balanced",
-        label: "バランス（5：5）",
-        description: "ケバブとドリンクの売上を半々にした場合",
-        kebabUnits: 1000,
-        drinkUnits: 1000,
-      },
-      {
-        id: "kebab-heavy",
-        label: "ケバブ中心",
-        description: "ドリンク添えは最小限（ケバブ売上が約99%）",
-        kebabUnits: 1420,
-        drinkUnits: 20,
-      },
-    ],
   },
   operationsManual: {
     title: "オペレーションマニュアル",
@@ -234,10 +212,25 @@ window.BON_ODORI_DATA = {
     daysToEvent: 27,
     milestones: 15,
     phases: 8,
-    urgentActions: 8,
+    urgentActions: 4,
     recommendedStaff: "16〜18名目標",
     attendanceSubmitted: 0,
     attendanceTarget: 11,
+  },
+  currentStatus: {
+    updatedAt: "2026-06-14",
+    headline: "6/13 準備完結MTGまで完了。次は数量・原価の確定",
+    focus: [
+      { label: "進行中", text: "ゆうや — 目標販数・ドリンク原価・仕入れ量（6/15期限）" },
+      { label: "進行中", text: "各リーダー — 搬入・備品・シフト・調理・PayPayのたたき台" },
+      { label: "確定", text: "車両搬入なし（台車・徒歩）。入構証不要" },
+      { label: "候補", text: "6月最終週に最終段取りMTG（日時未定）" },
+    ],
+    nextUp: [
+      { due: "6/15", task: "目標販数・ドリンク原価・仕入れ量" },
+      { due: "6/21", task: "試作・衛生チェックリスト" },
+      { due: "6/30", task: "シフト確定" },
+    ],
   },
   milestones: [
     {
@@ -395,8 +388,8 @@ window.BON_ODORI_DATA = {
   ],
   meetings: [
     { id: "mtg1", title: "認識合わせMTG", proposed: "5/30（土）19:30・坂倉家", status: "カレンダー登録済" },
-    { id: "mtg2", title: "準備完結MTG", proposed: "6/13（土）19:00", status: "カレンダー登録済" },
-    { id: "mtg3", title: "最終段取り確認", proposed: "6/20（土）14:00〜", status: "候補" },
+    { id: "mtg2", title: "準備完結MTG", proposed: "6/13（土）19:00", status: "実施済" },
+    { id: "mtg3", title: "最終段取り", proposed: "6月最終週（日時TBD）", status: "候補・未確定" },
   ],
   projectTeams: [
     {
@@ -596,22 +589,20 @@ window.BON_ODORI_DATA = {
       period: "6/1-6/13",
       title: "運営設計→準備完結",
       owner: "各リーダー",
-      status: "未着手",
-      focus: "たたき台提出→6/13 MTGで確定",
+      status: "進行中",
+      focus: "6/13 MTG実施済。各リーダーたたき台継続",
       tasks: [
-        "6/7まで：各チームたたき台提出（搬入・備品・価格・調理・シフト）",
-        "6/10：車両搬入の要否を決定（坂倉＋中澤）",
-        "6/12 17:00：入構証返信（車両使う場合）",
-        "6/12 夜まで：たたき台を事前共有",
-        "6/13 19:00：準備完結MTG（中澤家出国前）",
+        "各チームたたき台（搬入・備品・価格・調理・シフト）",
+        "6/13 準備完結MTG ✅",
+        "車両搬入なし確定 ✅",
       ],
     },
     {
       period: "6/8-6/21",
       title: "調達と試作",
       owner: "調理 / 会計",
-      status: "未着手",
-      focus: "価格確定済。販売数・仕入れ・調理手順",
+      status: "着手",
+      focus: "価格確定済。目標販数・仕入れ・試作",
       tasks: [
         "目標販数と時間あたり提供ペースを決める（6/15）",
         "仕込み、加熱、保冷、ラベル手順を試す",
