@@ -6,8 +6,8 @@
   <title>晴海ふ頭公園盆踊り大会2026 ケバブ出店</title>
   <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店。準備状況・メニュー・原価試算・当日オペレーション。">
   <meta name="theme-color" content="#111111">
-  <script src="./data.js?v=20260614-6"></script>
-  <script src="./cost-calc.js?v=20260614-6"></script>
+  <script src="./data.js?v=20260614-7"></script>
+  <script src="./cost-calc.js?v=20260614-7"></script>
   <style>
     :root {
       --bg: #ffffff;
@@ -1724,16 +1724,17 @@
     </div>
 
     <div id="tab-panel-simulation" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-simulation" hidden>
-      <p class="panel-lead">売上目標とケバブの売上比率を入力すると、販売数量と必要な仕入れ量を自動計算します。原価単価は「原価」タブの設定を使います。</p>
+      <p class="panel-lead">売上目標とケバブの販売数量比率を入力すると、販売数と仕入れ量を自動計算します。</p>
       <section class="section" id="menu-simulation">
         <h2>売上・仕入れ試算</h2>
         <form class="sim-calc-form" id="sim-calc-form">
           <div class="sim-calc-fields">
             <div><label for="sim-target-revenue">1. 売上目標（円）</label><input id="sim-target-revenue" type="number" min="0" step="10000" value="1000000"></div>
             <div>
-              <label for="sim-kebab-share">2. ケバブの売上比率（%）</label>
-              <input id="sim-kebab-share" type="number" min="0" max="100" step="5" value="70">
-              <p class="attendance-hint" id="sim-ratio-note">ドリンクの売上比率: 30%</p>
+              <label for="sim-kebab-share">2. ケバブの販売数量比率（%）</label>
+              <input id="sim-kebab-share" type="number" min="0" max="100" step="1" value="80">
+              <p class="attendance-hint">売れる個数のうち、何%がケバブか（例: 80%なら10個中8個がケバブ）。ドリンク添えは少数、という想定です。</p>
+              <p class="attendance-hint" id="sim-ratio-note">ドリンクの販売数量比率: 20%</p>
             </div>
           </div>
         </form>
@@ -2102,7 +2103,7 @@
       const targetRevEl = document.getElementById("sim-target-revenue");
       if (targetRevEl && sim.targetRevenue) targetRevEl.value = sim.targetRevenue;
       const shareEl = document.getElementById("sim-kebab-share");
-      if (shareEl && sim.kebabSharePct != null) shareEl.value = sim.kebabSharePct;
+      if (shareEl && sim.kebabUnitSharePct != null) shareEl.value = sim.kebabUnitSharePct;
       const drinkCostEl = document.getElementById("sim-drink-cost");
       if (drinkCostEl && sim.drinkCostAssumed != null) drinkCostEl.value = sim.drinkCostAssumed;
       const bufferEl = document.getElementById("sim-buffer");
@@ -2125,8 +2126,8 @@
         const premise = readPremiseInputs();
         return {
           target,
-          share,
-          drinkShare: 100 - share,
+          unitShare: share,
+          drinkUnitShare: 100 - share,
           ...solved,
           ...premise,
         };
@@ -2151,15 +2152,15 @@
         const bufferPct = Math.round(inputs.bufferRate * 100);
         const ratioNote = document.getElementById("sim-ratio-note");
         if (ratioNote) {
-          ratioNote.textContent = `ドリンクの売上比率: ${inputs.drinkShare}%（ケバブ ${inputs.share}%）`;
+          ratioNote.textContent = `ドリンクの販売数量比率: ${inputs.drinkUnitShare}%（ケバブ ${inputs.unitShare}%）`;
         }
         const revenueNote = document.getElementById("sim-revenue-note");
         if (revenueNote) {
           const gapText = inputs.gap > 0
-            ? `目標売上との差は端数調整により ${yen(inputs.gap)} です。`
+            ? `目標売上との差は丸めにより ${yen(inputs.gap)} です。`
             : "目標売上にぴったり合う販売数です。";
           revenueNote.textContent =
-            `売上配分の目安: ケバブ ${yen(inputs.kebabRevenueTarget)} / ドリンク ${yen(inputs.drinkRevenueTarget)}。${gapText}`;
+            `売上構成（結果）: ケバブ ${inputs.kebabRevenueSharePct.toFixed(1)}% / ドリンク ${inputs.drinkRevenueSharePct.toFixed(1)}%。${gapText}`;
         }
         document.getElementById("sim-result-grid").innerHTML = `
           <div class="sim-stat"><span>売上合計（試算）</span><strong>${yen(r.revenue)}</strong></div>

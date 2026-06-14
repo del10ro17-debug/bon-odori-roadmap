@@ -55,7 +55,7 @@ window.BON_ODORI_DATA = {
   },
   salesSimulation: {
     targetRevenue: 1000000,
-    kebabSharePct: 70,
+    kebabUnitSharePct: 80,
     eventDays: 2,
     drinkCostAssumed: 100,
     drinkCostNote: "ドリンク原価は未確定のため100円/本で仮計算（6/15までにゆうやさんが確定）",

@@ -12,19 +12,27 @@
   const sumKebabCogs = (breakdown) =>
     (breakdown || []).reduce((sum, row) => sum + (Number(row.cost) || 0), 0);
 
-  const solveUnitsForRevenue = (target, kebabSharePct, kebabPrice, drinkPrice) => {
+  const solveUnitsForRevenue = (target, kebabUnitSharePct, kebabPrice, drinkPrice) => {
     const targetNum = Math.max(0, Number(target) || 0);
-    const share = Math.min(100, Math.max(0, Number(kebabSharePct) || 0)) / 100;
+    const unitShare = Math.min(100, Math.max(0, Number(kebabUnitSharePct) || 0)) / 100;
     const pk = Number(kebabPrice) || 700;
     const pd = Number(drinkPrice) || 300;
     if (targetNum === 0 || pk <= 0 || pd <= 0) {
-      return { kebabUnits: 0, drinkUnits: 0, revenue: 0, gap: 0, kebabRevenueTarget: 0, drinkRevenueTarget: 0 };
+      return {
+        kebabUnits: 0,
+        drinkUnits: 0,
+        revenue: 0,
+        gap: 0,
+        kebabRevenueSharePct: 0,
+        drinkRevenueSharePct: 0,
+      };
     }
 
-    const kebabRevenueTarget = targetNum * share;
-    const drinkRevenueTarget = targetNum * (1 - share);
-    const kebabUnits = Math.round(kebabRevenueTarget / pk);
-    const drinkUnits = Math.round(drinkRevenueTarget / pd);
+    // 販売数量比率: 売れる個数のうち何%がケバブか（売上構成比ではない）
+    const avgRevenuePerUnit = unitShare * pk + (1 - unitShare) * pd;
+    const totalUnits = targetNum / avgRevenuePerUnit;
+    const kebabUnits = Math.round(unitShare * totalUnits);
+    const drinkUnits = Math.round((1 - unitShare) * totalUnits);
     const revenue = kebabUnits * pk + drinkUnits * pd;
 
     return {
@@ -32,8 +40,8 @@
       drinkUnits,
       revenue,
       gap: Math.abs(revenue - targetNum),
-      kebabRevenueTarget,
-      drinkRevenueTarget,
+      kebabRevenueSharePct: revenue > 0 ? (kebabUnits * pk / revenue) * 100 : 0,
+      drinkRevenueSharePct: revenue > 0 ? (drinkUnits * pd / revenue) * 100 : 0,
     };
   };
 
