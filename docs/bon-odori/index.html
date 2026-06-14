@@ -6,8 +6,8 @@
   <title>晴海ふ頭公園盆踊り大会2026 出店工程表</title>
   <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店に向けた準備工程表です。">
   <meta name="theme-color" content="#1a5282">
-  <script src="./data.js?v=20260614-2"></script>
-  <script src="./cost-calc.js?v=20260614-2"></script>
+  <script src="./data.js?v=20260614-3"></script>
+  <script src="./cost-calc.js?v=20260614-3"></script>
   <style>
     :root {
       /* HARUMI FLAG 自治会サイト（青×白）に合わせた配色 */
@@ -1795,24 +1795,25 @@
     </div>
 
     <div id="tab-panel-ops" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-ops" hidden>
-      <p class="panel-lead">プロジェクト体制・当日の役割分担・必要人数の目安です。<a href="#venue">会場レイアウト</a>はサマリータブで確認できます。</p>
+      <p class="panel-lead">竹山さん作成の<strong>オペレーションマニュアル</strong>に基づく当日体制です。準備期間の6チーム体制は下段を参照。</p>
 
       <section class="section" id="operations-manual">
         <h2>オペレーションマニュアル</h2>
         <div id="operations-manual-root"></div>
       </section>
 
+      <section class="section">
+        <h2>当日の体制（マニュアル準拠）</h2>
+        <p class="attendance-hint">番号呼び出し方式。レジ3名・調理3工程・案内1名・渡し1名が最小構成です。</p>
+        <div class="org-chart" id="day-of-organization"></div>
+      </section>
+
       <section class="section" id="teams">
-        <h2>プロジェクト体制</h2>
+        <h2>準備期間のプロジェクト体制（参考）</h2>
         <p class="attendance-hint">
           各チームは「リーダー ＋ メンバー」の形式です。シフトに組み入れる人が増えたら、リーダーの下にメンバーを追加していきます。
         </p>
         <div class="project-teams" id="project-teams"></div>
-      </section>
-
-      <section class="section">
-        <h2>当日の体制（シフト単位）</h2>
-        <div class="org-chart" id="day-of-organization"></div>
       </section>
 
       <section class="section">
@@ -1923,23 +1924,55 @@
         .map((step, i) => `<span class="ops-flow-step">${i + 1}. ${step}</span>`)
         .join("");
       const positions = renderTable(
-        ["ポジション", "リーダー", "人数"],
-        (manual.positions || []).map((p) => [p.role, p.lead, p.count])
+        ["ポジション", "リーダー", "人数", "メンバー", "主な役割"],
+        (manual.positions || []).map((p) => [
+          p.role,
+          p.lead,
+          p.count,
+          p.members || "—",
+          p.mission || "—",
+        ])
       );
-      const notes = (manual.notes || []).map((n) => `<li>${n}</li>`).join("");
+      const extra = (manual.extraRoles || [])
+        .map((r) => `<li><strong>${r.role}</strong>：${r.name}</li>`)
+        .join("");
       const themes = (manual.theme || []).map((t) => `<li>${t}</li>`).join("");
+      const roleBlocks = (manual.roleDetails || [])
+        .map((block) => {
+          const duties = (block.duties || []).map((d) => `<li>${d}</li>`).join("");
+          const scripts = (block.scripts || []).length
+            ? `<p><strong>声掛け例</strong></p><ul>${block.scripts.map((s) => `<li>${s}</li>`).join("")}</ul>`
+            : "";
+          return `<h4>${block.title}</h4><ul>${duties}</ul>${scripts}`;
+        })
+        .join("");
+      const ticketRules = (manual.ticketRules || []).map((r) => `<li>${r}</li>`).join("");
+      const ticketExamples = (manual.ticketExamples || []).map((e) => `<li>${e}</li>`).join("");
+      const handover = (manual.handoverRules || []).map((r) => `<li>${r}</li>`).join("");
+      const equipment = (manual.store?.equipment || []).map((e) => `<li>${e}</li>`).join("");
       return `
         <div class="resource-card">
-          <p class="resource-meta">${manual.author} 作成 · Ver.${manual.version}</p>
+          <p class="resource-meta">${manual.author} 作成 · Ver.${manual.version} · 決済：${manual.payment || "—"}</p>
           <p><a href="${manual.viewUrl}" target="_blank" rel="noopener noreferrer">${manual.title}（Googleスライドを開く）</a></p>
+          <p><strong>${manual.slogan || ""}</strong></p>
           <p><strong>2026オペレーションテーマ</strong></p>
           <ul>${themes}</ul>
           <p><strong>お客様の流れ</strong></p>
           <div class="ops-flow">${flow}</div>
-          <p><strong>当日ポジション（マニュアル記載）</strong></p>
+          <p><strong>当日ポジション</strong></p>
           ${positions}
-          <p><strong>運営メモ</strong></p>
-          <ul>${notes}</ul>
+          <p><strong>その他</strong></p>
+          <ul>${extra}</ul>
+          ${roleBlocks}
+          <h4>番号札・ドリンクチケット</h4>
+          <ul>${ticketRules}</ul>
+          <p><strong>例</strong></p>
+          <ul>${ticketExamples}</ul>
+          <h4>お渡しルール</h4>
+          <ul>${handover}</ul>
+          <h4>店舗・備品</h4>
+          <p>テント ${manual.store?.tentSize || "—"}。${manual.store?.layoutNote || ""}</p>
+          <ul>${equipment}</ul>
         </div>
       `;
     };
@@ -1949,7 +1982,7 @@
       ? `<div class="resource-card">
           <p><strong>${manual.title}</strong> — ${manual.author}（Ver.${manual.version}）</p>
           <p><a href="${manual.viewUrl}" target="_blank" rel="noopener noreferrer">Googleスライドで開く</a></p>
-          <p class="resource-meta">番号札方式・レジ3名体制など当日オペレーションの詳細はこちら。詳細は「体制・当日」タブにも要約あり。</p>
+          <p class="resource-meta">${manual.slogan || ""} · 番号札方式・レジ3名・調理3工程。詳細は「体制・当日」タブ。</p>
         </div>`
       : "<p>資料リンクは準備中です。</p>";
     document.getElementById("operations-manual-root").innerHTML = renderOperationsManual(manual);
