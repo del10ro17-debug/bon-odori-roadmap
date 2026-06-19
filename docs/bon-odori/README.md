@@ -36,7 +36,7 @@
 
 ## 共有URL（LINE用）
 
-**こちらだけを共有してください（青×白の最新版）:**
+**こちらだけを共有してください（白×黒のシンプル版）:**
 
 https://del10ro17-debug.github.io/bon-odori-roadmap/bon-odori/
 

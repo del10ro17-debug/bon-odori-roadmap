@@ -1,5 +1,5 @@
 window.BON_ODORI_DATA = {
-  updatedAt: "2026-06-14",
+  updatedAt: "2026-06-19",
   attendanceApiUrl:
     "https://script.google.com/macros/s/AKfycbzjEZdccMcKy8xDL3A0m3mb-BLU4MFuIdzflVsAA6yxAoFZ_OE3oRbll5nHOdtrWOgTaA/exec",
   attendanceSyncKey: "",
@@ -60,7 +60,42 @@ window.BON_ODORI_DATA = {
         ],
       },
     },
-    pending: ["目標販数", "包材原価", "仕入れ量"],
+    pending: ["包材原価", "ドリンク原価"],
+  },
+  ingredientProcurement: {
+    updatedAt: "2026-06-19",
+    owner: "中澤 たくろう",
+    summary: "2日合計1,000食（1日500食）。ピタ50袋×5枚、1枚半分切りで2食",
+    items: [
+      {
+        name: "ピタパン（5枚入）",
+        qty: "100袋（734円/袋）",
+        schedule: "7/11 50袋 / 7/12 50袋 引取 → 中澤家で自然解凍",
+        note: "ライフ調達・非レギュラー。数量変更・当日追加不可",
+      },
+      {
+        name: "鶏胸肉",
+        qty: "75kg",
+        schedule: "7/10 40kg / 7/11 35kg",
+        note: "7/7（火）天気予報で最終確定。市況品",
+      },
+      {
+        name: "キャベツ",
+        qty: "45玉",
+        schedule: "7/10 23玉 / 7/11 22玉",
+        note: "7/7 最終確定。店内千切り不可",
+      },
+    ],
+    pending: [
+      "7/10（金）鶏・キャベツの各家庭へのお届け希望時間をLINEで返信してください",
+    ],
+    notes:
+      "ピタは1日上限500食。1日250食超でも当日の買い足しはできません。7/7に鶏・キャベツの数量と単価が確定します。",
+  },
+  salesTarget: {
+    kebabTotal: 1000,
+    kebabPerDay: 500,
+    confirmedAt: "2026-06-19",
   },
   salesSimulation: {
     targetRevenue: 1000000,
@@ -218,7 +253,7 @@ window.BON_ODORI_DATA = {
     },
   },
   summary: {
-    daysToEvent: 27,
+    daysToEvent: 22,
     milestones: 15,
     phases: 8,
     urgentActions: 4,
@@ -227,17 +262,17 @@ window.BON_ODORI_DATA = {
     attendanceTarget: 11,
   },
   currentStatus: {
-    updatedAt: "2026-06-14",
-    headline: "6/13 準備完結MTGまで完了。次は数量・原価の確定",
+    updatedAt: "2026-06-19",
+    headline: "食材発注メモ共有済。7/10配分のお届け時間を回収中",
     focus: [
-      { label: "進行中", text: "ゆうや — 目標販数・ドリンク原価・仕入れ量（6/15期限）" },
-      { label: "進行中", text: "各リーダー — 搬入・備品・シフト・調理・PayPayのたたき台" },
-      { label: "確定", text: "車両搬入なし（台車・徒歩）。入構証不要" },
-      { label: "候補", text: "6月最終週に最終段取りMTG（日時未定）" },
+      { label: "確定", text: "1000食ベース — ピタ100袋・鶏75kg・キャベツ45玉（7/7に鶏・キャベツ最終確定）" },
+      { label: "確定", text: "ピタ: 7/11・7/12 各50袋引取 → 中澤家自然解凍（当日追加不可）" },
+      { label: "要回答", text: "各家庭 — 7/10 鶏・キャベツのお届け希望時間" },
+      { label: "進行中", text: "ゆうや — 1000食ベースの原価・売上試算更新" },
     ],
     nextUp: [
-      { due: "6/15", task: "目標販数・ドリンク原価・仕入れ量" },
-      { due: "6/21", task: "試作・衛生チェックリスト" },
+      { due: "6/25", task: "7/10 お届け希望時間の回収" },
+      { due: "7/7", task: "天気予報で鶏・キャベツ最終数量確定" },
       { due: "6/30", task: "シフト確定" },
     ],
   },
@@ -578,6 +613,7 @@ window.BON_ODORI_DATA = {
     "オペレーションマニュアル：竹山さん作成（2026-06-13）— Googleスライド共有",
     "6/13 準備完結MTG 実施（2026-06-14）",
     "車両搬入なし確定・入構証不要（2026-06-14）",
+    "食材発注メモ共有 — 1000食ベース（2026-06-19）",
   ],
   phases: [
     {
@@ -665,9 +701,9 @@ window.BON_ODORI_DATA = {
     },
   ],
   urgentActions: [
-    { priority: 1, action: "目標販数・ドリンク原価・仕入れ量の算出", owner: "青島 ゆうや", due: "6/15", status: "計算中" },
-    { priority: 2, action: "各リーダーたたき台（搬入・備品・シフト・調理・PayPay）", owner: "各リーダー", due: "6/30", status: "進行中" },
-    { priority: 3, action: "最終段取りMTG（6月最終週・日時TBD）", owner: "全員", due: "6/23–6/30", status: "候補・未確定" },
+    { priority: 1, action: "7/10 鶏・キャベツのお届け希望時間を回収", owner: "各世帯", due: "6/25", status: "未回答" },
+    { priority: 2, action: "1000食ベースの原価・売上試算更新", owner: "青島 ゆうや", due: "6/25", status: "要更新" },
+    { priority: 3, action: "各リーダーたたき台（搬入・備品・シフト・調理・PayPay）", owner: "各リーダー", due: "6/30", status: "進行中" },
     { priority: 4, action: "のぼり・メニュー表・装飾・備品", owner: "竹山 ひろ", due: "7/10", status: "未着手" },
   ],
   risks: [

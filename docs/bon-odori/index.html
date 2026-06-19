@@ -6,8 +6,8 @@
   <title>晴海ふ頭公園盆踊り大会2026 ケバブ出店</title>
   <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店。準備状況・メニュー・原価試算・当日オペレーション。">
   <meta name="theme-color" content="#111111">
-  <script src="./data.js?v=20260614-9"></script>
-  <script src="./cost-calc.js?v=20260614-9"></script>
+  <script src="./data.js?v=20260619"></script>
+  <script src="./cost-calc.js?v=20260619"></script>
   <style>
     :root {
       --bg: #ffffff;
@@ -38,13 +38,14 @@
     }
 
     .site-bar {
-      background: var(--accent-dark);
-      color: #fff;
+      background: var(--bg);
+      color: var(--ink);
+      border-bottom: 1px solid var(--line);
       text-align: center;
       padding: 10px 16px;
       font-size: 13px;
       font-weight: 600;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.04em;
     }
 
     main {
@@ -1688,6 +1689,11 @@
         <div class="grid" id="summary-grid"></div>
       </section>
 
+      <section class="section" id="ingredient-procurement">
+        <h2>食材発注（1000食ベース）</h2>
+        <div id="ingredient-procurement-root"></div>
+      </section>
+
       <section class="section" id="menu-summary">
         <h2>確定メニュー</h2>
         <div class="menu-price-list" id="menu-price-list"></div>
@@ -2045,7 +2051,7 @@
       <div class="stat"><strong>${data.summary.daysToEvent}日</strong><span>初日まで</span></div>
       <div class="stat"><strong>37番</strong><span>ブース</span></div>
       <div class="stat"><strong>7/11-12</strong><span>本番</span></div>
-      <div class="stat"><strong>PayPay</strong><span>決済（基本）</span></div>
+      <div class="stat"><strong>1000食</strong><span>2日目標</span></div>
     `;
 
     const status = data.currentStatus || {};
@@ -2062,6 +2068,28 @@
       <h3>直近の期限</h3>
       <table class="status-next-table"><tbody>${nextRows}</tbody></table>
     `;
+
+    const proc = data.ingredientProcurement;
+    const procRoot = document.getElementById("ingredient-procurement-root");
+    if (procRoot && proc) {
+      const rows = (proc.items || []).map((row) => `
+        <tr>
+          <th>${row.name}</th>
+          <td>${row.qty}</td>
+          <td>${row.schedule || "—"}</td>
+          <td>${row.note || "—"}</td>
+        </tr>
+      `).join("");
+      const pending = (proc.pending || []).map((item) => `<li>${item}</li>`).join("");
+      procRoot.innerHTML = `
+        <p class="attendance-hint">${proc.summary || ""} · 担当: ${proc.owner || "—"}（${proc.updatedAt || ""}）</p>
+        <table><tbody>${rows}</tbody></table>
+        ${pending ? `<h3>お願い</h3><ul>${pending}</ul>` : ""}
+        ${proc.notes ? `<div class="notice">${proc.notes}</div>` : ""}
+      `;
+    } else if (procRoot) {
+      procRoot.innerHTML = "<p>発注情報は準備中です。</p>";
+    }
 
     document.getElementById("completed-list").innerHTML = data.completed
       .map((item) => `<li>${item}</li>`)
