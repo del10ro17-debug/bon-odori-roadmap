@@ -6,8 +6,8 @@
   <title>晴海ふ頭公園盆踊り大会2026 ケバブ出店</title>
   <meta name="description" content="晴海ふ頭公園盆踊り大会2026のケバブ出店。準備状況・メニュー・原価試算・当日オペレーション。">
   <meta name="theme-color" content="#111111">
-  <script src="./data.js?v=20260619"></script>
-  <script src="./cost-calc.js?v=20260619"></script>
+  <script src="./data.js?v=20260620"></script>
+  <script src="./cost-calc.js?v=20260620"></script>
   <style>
     :root {
       --bg: #ffffff;
@@ -2080,10 +2080,20 @@
           <td>${row.note || "—"}</td>
         </tr>
       `).join("");
+      const condRows = (proc.condiments || []).map((row) => `
+        <tr>
+          <th>${row.name}</th>
+          <td>${row.qty}</td>
+          <td>${row.owner || "—"}</td>
+          <td>${row.note || "—"}</td>
+        </tr>
+      `).join("");
       const pending = (proc.pending || []).map((item) => `<li>${item}</li>`).join("");
       procRoot.innerHTML = `
         <p class="attendance-hint">${proc.summary || ""} · 担当: ${proc.owner || "—"}（${proc.updatedAt || ""}）</p>
-        <table><tbody>${rows}</tbody></table>
+        <h3>主材</h3>
+        <table><thead><tr><th>品目</th><th>数量</th><th>納期・配送</th><th>備考</th></tr></thead><tbody>${rows}</tbody></table>
+        ${condRows ? `<h3>ソース・調味料</h3><table><thead><tr><th>品目</th><th>数量</th><th>担当</th><th>備考</th></tr></thead><tbody>${condRows}</tbody></table>` : ""}
         ${pending ? `<h3>お願い</h3><ul>${pending}</ul>` : ""}
         ${proc.notes ? `<div class="notice">${proc.notes}</div>` : ""}
       `;
