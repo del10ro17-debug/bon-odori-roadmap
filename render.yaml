@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: maruke-app
+    runtime: docker
+    rootDir: apps/maruke-app
+    dockerfilePath: Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: BETA_INVITE_CODE
+        sync: false
+        optional: true

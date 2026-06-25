@@ -1,0 +1,23 @@
+# Fly.io デプロイ設定（ベータ公開用）
+# 初回: fly launch --no-deploy （fly.toml は既にあるので上書き確認）
+# 秘密情報: fly secrets set OPENAI_API_KEY=sk-... BETA_INVITE_CODE=家族用の合言葉
+# デプロイ: fly deploy
+
+app = 'maruke-sakakura'
+primary_region = 'nrt'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1

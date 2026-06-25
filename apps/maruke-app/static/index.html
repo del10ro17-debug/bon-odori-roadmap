@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#2563eb" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<title>まるつけ｜中学受験の丸つけ</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --ink: #1f2937;
+    --sub: #6b7280;
+    --line: #e5e7eb;
+    --blue: #2563eb;
+    --green: #16a34a;
+    --red: #dc2626;
+    --amber: #d97706;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px);
+  }
+  header { text-align: center; padding: 18px 16px 8px; }
+  header h1 { font-size: 20px; margin: 0; letter-spacing: .02em; }
+  header p { font-size: 12px; color: var(--sub); margin: 4px 0 0; line-height: 1.5; }
+  main { max-width: 560px; margin: 0 auto; padding: 8px 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  label.field { display: block; font-size: 13px; color: var(--sub); margin-bottom: 6px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chips button {
+    flex: 1 1 auto; min-width: 52px; padding: 10px 8px; border-radius: 10px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+    font-size: 14px; font-weight: 600;
+  }
+  .chips button.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .shot {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; width: 100%; padding: 22px 12px; border-radius: 14px;
+    border: 2px dashed var(--line); background: #fbfbfc; color: var(--sub);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .shot .big { font-size: 30px; }
+  .shot.has { border-style: solid; border-color: var(--blue); padding: 8px; }
+  .shot img { max-width: 100%; max-height: 240px; border-radius: 10px; display: block; }
+  input[type=file] { display: none; }
+  .keyrow { margin-top: 10px; }
+  .keyrow summary { font-size: 13px; color: var(--blue); cursor: pointer; }
+  .go {
+    width: 100%; padding: 16px; border: none; border-radius: 14px;
+    background: var(--blue); color: #fff; font-size: 17px; font-weight: 700;
+  }
+  .go:disabled { background: #9ca3af; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.4);
+    border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -3px; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .score { display: flex; gap: 10px; text-align: center; }
+  .score .box { flex: 1; padding: 12px 6px; border-radius: 12px; background: #f3f4f6; }
+  .score .box b { display: block; font-size: 24px; }
+  .score .box.g b { color: var(--green); }
+  .score .box.r b { color: var(--red); }
+  .score .box.a b { color: var(--amber); }
+  .score .box span { font-size: 11px; color: var(--sub); }
+  .summary { font-size: 13px; color: var(--sub); margin: 12px 2px 0; line-height: 1.6; }
+  .item { display: flex; gap: 12px; padding: 14px 4px; border-top: 1px solid var(--line); }
+  .item .mark { font-size: 26px; line-height: 1.2; width: 30px; text-align: center; flex: none; }
+  .item .body { flex: 1; min-width: 0; }
+  .item .no { font-size: 12px; color: var(--sub); }
+  .item .q { font-size: 13px; color: var(--ink); margin: 2px 0 4px; line-height: 1.4; }
+  .item .ans { font-size: 15px; font-weight: 600; margin: 2px 0; }
+  .item .ans .ng { color: var(--red); }
+  .item .ans .ok { color: var(--green); }
+  .item .cor { font-size: 13px; color: var(--sub); }
+  .item .cm { font-size: 12px; color: var(--sub); margin-top: 4px; line-height: 1.5; }
+  .item .exp {
+    font-size: 13px; color: var(--ink); margin-top: 8px; padding: 10px 12px;
+    background: #f0f9ff; border-radius: 10px; line-height: 1.65;
+  }
+  .item .exp b { font-size: 12px; color: var(--blue); display: block; margin-bottom: 4px; }
+  .item .exp.mama { background: #f0f9ff; }
+  .item .exp.kid { background: #fefce8; }
+  .item .exp.kid b { color: #a16207; }
+  .item .fig {
+    margin-top: 10px; padding: 8px; background: #fff; border: 1px solid var(--line);
+    border-radius: 12px; text-align: center;
+  }
+  .item .fig svg { max-width: 100%; height: auto; max-height: 220px; }
+  .badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 6px; margin-left: 6px; vertical-align: 1px; }
+  .badge.key { background: #ecfdf5; color: var(--green); }
+  .badge.low { background: #fffbeb; color: var(--amber); }
+  .badge.solve { background: #eff6ff; color: var(--blue); }
+  .warnbox {
+    font-size: 12px; color: #92400e; background: #fffbeb;
+    border: 1px solid #fde68a; border-radius: 10px; padding: 10px 12px;
+    margin-top: 10px; line-height: 1.5;
+  }
+  .err { color: var(--red); font-size: 14px; text-align: center; padding: 8px; }
+  .hint { font-size: 11px; color: var(--sub); text-align: center; margin-top: 10px; line-height: 1.6; }
+  .status { font-size: 11px; color: var(--sub); text-align: center; margin-top: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📷 まるつけ</h1>
+  <p>中学受験の宿題、撮るだけで丸つけ。<br>塾・進研・Z会のプリントに対応</p>
+</header>
+
+<main>
+  <div class="card" id="inputCard">
+    <label class="field">学年（中学受験は小4〜6が多いです）</label>
+    <div class="chips" id="grades">
+      <button data-g="4">小4</button>
+      <button data-g="5">小5</button>
+      <button data-g="6">小6</button>
+      <button data-g="">おまかせ</button>
+      <button data-g="3">小3</button>
+      <button data-g="2">小2</button>
+      <button data-g="1">小1</button>
+    </div>
+
+    <div style="height:14px"></div>
+    <label class="field">教科（任意・自動でも判定します）</label>
+    <div class="chips" id="subjects">
+      <button data-s="">おまかせ</button>
+      <button data-s="算数">算数</button>
+      <button data-s="国語">国語</button>
+      <button data-s="理科">理科</button>
+      <button data-s="社会">社会</button>
+    </div>
+
+    <div style="height:14px"></div>
+    <label class="field">採点モード</label>
+    <div class="chips" id="modes">
+      <button data-m="simple">答えだけ<br><small style="font-weight:400;font-size:10px">月600円想定</small></button>
+      <button data-m="rich">解説リッチ<br><small style="font-weight:400;font-size:10px">月1,280円想定</small></button>
+    </div>
+    <p class="hint" id="modeHint" style="text-align:left;margin-top:8px">解説・図・ママ向け解説つき（時間・料金多め）</p>
+
+    <div style="height:14px"></div>
+    <label class="field">子どもの答案（問題＋答え）を撮影</label>
+    <label class="shot" id="shotAns" for="fileAns">
+      <span class="big">📸</span><span>カメラで撮る / 写真を選ぶ（複数可）</span>
+    </label>
+    <input type="file" id="fileAns" accept="image/*" multiple />
+    <div class="warnbox" id="spreadWarn" hidden>見開き全体は読み取りミスが出やすいです。片ページ、または大問ごとに撮ると精度が上がります。</div>
+
+    <details class="keyrow">
+      <summary>＋ 解答ページも撮る（精度アップ・任意）</summary>
+      <label class="field" style="margin-top:10px">解答（正解）ページ</label>
+      <label class="shot" id="shotKey" for="fileKey">
+        <span class="big">🔑</span><span>解答を撮影 / 写真を選ぶ</span>
+      </label>
+      <input type="file" id="fileKey" accept="image/*" />
+    </details>
+
+    <details class="keyrow" id="inviteRow" hidden>
+      <summary>🔒 招待コード（ベータ版）</summary>
+      <label class="field" style="margin-top:10px">家族・友人に渡された合言葉</label>
+      <input type="text" id="inviteCode" placeholder="招待コード" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:15px" />
+      <p class="hint" style="margin-top:8px;text-align:left">一度入力すると保存されます</p>
+    </details>
+
+    <div style="height:14px"></div>
+    <button class="go" id="go" disabled>答え合わせする</button>
+    <p class="hint">🟡＝AIが自信なし。保護者がご確認ください。<br>国語の見開き・縦書きは時間がかかります。問題ページだけの撮影がおすすめです。</p>
+    <p class="status" id="apiStatus"></p>
+    <div class="err" id="err" hidden></div>
+  </div>
+
+  <div id="result"></div>
+</main>
+
+<script>
+const state = { subject: "", grade: "", mode: "rich", ans: null, key: null };
+
+const MODE_HINTS = {
+  simple: "○×と正解だけ。毎日サクッと丸つけ向け（原価・時間とも軽め）",
+  rich: "ママ向け解説・子どもヒント・図形の図つき。わからない問題向け",
+};
+
+function el(tag, props, ...kids) {
+  const n = document.createElement(tag);
+  for (const k in (props || {})) {
+    if (k === "class") n.className = props[k];
+    else if (k === "text") n.textContent = props[k];
+    else n.setAttribute(k, props[k]);
+  }
+  for (const kid of kids) if (kid != null) n.append(kid);
+  return n;
+}
+function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+function wireChipGroup(id, key) {
+  const root = document.getElementById(id);
+  root.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    [...root.children].forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    state[key] = b.dataset[key === "grade" ? "g" : "s"] || "";
+  });
+  root.querySelector("button").classList.add("on");
+}
+wireChipGroup("grades", "grade");
+wireChipGroup("subjects", "subject");
+document.getElementById("modes").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  [...document.getElementById("modes").children].forEach(x => x.classList.remove("on"));
+  b.classList.add("on");
+  state.mode = b.dataset.m || "rich";
+  document.getElementById("modeHint").textContent = MODE_HINTS[state.mode] || "";
+});
+document.querySelectorAll("#grades button").forEach(b => b.classList.remove("on"));
+document.querySelector("#grades button[data-g='5']").classList.add("on");
+document.querySelector("#modes button[data-m='rich']").classList.add("on");
+state.grade = "5";
+
+function toJpeg(file, maxEdge = 2000) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = img.width, h = img.height;
+      const scale = Math.min(1, maxEdge / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      c.toBlob(b => b ? resolve({ blob: b, preview: c.toDataURL("image/jpeg", .7) })
+                       : reject(new Error("画像変換に失敗")), "image/jpeg", 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("画像を読み込めません")); };
+    img.src = url;
+  });
+}
+
+function wireShot(inputId, shotId, slot) {
+  const input = document.getElementById(inputId);
+  const shot = document.getElementById(shotId);
+  input.addEventListener("change", async () => {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    try {
+      const converted = [];
+      for (const file of files) {
+        converted.push(await toJpeg(file));
+      }
+      if (slot === "ans" && converted.length === 1) {
+        const img = new Image();
+        img.src = converted[0].preview;
+        await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; });
+        const spreadWarn = document.getElementById("spreadWarn");
+        spreadWarn.hidden = !(img.width > 0 && img.width / img.height > 1.25);
+      }
+      state[slot] = slot === "ans" ? converted.map(item => item.blob) : converted[0].blob;
+      shot.classList.add("has");
+      clear(shot);
+      if (slot === "ans" && converted.length > 1) {
+        shot.append(
+          el("span", { class: "big", text: "📚" }),
+          el("span", { text: `${converted.length}枚選択中` })
+        );
+      } else {
+        shot.append(el("img", { src: converted[0].preview, alt: "プレビュー" }));
+      }
+      document.getElementById("go").disabled = !state.ans;
+    } catch (err) { showErr(err.message); }
+  });
+}
+wireShot("fileAns", "shotAns", "ans");
+wireShot("fileKey", "shotKey", "key");
+
+function showErr(msg) {
+  const e = document.getElementById("err");
+  e.textContent = "⚠️ " + msg;
+  e.hidden = false;
+  e.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+async function loadApiStatus() {
+  try {
+    const res = await fetch("/api/health");
+    const data = await res.json();
+    const node = document.getElementById("apiStatus");
+    node.textContent = data.live_grading
+      ? "本番採点モード（OpenAI API 接続済み）"
+      : "デモモード（APIキー未設定・サンプル結果を表示）";
+    if (data.invite_required) {
+      document.getElementById("inviteRow").hidden = false;
+      const saved = localStorage.getItem("maruke_invite_code");
+      if (saved) document.getElementById("inviteCode").value = saved;
+    }
+  } catch {
+    document.getElementById("apiStatus").textContent = "";
+  }
+}
+loadApiStatus();
+
+document.getElementById("go").addEventListener("click", async () => {
+  if (!state.ans) return;
+  document.getElementById("err").hidden = true;
+  const go = document.getElementById("go");
+  go.disabled = true;
+  clear(go);
+  go.append(el("span", { class: "spinner" }), document.createTextNode("採点中…（10〜30秒）"));
+
+  const fd = new FormData();
+  state.ans.forEach((blob, index) => {
+    fd.append("images", blob, `answer-${index + 1}.jpg`);
+  });
+  if (state.subject) fd.append("subject", state.subject);
+  if (state.grade) fd.append("grade_level", state.grade);
+  if (state.key) fd.append("answer_key", state.key, "key.jpg");
+  fd.append("grading_mode", state.mode || "rich");
+  const invite = document.getElementById("inviteCode").value.trim();
+  if (invite) {
+    fd.append("invite_code", invite);
+    localStorage.setItem("maruke_invite_code", invite);
+  }
+
+  try {
+    const res = await fetch("/api/grade", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) {
+      const detail = data.error || "採点に失敗しました";
+      throw new Error(res.status === 502 ? `AI採点エラー: ${detail}` : detail);
+    }
+    render(data);
+  } catch (err) {
+    showErr(err.message);
+  } finally {
+    go.disabled = false;
+    go.textContent = "もう一度 / 別の写真で";
+  }
+});
+
+const MARK = { correct: "⭕️", incorrect: "❌", uncertain: "🟡" };
+
+function scoreBox(cls, n, label) {
+  return el("div", { class: "box " + cls }, el("b", { text: String(n) }), el("span", { text: label }));
+}
+
+function sanitizeSvg(svg) {
+  const s = (svg || "").trim();
+  if (!s.toLowerCase().startsWith("<svg")) return "";
+  const lower = s.toLowerCase();
+  if (["<script", "javascript:", "onload", "onclick", "foreignobject", "<style"].some(x => lower.includes(x)))
+    return "";
+  return s;
+}
+
+function appendDiagram(body, svgRaw) {
+  const svg = sanitizeSvg(svgRaw);
+  if (!svg) return;
+  const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
+  const node = doc.documentElement;
+  if (!node || node.nodeName === "parsererror" || node.tagName.toLowerCase() !== "svg") return;
+  const wrap = el("div", { class: "fig" });
+  wrap.appendChild(document.importNode(node, true));
+  body.append(wrap);
+}
+
+function itemRow(it) {
+  const resultType = it.result_type || (
+    (it.child_answer || "").includes("未記入") ? "answer_example" : "graded"
+  );
+  const isAnswerOnly = resultType === "answer_example";
+  const ansCls = it.verdict === "correct" ? "ok" : it.verdict === "incorrect" ? "ng" : "";
+  const no = el("div", { class: "no" }, document.createTextNode(it.number || ""));
+
+  if (isAnswerOnly) {
+    no.append(el("span", { class: "badge solve", text: "答え" }));
+  } else if (it.basis === "answer_key") {
+    no.append(el("span", { class: "badge key", text: "解答照合" }));
+  }
+  if (resultType === "unreadable") no.append(el("span", { class: "badge low", text: "要再撮影" }));
+  else if (!isAnswerOnly && it.confidence === "low") no.append(el("span", { class: "badge low", text: "自信なし" }));
+
+  const body = el("div", { class: "body" }, no);
+  if (it.question) body.append(el("div", { class: "q", text: it.question }));
+
+  if (isAnswerOnly) {
+    body.append(
+      el("div", { class: "ans" },
+        document.createTextNode("答え："),
+        el("span", { class: "ok", text: it.correct_answer || "画像確認が必要" }))
+    );
+  } else {
+    body.append(
+      el("div", { class: "ans" }, document.createTextNode("答え："),
+        el("span", { class: ansCls, text: it.child_answer || "" }))
+    );
+    if (it.verdict !== "correct" && it.correct_answer)
+      body.append(el("div", { class: "cor", text: "正解：" + it.correct_answer }));
+  }
+
+  appendDiagram(body, it.diagram_svg);
+
+  const exp = (it.explanation || "").trim();
+  if (exp)
+    body.append(el("div", { class: "exp mama" }, el("b", { text: "ママ向け解説" }), document.createTextNode(exp)));
+
+  const tip = (it.child_tip || "").trim();
+  if (tip)
+    body.append(el("div", { class: "exp kid" }, el("b", { text: "子どもへのヒント" }), document.createTextNode(tip)));
+
+  if (it.comment && resultType === "graded")
+    body.append(el("div", { class: "cm", text: "💬 " + it.comment }));
+
+  const mark = isAnswerOnly ? "💡" : resultType === "unreadable" ? "📷" : (MARK[it.verdict] || "❔");
+  return el("div", { class: "item" }, el("div", { class: "mark", text: mark }), body);
+}
+
+function render(d) {
+  const r = document.getElementById("result");
+  clear(r);
+  const card = el("div", { class: "card" });
+  if (d.demo) {
+    const banner = el("div", {
+      class: "summary",
+      text: "🧪 デモ表示中（サンプル結果）。実際の採点には apps/maruke-app/.env に OPENAI_API_KEY を設定してください。",
+    });
+    banner.style.cssText = "background:#fffbeb;color:#92400e;padding:10px;border-radius:10px;margin:0 0 12px;font-weight:600";
+    card.append(banner);
+  }
+  const graded = d.graded_count || 0;
+  const answers = d.answer_example_count || 0;
+  const unreadable = d.unreadable_count || 0;
+  if (graded === 0 && answers > 0) {
+    card.append(el("div", { class: "score" },
+      scoreBox("g", answers, "答え"),
+      scoreBox("r", 0, "まちがい"),
+      scoreBox("a", unreadable, "要再撮影")));
+  } else {
+    card.append(el("div", { class: "score" },
+      scoreBox("g", d.correct_count, "正解"),
+      scoreBox("r", d.incorrect_count, "まちがい"),
+      scoreBox("a", d.uncertain_count + unreadable, "要確認")));
+  }
+  const summaryParts = [];
+  if (d.subject_detected) summaryParts.push("教科: " + d.subject_detected);
+  if (d.grading_profile) summaryParts.push("採点設定: " + d.grading_profile);
+  if (d.grading_mode === "simple") summaryParts.push("モード: 答えだけ");
+  else if (d.grading_mode === "rich") summaryParts.push("モード: 解説リッチ");
+  if (graded > 0) summaryParts.push("答え合わせ " + graded + "問");
+  if (answers > 0) summaryParts.push("答え・解説 " + answers + "問");
+  if (d.summary) summaryParts.push(d.summary);
+  if (summaryParts.length)
+    card.append(el("p", { class: "summary", text: summaryParts.join(" / ") }));
+  (d.items || []).forEach(it => card.append(itemRow(it)));
+  r.append(card);
+  r.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+</script>
+</body>
+</html>

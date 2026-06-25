@@ -1,0 +1,493 @@
+import base64
+import json
+import os
+from typing import Any, Optional, Sequence
+from urllib import error, request
+
+OPENAI_FAST_MODEL = os.getenv("OPENAI_FAST_MODEL", "gpt-4o-mini")
+OPENAI_PRECISE_MODEL = os.getenv("OPENAI_PRECISE_MODEL", "gpt-4o")
+OPENAI_API_TIMEOUT_SECONDS = int(os.getenv("OPENAI_API_TIMEOUT_SECONDS", "90"))
+
+VALID_GRADING_MODES = {"simple", "rich"}
+
+
+class GraderError(Exception):
+    pass
+
+
+SYSTEM_PROMPT = """あなたは中学受験生の家庭学習を支える、丁寧で正確な採点者です。
+保護者が子どもの宿題（塾・進研・Z会・学校プリント）の丸つけを楽にするためのアプリの一部として動きます。
+
+【最重要ルール】
+1. 写真に「解答（正解）」が一緒に写っている場合は、それを最優先で正解の根拠にする（自分で解き直さない）。basis="answer_key"。
+2. 解答が写っていない場合のみ、自分で問題を解いて正解を求める。basis="solved"。
+3. 自分で解いた結果に少しでも自信がない、または子どもの答えが読み取りにくい場合は、
+   勝手に incorrect にせず verdict="uncertain"（要確認）にする。誤採点で保護者を惑わせないことが何より大事。
+4. 子どもの答えが書かれていない空欄の設問でも、問題文が読める場合は必ず自分で解いて correct_answer に正答例を書く。
+   その場合 child_answer="（未記入）"、verdict="uncertain"、basis="solved" とし、comment には「答えを書くなら〇〇」のように短く示す。
+5. 国語の記述・作文など機械採点が不向きな設問でも、問題文が読める場合は正答例や書き方の例を correct_answer に作る。
+   ただし採点は verdict="uncertain" にし、comment に観点だけ示す（無理に○×をつけない）。
+6. 縦書き（タテ書き）の国語プリントでも、右から左・上から下の順で設問を読み取る。
+7. 見開き2ページが1枚の写真に写っている場合は、両ページの設問を読み取る。自信がない設問は uncertain にする。
+8. 選択肢がある問題では、必ず写真に印刷された選択肢の中から答えを選ぶ。選択肢外の答えを勝手に作らない。
+9. child_answer には「子どもが鉛筆・ペンで手書きした内容」だけを入れる。問題文に印刷されている選択肢ラベル（ア・イ・ウなど）、番号、見出し、例文は child_answer に入れない。
+10. 丸・枠・下線の空欄に手書きがない場合は必ず未記入とする。空欄を推測して「ウ」などと書いたり、graded / correct にしない。
+11. result_type="answer_example"（未記入）のときは verdict は必ず uncertain、basis は answer_key にしない（採点していないので解答照合ではない）。
+
+【モードの区別（result_type）】
+- 子どもの手書きの答えがあり、それと正解を比較した: result_type="graded"
+- 答えが未記入で、正解だけを表示する: result_type="answer_example"（verdict は uncertain、採点しない）
+- 問題文・図が読めず判定不能: result_type="unreadable"（basis="unknown"）
+
+【採点の基準】
+- 数値・式・用語・記号は、表記ゆれ（全角半角、約分の有無、単位の有無など）を考慮して柔軟に正誤判定する。
+- 子どもが空欄の設問は child_answer="（未記入）" とし、問題文が読める限り correct_answer にAIが作った正答例を書く。
+- correct_answer は、保護者がそのまま見て使える答えだけを簡潔に書く。説明は comment に分ける。
+- 問題文そのものが読めない場合だけ、correct_answer="画像確認が必要"、basis="unknown"、verdict="uncertain" とする。
+- question は設問を短く要約する。全文を書き写さない。
+- comment は採点時の短い一言（20文字前後）。正解のお褒め・惜しい点のヒント。
+- explanation は「ママ向け解説」。採点する保護者が自分の頭で理解し、子に教えるための手順書。
+  専門用語は使うなら平易に補足。3〜5文。「まず〇〇→次に△△→だから答えは××」の流れで書く。
+  中学受験に詳しくないママでも採点・指導できることを最優先。
+- child_tip は「子ども向けヒント」。子どもが自分で読めるやさしい日本語で1〜2文。
+  図や比喩を使って、答えのイメージが湧くように書く。
+- diagram_svg は図形・作図・角度・面積・グラフ・座標など視覚が必要な設問だけ、
+  子どもが見てわかる補助図を SVG で1つ書く。不要な設問は空文字 ""。
+  形式: 単一の <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">…</svg>
+  線・円・多角形・弧・text のみ。script/style/foreignObject は禁止。色は黒線＋薄い塗り。
+  角度・辺の長さ・記号（○△）をラベルで示す。
+- explanation / child_tip は result_type が answer_example でも graded でも必ず書く（unreadable 時のみ省略可）。
+
+すべて日本語で出力する。"""
+
+SIMPLE_MODE_INSTRUCTION = (
+    "【お手軽モード】答えと○×だけを優先。explanation・child_tip・diagram_svg は必ず空文字 \"\"。"
+    "comment は採点時のみ20文字以内。未記入は correct_answer に答えだけ。"
+)
+
+
+OUTPUT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "subject_detected": {"type": "string"},
+        "answer_key_present": {"type": "boolean"},
+        "summary": {"type": "string"},
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "number": {"type": "string"},
+                    "question": {"type": "string"},
+                    "child_answer": {"type": "string"},
+                    "correct_answer": {"type": "string"},
+                    "verdict": {
+                        "type": "string",
+                        "enum": ["correct", "incorrect", "uncertain"],
+                    },
+                    "confidence": {
+                        "type": "string",
+                        "enum": ["high", "medium", "low"],
+                    },
+                    "basis": {
+                        "type": "string",
+                        "enum": ["answer_key", "solved", "unknown"],
+                    },
+                    "result_type": {
+                        "type": "string",
+                        "enum": ["graded", "answer_example", "unreadable"],
+                    },
+                    "comment": {"type": "string"},
+                    "explanation": {"type": "string"},
+                    "child_tip": {"type": "string"},
+                    "diagram_svg": {"type": "string"},
+                },
+                "required": [
+                    "number",
+                    "question",
+                    "child_answer",
+                    "correct_answer",
+                    "verdict",
+                    "confidence",
+                    "basis",
+                    "result_type",
+                    "comment",
+                    "explanation",
+                    "child_tip",
+                    "diagram_svg",
+                ],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["subject_detected", "answer_key_present", "summary", "items"],
+    "additionalProperties": False,
+}
+
+
+def _grade_profile(grade_level: Optional[str], grading_mode: str = "rich") -> dict[str, Any]:
+    grade = (grade_level or "").strip()
+    if grade in {"1", "2"}:
+        profile = {
+            "model": OPENAI_FAST_MODEL,
+            "image_detail": "high",
+            "max_output_tokens": 6000,
+            "label": f"小学{grade}年・高速",
+        }
+    elif grade in {"3", "4"}:
+        profile = {
+            "model": OPENAI_FAST_MODEL,
+            "image_detail": "high",
+            "max_output_tokens": 8000,
+            "label": f"小学{grade}年・標準",
+        }
+    elif grade in {"5", "6"}:
+        profile = {
+            "model": OPENAI_PRECISE_MODEL,
+            "image_detail": "high",
+            "max_output_tokens": 14000,
+            "label": f"小学{grade}年・精密",
+        }
+    else:
+        profile = {
+            "model": OPENAI_FAST_MODEL,
+            "image_detail": "high",
+            "max_output_tokens": 8000,
+            "label": "学年おまかせ・標準",
+        }
+
+    if grading_mode == "simple":
+        profile = dict(profile)
+        profile["model"] = OPENAI_FAST_MODEL
+        profile["image_detail"] = "low"
+        profile["max_output_tokens"] = min(profile["max_output_tokens"], 3500)
+        profile["label"] = profile["label"] + "・お手軽"
+    else:
+        profile = dict(profile)
+        profile["label"] = profile["label"] + "・解説リッチ"
+
+    return profile
+
+
+def _image_part(image_bytes: bytes, media_type: str, image_detail: str) -> dict[str, Any]:
+    b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
+    return {
+        "type": "image_url",
+        "image_url": {
+            "url": f"data:{media_type};base64,{b64}",
+            "detail": image_detail,
+        },
+    }
+
+
+def _is_unfilled_answer(child: str) -> bool:
+    s = (child or "").strip()
+    if not s:
+        return True
+    if "未記入" in s or s in {"（空欄）", "空欄", "—", "－", "-"}:
+        return True
+    return False
+
+
+def _infer_result_type(item: dict[str, Any]) -> str:
+    explicit = item.get("result_type")
+    basis = item.get("basis", "")
+    child = item.get("child_answer", "")
+    correct = item.get("correct_answer", "")
+    if basis == "unknown" or "画像確認" in correct:
+        return "unreadable"
+    if _is_unfilled_answer(child):
+        return "answer_example"
+    if explicit in {"graded", "answer_example", "unreadable"}:
+        return explicit
+    return "graded"
+
+
+def _sanitize_svg(svg: str) -> str:
+    s = (svg or "").strip()
+    if not s or not s.lower().startswith("<svg"):
+        return ""
+    blocked = ("<script", "javascript:", "onload", "onclick", "foreignobject", "<style")
+    lower = s.lower()
+    if any(b in lower for b in blocked):
+        return ""
+    return s
+
+
+def _normalize_item(item: dict[str, Any], grading_mode: str = "rich") -> dict[str, Any]:
+    item["result_type"] = _infer_result_type(item)
+    item["diagram_svg"] = _sanitize_svg(item.get("diagram_svg", ""))
+
+    if item["result_type"] == "answer_example":
+        item["child_answer"] = "（未記入）"
+        item["verdict"] = "uncertain"
+        if item.get("basis") == "answer_key":
+            item["basis"] = "solved"
+        if grading_mode == "rich":
+            if not (item.get("explanation") or "").strip():
+                correct = (item.get("correct_answer") or "").strip()
+                if correct and "画像確認" not in correct:
+                    item["explanation"] = f"正解は{correct}です。"
+
+    if grading_mode == "simple":
+        item["explanation"] = ""
+        item["child_tip"] = ""
+        item["diagram_svg"] = ""
+
+    if item["result_type"] == "unreadable":
+        item["verdict"] = "uncertain"
+        item["basis"] = "unknown"
+
+    return item
+
+
+def _normalize_items(
+    items: list[dict[str, Any]],
+    answer_key_present: bool = False,
+    grading_mode: str = "rich",
+) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+    for item in items:
+        if not answer_key_present and item.get("basis") == "answer_key":
+            item["basis"] = "solved"
+            item["child_answer"] = "（未記入）"
+        normalized.append(_normalize_item(item, grading_mode))
+    return normalized
+
+
+def _with_counts(data: dict[str, Any], grading_mode: str = "rich") -> dict[str, Any]:
+    answer_key_present = bool(data.get("answer_key_present"))
+    items = _normalize_items(data.get("items", []), answer_key_present, grading_mode)
+    data["items"] = items
+    data["total"] = len(items)
+    graded = [item for item in items if item.get("result_type") == "graded"]
+    data["graded_count"] = len(graded)
+    data["answer_example_count"] = sum(
+        1 for item in items if item.get("result_type") == "answer_example"
+    )
+    data["unreadable_count"] = sum(1 for item in items if item.get("result_type") == "unreadable")
+    data["correct_count"] = sum(1 for item in graded if item.get("verdict") == "correct")
+    data["incorrect_count"] = sum(1 for item in graded if item.get("verdict") == "incorrect")
+    data["uncertain_count"] = sum(1 for item in graded if item.get("verdict") == "uncertain")
+    if data["graded_count"] == 0 and data["answer_example_count"] > 0:
+        if grading_mode == "simple":
+            data["summary"] = (
+                f"答案は未記入でした。{data['answer_example_count']}問の答えを表示しています。"
+            )
+        else:
+            data["summary"] = (
+                f"答案は未記入でした。{data['answer_example_count']}問の答えと解説を表示しています。"
+            )
+    data["grading_mode"] = grading_mode
+    return data
+
+
+def _loads_json_object(content: str) -> dict[str, Any]:
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        start = content.find("{")
+        end = content.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise
+        return json.loads(content[start : end + 1])
+
+
+def _post_chat_completion(payload: dict[str, Any]) -> dict[str, Any]:
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise GraderError("OPENAI_API_KEY が未設定です。")
+
+    req = request.Request(
+        "https://api.openai.com/v1/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with request.urlopen(req, timeout=OPENAI_API_TIMEOUT_SECONDS) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except error.HTTPError as exc:
+        message = exc.read().decode("utf-8", errors="replace")
+        raise GraderError(f"OpenAI API エラー ({exc.code}): {message}") from exc
+    except error.URLError as exc:
+        raise GraderError(f"OpenAI API に接続できませんでした: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise GraderError(
+            "OpenAI API の応答がタイムアウトしました。画像枚数を減らすか、少し時間を置いて再試行してください。"
+        ) from exc
+
+
+def demo_result(
+    subject_hint: Optional[str] = None,
+    grade_level: Optional[str] = None,
+    grading_mode: str = "rich",
+) -> dict[str, Any]:
+    profile = _grade_profile(grade_level, grading_mode)
+    data = {
+        "demo": True,
+        "subject_detected": subject_hint or "算数",
+        "answer_key_present": False,
+        "summary": f"デモ結果です（APIキー未設定）。採点設定: {profile['label']}。",
+        "grading_profile": profile["label"],
+        "items": [
+                {
+                    "number": "1",
+                    "question": "12 + 8",
+                    "child_answer": "20",
+                    "correct_answer": "20",
+                    "verdict": "correct",
+                    "confidence": "high",
+                    "basis": "solved",
+                    "result_type": "graded",
+                    "comment": "正しく計算できています。",
+                    "explanation": "まず12と8を足す問題です。10と8を足して18、残りの2を足して20になります。",
+                    "child_tip": "10と8を足してから、あと2を足すと楽だよ。",
+                    "diagram_svg": "",
+                },
+                {
+                    "number": "2",
+                    "question": "つるとかめが合わせて8匹、足が22本。つるは何羽？",
+                    "child_answer": "5羽",
+                    "correct_answer": "つる5羽、かめ3匹",
+                    "verdict": "incorrect",
+                    "confidence": "medium",
+                    "basis": "solved",
+                    "result_type": "graded",
+                    "comment": "つるだけ答えて惜しい！かめも数えよう。",
+                    "explanation": "頭が8匹・足が22本の条件を満たす組を探します。つる5・かめ3なら頭8・足22でピッタリ。つるだけ5と答えるとかめの数が抜けます。",
+                    "child_tip": "つるは2本足、かめは4本足。足の合計から考えよう。",
+                    "diagram_svg": "",
+                },
+                {
+                    "number": "3",
+                    "question": "図形の角度問題",
+                    "child_answer": "（未記入）",
+                    "correct_answer": "60°",
+                    "verdict": "uncertain",
+                    "confidence": "low",
+                    "basis": "solved",
+                    "result_type": "answer_example",
+                    "comment": "図を一緒に見てみましょう。",
+                    "explanation": "三角形は3つの角を足すと必ず180°になります。図で分かっている2つの角を足し、180°から引けば残りの角が出ます。",
+                    "child_tip": "三角形の角は、3つ合わせて180度になるよ。",
+                    "diagram_svg": (
+                        '<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">'
+                        '<polygon points="40,200 200,200 120,40" fill="#eff6ff" stroke="#1f2937" stroke-width="2"/>'
+                        '<text x="115" y="215" font-size="14" fill="#1f2937">底辺</text>'
+                        '<text x="30" y="130" font-size="14" fill="#dc2626">60°</text>'
+                        '<text x="175" y="130" font-size="14" fill="#1f2937">?</text>'
+                        '</svg>'
+                    ),
+                },
+            ],
+    }
+    return _with_counts(data, grading_mode)
+
+
+def grade(
+    answer_image: Optional[bytes] = None,
+    answer_media_type: str = "image/jpeg",
+    subject_hint: Optional[str] = None,
+    grade_level: Optional[str] = None,
+    key_image: Optional[bytes] = None,
+    key_media_type: Optional[str] = None,
+    answer_images: Optional[Sequence[tuple[bytes, str]]] = None,
+    grading_mode: str = "rich",
+) -> dict[str, Any]:
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise GraderError("OPENAI_API_KEY が未設定です。")
+
+    mode = grading_mode if grading_mode in VALID_GRADING_MODES else "rich"
+    profile = _grade_profile(grade_level, mode)
+    normalized_answer_images = list(answer_images or [])
+    if not normalized_answer_images and answer_image is not None:
+        normalized_answer_images = [(answer_image, answer_media_type)]
+    if not normalized_answer_images:
+        raise GraderError("採点する答案写真がありません。")
+
+    intro = (
+        "次の画像は、子どもが解いた宿題（問題と子どもの答え）です。"
+        "複数枚ある場合は同じ宿題の続きとして、画像の順番に設問を読み取ってください。"
+        "各設問について、鉛筆・ペンで手書きされた答えが写真に見える場合のみ mode=採点（result_type=graded）で答え合わせする。"
+        "空欄・未記入の場合は mode=答え表示（result_type=answer_example）とし、"
+        "child_answer は必ず「（未記入）」、correct_answer に正解を書く（採点しない）。"
+    )
+    if mode == "simple":
+        intro += SIMPLE_MODE_INSTRUCTION
+    else:
+        intro += (
+            "explanation（ママ向け）・child_tip（子ども向け）・必要なら diagram_svg も書く。"
+        )
+    intro += (
+        "印刷されている選択肢ラベル（ア・イ・ウなど）を子どもの答えと誤認しない。"
+        "問題が読めない場合のみ result_type=unreadable とする。"
+    )
+
+    user_content: list[dict[str, Any]] = [{"type": "text", "text": intro}]
+    for index, (image_bytes, media_type) in enumerate(normalized_answer_images, start=1):
+        user_content.extend(
+            [
+                {"type": "text", "text": f"答案写真 {index} / {len(normalized_answer_images)}"},
+                _image_part(image_bytes, media_type, profile["image_detail"]),
+            ]
+        )
+
+    if key_image is not None:
+        user_content.extend(
+            [
+                {
+                    "type": "text",
+                    "text": "次の画像は、上の問題に対応する解答（正解）です。これを正解の根拠として優先してください。",
+                },
+                _image_part(key_image, key_media_type or "image/jpeg", profile["image_detail"]),
+            ]
+        )
+
+    closing = "設問ごとに採点してください。"
+    if grade_level:
+        closing = f"対象は小学{grade_level}年生です。学年相応の考え方で採点してください。" + closing
+    if subject_hint:
+        closing = f"この宿題の教科は「{subject_hint}」です。" + closing
+    user_content.append({"type": "text", "text": closing})
+
+    resp = _post_chat_completion(
+        {
+            "model": profile["model"],
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_content},
+            ],
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "grading",
+                    "schema": OUTPUT_SCHEMA,
+                    "strict": True,
+                },
+            },
+            "max_completion_tokens": profile["max_output_tokens"],
+        }
+    )
+
+    choice = resp.get("choices", [{}])[0]
+    if choice.get("finish_reason") == "length":
+        raise GraderError(
+            "問題数が多く、AIの返答が途中で切れました。写真を1ページずつ、または範囲を絞って撮り直してください。"
+        )
+
+    content = choice.get("message", {}).get("content")
+    if not content:
+        raise GraderError("OpenAI API から空の結果が返りました。")
+
+    try:
+        data = _loads_json_object(content)
+    except json.JSONDecodeError as exc:
+        raise GraderError("OpenAI API の結果を JSON として読めませんでした。") from exc
+
+    data["answer_key_present"] = key_image is not None
+    data["grading_profile"] = profile["label"]
+    return _with_counts(data, mode)
