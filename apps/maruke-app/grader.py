@@ -8,8 +8,9 @@ from urllib import error, request
 OPENAI_FAST_MODEL = os.getenv("OPENAI_FAST_MODEL", "gpt-4o-mini")
 OPENAI_PRECISE_MODEL = os.getenv("OPENAI_PRECISE_MODEL", "gpt-4o")
 OPENAI_OCR_MODEL = os.getenv("OPENAI_OCR_MODEL", OPENAI_PRECISE_MODEL)
-OPENAI_API_TIMEOUT_SECONDS = int(os.getenv("OPENAI_API_TIMEOUT_SECONDS", "120"))
-SPLIT_TWO_STAGE = os.getenv("MARUKE_SPLIT_TWO_STAGE", "1").strip() not in {"0", "false", "no"}
+OPENAI_API_TIMEOUT_SECONDS = int(os.getenv("OPENAI_API_TIMEOUT_SECONDS", "180"))
+# 0=ChatGPT同型の1pass（推奨） / 1=OCR分割の2段階（実験）
+SPLIT_TWO_STAGE = os.getenv("MARUKE_SPLIT_TWO_STAGE", "0").strip().lower() in {"1", "true", "yes"}
 
 VALID_GRADING_MODES = {"simple", "rich"}
 
@@ -46,6 +47,11 @@ SYSTEM_PROMPT = """あなたは中学受験生の家庭学習を支える、丁�
 13. 子どもの手書き数字・分数・単位は画像をよく見て読む。480 と 32、0.08 と 0.18 など似た桁を取り違えない。読み取りに自信がなければ uncertain。
 14. 問題文を要約するとき、与えられた数字・記号を落とさない（例: 並べ替え問題では使える数字をすべて使う）。
 15. correct_answer と explanation の数値は必ず一致させる。矛盾したら confidence=low、verdict=uncertain。
+16. 【算数プリントの読み取り】
+    - 除法の筆算（0.4）83.6 など）は「83.6÷0.4」であり掛け算ではない。
+    - 「8/15 分」「15分の8分」= 8/15 分（時間）。「8分の15」「15/8 分」と読み替えない。
+    - 帯分数は「3と1/3」「4と2/9」の表記を維持。LaTeX は使わずプレーンテキスト。
+    - question には印刷された問題文を要約せず書き写す（数字・記号を落とさない）。
 
 【モードの区別（result_type）】
 - 子どもの手書きの答えがあり、それと正解を比較した: result_type="graded"
@@ -57,7 +63,7 @@ SYSTEM_PROMPT = """あなたは中学受験生の家庭学習を支える、丁�
 - 子どもが空欄の設問は child_answer="（未記入）" とし、問題文が読める限り correct_answer にAIが作った正答例を書く。
 - correct_answer は、保護者がそのまま見て使える答えだけを簡潔に書く。説明は comment に分ける。
 - 問題文そのものが読めない場合だけ、correct_answer="画像確認が必要"、basis="unknown"、verdict="uncertain" とする。
-- question は設問を短く要約する。全文を書き写さない。
+- question は設問の内容を正確に書く。問題プリント＋答案ノート分割時は印刷を書き写し、1枚撮影時は短く要約してよい。
 - comment は採点時の短い一言（20文字前後）。正解のお褒め・惜しい点のヒント。
 - explanation は「ママ向け解説」。採点する保護者が自分の頭で理解し、子に教えるための手順書。
   専門用語は使うなら平易に補足。3〜5文。「まず〇〇→次に△△→だから答えは××」の流れで書く。
@@ -746,12 +752,13 @@ def _build_user_content(
     split_mode = bool(normalized_problem_images)
     if split_mode:
         intro = (
-            "【問題プリントと答案ノートが別】"
-            "まず「問題プリント」から各設問の問題文・図・選択肢を読み取る。"
-            "次に「答案ノート」から同じ設問番号 (1)(2)… の子どもの手書き答えを読み取る。"
-            "問題プリントの空欄□だけを見て未記入と決めつけない。答案ノートに手書きがあれば採点する。"
-            "設問番号で対応づけられない場合は verdict=uncertain。"
-            "答案ノートでは赤丸・最終行の数字を最終答えとして優先する。"
+            "【1枚目＝問題プリント、2枚目以降＝答案ノート】"
+            " ChatGPT に「1枚目は問題、2枚目は回答、答え合わせして」と依頼するのと同じ作業です。"
+            " 問題プリントと答案ノートを見比べ、(1)(2)… ごとに採点してください。"
+            " 問題文は印刷をそのまま question に写す（×と÷を入れ替えない）。"
+            " 空欄□だけ見て未記入と決めない。答案ノートに (1) の手書きがあれば採点する。"
+            " 答案ノートの赤丸・最終行の数字を child_answer にする（途中式は含めない）。"
+            " 480と32、0.85と0.18、314と31.4 のような桁取り違えに注意。"
         )
     else:
         intro = (
@@ -861,6 +868,13 @@ def grade(
             key_media_type=key_media_type,
         )
 
+    # 分割モードは ChatGPT 同型の 1pass + 精密モデル固定
+    if normalized_problem_images:
+        profile = dict(profile)
+        profile["model"] = OPENAI_PRECISE_MODEL
+        profile["image_detail"] = "high"
+        profile["label"] = profile.get("label", "") + "・分割1pass"
+
     user_content = _build_user_content(
         profile=profile,
         mode=mode,
@@ -909,7 +923,7 @@ def grade(
     data["answer_key_present"] = key_image is not None
     data["grading_profile"] = profile["label"]
     data["layout_mode"] = "split" if normalized_problem_images else "combined"
-    data["grading_strategy"] = "single_pass"
+    data["grading_strategy"] = "split_unified" if normalized_problem_images else "single_pass"
     result = _with_counts(data, mode)
     logger.info(
         "grade done strategy=single_pass layout=%s items=%d correct=%d incorrect=%d",

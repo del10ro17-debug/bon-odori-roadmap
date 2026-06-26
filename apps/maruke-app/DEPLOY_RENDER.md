@@ -19,6 +19,8 @@ Fly より手軽。**クレカ不要**で固定 URL がもらえます。
 4. `render.yaml` が検出される → **Apply**
 5. 環境変数を設定:
    - `OPENAI_API_KEY` = あなたのキー
+   - `OPENAI_PRECISE_MODEL` = `gpt-4o`（可能なら `gpt-5.5` 等。未設定だと精度が ChatGPT アプリより落ちる）
+   - `OPENAI_API_TIMEOUT_SECONDS` = `180`
    - `BETA_INVITE_CODE` = 友達用合言葉（任意）
 6. デプロイ完了後、表示される URL を友達に共有
 

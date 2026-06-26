@@ -504,6 +504,7 @@ function render(d) {
   const summaryParts = [];
   if (d.subject_detected) summaryParts.push("教科: " + d.subject_detected);
   if (d.grading_profile) summaryParts.push("採点設定: " + d.grading_profile);
+  if (d.grading_strategy) summaryParts.push("方式: " + d.grading_strategy);
   if (d.grading_mode === "simple") summaryParts.push("モード: 答えだけ");
   else if (d.grading_mode === "rich") summaryParts.push("モード: 解説リッチ");
   if (graded > 0) summaryParts.push("答え合わせ " + graded + "問");

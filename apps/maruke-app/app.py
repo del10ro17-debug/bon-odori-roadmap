@@ -48,6 +48,12 @@ async def api_health():
         "ok": True,
         "live_grading": bool(os.environ.get("OPENAI_API_KEY")),
         "invite_required": bool(BETA_INVITE_CODE),
+        "models": {
+            "fast": grader.OPENAI_FAST_MODEL,
+            "precise": grader.OPENAI_PRECISE_MODEL,
+            "ocr": grader.OPENAI_OCR_MODEL,
+        },
+        "split_two_stage": grader.SPLIT_TWO_STAGE,
     }
 
 
