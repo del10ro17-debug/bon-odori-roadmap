@@ -5,8 +5,8 @@ import os
 from typing import Any, Optional, Sequence
 from urllib import error, request
 
-OPENAI_FAST_MODEL = os.getenv("OPENAI_FAST_MODEL", "gpt-4o-mini")
-OPENAI_PRECISE_MODEL = os.getenv("OPENAI_PRECISE_MODEL", "gpt-4o")
+OPENAI_FAST_MODEL = os.getenv("OPENAI_FAST_MODEL", "gpt-5.4-mini")
+OPENAI_PRECISE_MODEL = os.getenv("OPENAI_PRECISE_MODEL", "gpt-5.5")
 OPENAI_OCR_MODEL = os.getenv("OPENAI_OCR_MODEL", OPENAI_PRECISE_MODEL)
 OPENAI_API_TIMEOUT_SECONDS = int(os.getenv("OPENAI_API_TIMEOUT_SECONDS", "180"))
 # 0=ChatGPT同型の1pass（推奨） / 1=OCR分割の2段階（実験）

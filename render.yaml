@@ -9,6 +9,14 @@ services:
     envVars:
       - key: OPENAI_API_KEY
         sync: false
+      - key: OPENAI_PRECISE_MODEL
+        value: gpt-5.5
+      - key: OPENAI_FAST_MODEL
+        value: gpt-5.4-mini
+      - key: OPENAI_API_TIMEOUT_SECONDS
+        value: "180"
+      - key: MARUKE_SPLIT_TWO_STAGE
+        value: "0"
       - key: BETA_INVITE_CODE
         sync: false
         optional: true
