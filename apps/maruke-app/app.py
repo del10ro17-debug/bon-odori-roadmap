@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 import grader
+from image_prep import normalize_image
 
 load_dotenv()
 
@@ -89,7 +90,8 @@ async def _read_uploads(
         media_type = upload.content_type or "image/jpeg"
         if media_type not in ALLOWED_TYPES:
             media_type = "image/jpeg"
-        images.append((raw, media_type))
+        normalized, media_type = normalize_image(raw, media_type)
+        images.append((normalized, media_type))
     return images, None
 
 

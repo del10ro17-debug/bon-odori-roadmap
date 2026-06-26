@@ -158,6 +158,7 @@
         <span class="big">📄</span><span>問題ページを撮る / 選ぶ</span>
       </label>
       <input type="file" id="fileProb" accept="image/*" multiple />
+      <p class="hint" style="text-align:left;margin-top:8px">文字が横になるよう撮影。暗い・斜め・小さすぎると読み取りミスが出ます。</p>
     </div>
     <label class="field" id="ansFieldLabel">子どもの答案（問題＋答え）を撮影</label>
     <label class="shot" id="shotAns" for="fileAns">
@@ -510,6 +511,26 @@ function render(d) {
   if (d.summary) summaryParts.push(d.summary);
   if (summaryParts.length)
     card.append(el("p", { class: "summary", text: summaryParts.join(" / ") }));
+
+  if (d.ocr_preview) {
+    const det = el("details", { class: "keyrow", style: "margin:12px 4px 0" });
+    det.append(el("summary", { text: "🔍 AIが読み取った問題文・答え（確認用）" }));
+    const pre = el("pre", {
+      style: "font-size:11px;white-space:pre-wrap;word-break:break-word;background:#f3f4f6;padding:10px;border-radius:10px;line-height:1.5",
+    });
+    const lines = [];
+    (d.ocr_preview.problems || []).forEach(p => {
+      lines.push(`(${p.number}) ${p.question}${p.read_confidence && p.read_confidence !== "high" ? " [読取:" + p.read_confidence + "]" : ""}`);
+    });
+    lines.push("---");
+    (d.ocr_preview.answers || []).forEach(a => {
+      lines.push(`(${a.number}) 子の答え: ${a.child_answer}${a.read_confidence && a.read_confidence !== "high" ? " [読取:" + a.read_confidence + "]" : ""}`);
+    });
+    pre.textContent = lines.join("\n");
+    det.append(pre);
+    card.append(det);
+  }
+
   (d.items || []).forEach(it => card.append(itemRow(it)));
   r.append(card);
   r.scrollIntoView({ behavior: "smooth", block: "start" });

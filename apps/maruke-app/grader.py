@@ -7,6 +7,7 @@ from urllib import error, request
 
 OPENAI_FAST_MODEL = os.getenv("OPENAI_FAST_MODEL", "gpt-4o-mini")
 OPENAI_PRECISE_MODEL = os.getenv("OPENAI_PRECISE_MODEL", "gpt-4o")
+OPENAI_OCR_MODEL = os.getenv("OPENAI_OCR_MODEL", OPENAI_PRECISE_MODEL)
 OPENAI_API_TIMEOUT_SECONDS = int(os.getenv("OPENAI_API_TIMEOUT_SECONDS", "120"))
 SPLIT_TWO_STAGE = os.getenv("MARUKE_SPLIT_TWO_STAGE", "1").strip() not in {"0", "false", "no"}
 
@@ -147,8 +148,12 @@ PROBLEM_EXTRACT_SCHEMA: dict[str, Any] = {
                 "properties": {
                     "number": {"type": "string"},
                     "question": {"type": "string"},
+                    "read_confidence": {
+                        "type": "string",
+                        "enum": ["high", "medium", "low"],
+                    },
                 },
-                "required": ["number", "question"],
+                "required": ["number", "question", "read_confidence"],
                 "additionalProperties": False,
             },
         },
@@ -156,6 +161,20 @@ PROBLEM_EXTRACT_SCHEMA: dict[str, Any] = {
     "required": ["subject_detected", "items"],
     "additionalProperties": False,
 }
+
+PROBLEM_OCR_SYSTEM = """あなたは中学受験プリントの OCR 専門家です。画像に写っている印刷文字だけを正確に書き写します。
+
+【絶対ルール】
+1. 要約・言い換え・解釈は禁止。印刷されている文言をそのまま question に写す。
+2. 数字・記号・単位・分数・帯分数・小数・選択肢（ア・イ・ウ）は1文字も変えない。
+3. 画像に無い問題を作らない。見えない設問は出力しない。
+4. 空欄□は「□」のまま残す。空欄に子の手書きがあっても無視（問題プリントには答えは通常ない）。
+5. 2段組・2列レイアウトは左列の上から下、次に右列の上から下の順で (1)(2)… を付ける。
+6. 縦書き国語は右→左、上→下。算数の筆算・除法の縦書き形式もそのまま写す。
+7. 長文は省略しない。1設問 = items の1要素。
+8. 読み取りに自信がなければ read_confidence=low。推測で埋めない。
+
+Output JSON only."""
 
 ANSWER_EXTRACT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -445,9 +464,10 @@ def _extract_problems(
     grade_level: Optional[str],
 ) -> dict[str, Any]:
     intro = (
-        "問題プリントから設問を読み取るだけ。採点・解答はしない。"
-        "印刷された問題文・数式・選択肢を (1)(2)… の番号ごとに question に書く。"
-        "空欄□に手書きがなくても問題文は読む。子どもの答えは書かない。"
+        "【問題プリント OCR】"
+        " (1)(2)… の設問番号ごとに、印刷された問題文を verbatim（そのまま）で question に書く。"
+        " 見開き・2列でも全設問を漏らさない。"
+        " 採点・解答・要約はしない。"
     )
     if subject_hint:
         intro = f"教科: {subject_hint}。" + intro
@@ -457,16 +477,43 @@ def _extract_problems(
         intro,
         problem_images,
         label="【問題プリント】",
-        image_detail=profile["image_detail"],
+        image_detail="high",
     )
-    return _chat_json_schema(
-        model=profile["model"],
-        system="You extract printed homework problems from images. Output JSON only.",
+    ocr_model = OPENAI_OCR_MODEL
+    first = _chat_json_schema(
+        model=ocr_model,
+        system=PROBLEM_OCR_SYSTEM,
         user_content=content,
         schema=PROBLEM_EXTRACT_SCHEMA,
         schema_name="problem_extract",
-        max_tokens=min(profile["max_output_tokens"], 4000),
+        max_tokens=8000,
     )
+    verify_intro = (
+        "前回の OCR 結果を画像と照合し、誤字・脱落・要約ミスを修正した完全版を返す。"
+        " 数字や記号の取り違えがあれば必ず直す。画像に無い設問は削除。"
+        f"\n\n【前回 OCR】\n{json.dumps(first, ensure_ascii=False)}"
+    )
+    verify_content = _images_user_content(
+        verify_intro,
+        problem_images,
+        label="【問題プリント・再確認】",
+        image_detail="high",
+    )
+    verified = _chat_json_schema(
+        model=ocr_model,
+        system=PROBLEM_OCR_SYSTEM,
+        user_content=verify_content,
+        schema=PROBLEM_EXTRACT_SCHEMA,
+        schema_name="problem_extract_verify",
+        max_tokens=8000,
+    )
+    logger.info(
+        "problem OCR model=%s pass1=%d pass2=%d items",
+        ocr_model,
+        len(first.get("items", [])),
+        len(verified.get("items", [])),
+    )
+    return verified
 
 
 def _extract_answers(
@@ -518,6 +565,8 @@ def _grade_from_extracts(
         "以下は問題プリントと答案ノートから OCR した JSON です。"
         "設問番号で対応づけ、採点結果 JSON を出力する。"
         "answers の read_confidence=low の設問は verdict=uncertain を優先。"
+        "problems の read_confidence=low の設問も verdict=uncertain を優先。"
+        "question フィールドは problems の question をそのまま使う（短く書き換えない）。"
         "child_answer は answers の値をそのまま使う（書き換えない）。"
         f"\n\n{json.dumps(payload, ensure_ascii=False)}"
     )
@@ -598,7 +647,22 @@ def _grade_split_two_stage(
         key_media_type=key_media_type,
     )
     data["grading_strategy"] = "split_two_stage"
-    return data
+    data["grading_profile"] = profile["label"] + "・2段階"
+    data["layout_mode"] = "split"
+    result = _with_counts(data, mode)
+    if os.getenv("MARUKE_INCLUDE_OCR_PREVIEW", "1").strip().lower() not in {"0", "false", "no"}:
+        result["ocr_preview"] = {
+            "problems": problems.get("items", []),
+            "answers": answers.get("items", []),
+        }
+    logger.info(
+        "grade done strategy=split_two_stage items=%d correct=%d incorrect=%d uncertain=%d",
+        result.get("total", 0),
+        result.get("correct_count", 0),
+        result.get("incorrect_count", 0),
+        result.get("uncertain_count", 0),
+    )
+    return result
 
 
 def demo_result(
@@ -786,7 +850,7 @@ def grade(
         raise GraderError("答案ノートの写真を1枚以上選んでください。")
 
     if normalized_problem_images and SPLIT_TWO_STAGE:
-        data = _grade_split_two_stage(
+        return _grade_split_two_stage(
             normalized_problem_images=normalized_problem_images,
             normalized_answer_images=normalized_answer_images,
             profile=profile,
@@ -796,17 +860,6 @@ def grade(
             key_image=key_image,
             key_media_type=key_media_type,
         )
-        data["grading_profile"] = profile["label"] + "・2段階"
-        data["layout_mode"] = "split"
-        result = _with_counts(data, mode)
-        logger.info(
-            "grade done strategy=split_two_stage items=%d correct=%d incorrect=%d uncertain=%d",
-            result.get("total", 0),
-            result.get("correct_count", 0),
-            result.get("incorrect_count", 0),
-            result.get("uncertain_count", 0),
-        )
-        return result
 
     user_content = _build_user_content(
         profile=profile,
