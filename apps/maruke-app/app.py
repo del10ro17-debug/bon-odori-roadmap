@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -18,6 +19,12 @@ from fastapi.staticfiles import StaticFiles
 import grader
 
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger("maruke.app")
 
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
@@ -161,6 +168,15 @@ async def api_grade(
         )
 
     try:
+        logger.info(
+            "grade request layout=%s mode=%s grade=%s problems=%d answers=%d key=%s",
+            layout,
+            mode,
+            normalized_grade or "-",
+            len(problem_image_data),
+            len(answer_images),
+            bool(key_bytes),
+        )
         result = grader.grade(
             answer_images=answer_images,
             problem_images=problem_image_data or None,
@@ -171,8 +187,16 @@ async def api_grade(
             grading_mode=mode,
         )
     except grader.GraderError as e:
+        logger.warning("grade failed: %s", e)
         return JSONResponse({"error": str(e)}, status_code=502)
 
+    logger.info(
+        "grade ok strategy=%s items=%d correct=%d incorrect=%d",
+        result.get("grading_strategy", "?"),
+        result.get("total", 0),
+        result.get("correct_count", 0),
+        result.get("incorrect_count", 0),
+    )
     return result
 
 

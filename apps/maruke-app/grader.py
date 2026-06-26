@@ -1,14 +1,18 @@
 import base64
 import json
+import logging
 import os
 from typing import Any, Optional, Sequence
 from urllib import error, request
 
 OPENAI_FAST_MODEL = os.getenv("OPENAI_FAST_MODEL", "gpt-4o-mini")
 OPENAI_PRECISE_MODEL = os.getenv("OPENAI_PRECISE_MODEL", "gpt-4o")
-OPENAI_API_TIMEOUT_SECONDS = int(os.getenv("OPENAI_API_TIMEOUT_SECONDS", "90"))
+OPENAI_API_TIMEOUT_SECONDS = int(os.getenv("OPENAI_API_TIMEOUT_SECONDS", "120"))
+SPLIT_TWO_STAGE = os.getenv("MARUKE_SPLIT_TWO_STAGE", "1").strip() not in {"0", "false", "no"}
 
 VALID_GRADING_MODES = {"simple", "rich"}
+
+logger = logging.getLogger("maruke.grader")
 
 
 class GraderError(Exception):
@@ -129,6 +133,51 @@ OUTPUT_SCHEMA: dict[str, Any] = {
         },
     },
     "required": ["subject_detected", "answer_key_present", "summary", "items"],
+    "additionalProperties": False,
+}
+
+PROBLEM_EXTRACT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "subject_detected": {"type": "string"},
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "number": {"type": "string"},
+                    "question": {"type": "string"},
+                },
+                "required": ["number", "question"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["subject_detected", "items"],
+    "additionalProperties": False,
+}
+
+ANSWER_EXTRACT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "number": {"type": "string"},
+                    "child_answer": {"type": "string"},
+                    "read_confidence": {
+                        "type": "string",
+                        "enum": ["high", "medium", "low"],
+                    },
+                },
+                "required": ["number", "child_answer", "read_confidence"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["items"],
     "additionalProperties": False,
 }
 
@@ -290,17 +339,6 @@ def _with_counts(data: dict[str, Any], grading_mode: str = "rich") -> dict[str, 
     return data
 
 
-def _loads_json_object(content: str) -> dict[str, Any]:
-    try:
-        return json.loads(content)
-    except json.JSONDecodeError:
-        start = content.find("{")
-        end = content.rfind("}")
-        if start == -1 or end == -1 or end <= start:
-            raise
-        return json.loads(content[start : end + 1])
-
-
 def _post_chat_completion(payload: dict[str, Any]) -> dict[str, Any]:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
@@ -327,6 +365,240 @@ def _post_chat_completion(payload: dict[str, Any]) -> dict[str, Any]:
         raise GraderError(
             "OpenAI API の応答がタイムアウトしました。画像枚数を減らすか、少し時間を置いて再試行してください。"
         ) from exc
+
+
+def _loads_json_object(content: str) -> dict[str, Any]:
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        start = content.find("{")
+        end = content.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise
+        return json.loads(content[start : end + 1])
+
+
+def _chat_json_schema(
+    *,
+    model: str,
+    system: str,
+    user_content: list[dict[str, Any]] | str,
+    schema: dict[str, Any],
+    schema_name: str,
+    max_tokens: int,
+) -> dict[str, Any]:
+    messages: list[dict[str, Any]] = [{"role": "system", "content": system}]
+    if isinstance(user_content, str):
+        messages.append({"role": "user", "content": user_content})
+    else:
+        messages.append({"role": "user", "content": user_content})
+
+    resp = _post_chat_completion(
+        {
+            "model": model,
+            "messages": messages,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": schema_name,
+                    "schema": schema,
+                    "strict": True,
+                },
+            },
+            "max_completion_tokens": max_tokens,
+        }
+    )
+    choice = resp.get("choices", [{}])[0]
+    if choice.get("finish_reason") == "length":
+        raise GraderError("AIの返答が途中で切れました。写真枚数を減らして再試行してください。")
+    content = choice.get("message", {}).get("content")
+    if not content:
+        raise GraderError("OpenAI API から空の結果が返りました。")
+    try:
+        return _loads_json_object(content)
+    except json.JSONDecodeError as exc:
+        raise GraderError("OpenAI API の結果を JSON として読めませんでした。") from exc
+
+
+def _images_user_content(
+    intro: str,
+    images: Sequence[tuple[bytes, str]],
+    *,
+    label: str,
+    image_detail: str,
+) -> list[dict[str, Any]]:
+    content: list[dict[str, Any]] = [{"type": "text", "text": intro}]
+    for index, (image_bytes, media_type) in enumerate(images, start=1):
+        content.extend(
+            [
+                {"type": "text", "text": f"{label} {index} / {len(images)}"},
+                _image_part(image_bytes, media_type, image_detail),
+            ]
+        )
+    return content
+
+
+def _extract_problems(
+    problem_images: Sequence[tuple[bytes, str]],
+    profile: dict[str, Any],
+    subject_hint: Optional[str],
+    grade_level: Optional[str],
+) -> dict[str, Any]:
+    intro = (
+        "問題プリントから設問を読み取るだけ。採点・解答はしない。"
+        "印刷された問題文・数式・選択肢を (1)(2)… の番号ごとに question に書く。"
+        "空欄□に手書きがなくても問題文は読む。子どもの答えは書かない。"
+    )
+    if subject_hint:
+        intro = f"教科: {subject_hint}。" + intro
+    if grade_level:
+        intro = f"小学{grade_level}年。" + intro
+    content = _images_user_content(
+        intro,
+        problem_images,
+        label="【問題プリント】",
+        image_detail=profile["image_detail"],
+    )
+    return _chat_json_schema(
+        model=profile["model"],
+        system="You extract printed homework problems from images. Output JSON only.",
+        user_content=content,
+        schema=PROBLEM_EXTRACT_SCHEMA,
+        schema_name="problem_extract",
+        max_tokens=min(profile["max_output_tokens"], 4000),
+    )
+
+
+def _extract_answers(
+    answer_images: Sequence[tuple[bytes, str]],
+    profile: dict[str, Any],
+    grade_level: Optional[str],
+) -> dict[str, Any]:
+    intro = (
+        "答案ノートから子どもの手書き答えだけを読み取る。問題文は書かない。"
+        "各マス・各設問の (1)(2)… 番号に対応づけ、最終答えを child_answer に書く。"
+        "赤丸・下線・二重線で囲った数字を最終答えとして優先。途中式は無視。"
+        "手書きがなければ child_answer=\"（未記入）\"。"
+        "480と32、0.84と0.08など桁を取り違えない。自信がなければ read_confidence=low。"
+    )
+    if grade_level:
+        intro = f"小学{grade_level}年の答案。" + intro
+    content = _images_user_content(
+        intro,
+        answer_images,
+        label="【答案ノート】",
+        image_detail=profile["image_detail"],
+    )
+    return _chat_json_schema(
+        model=profile["model"],
+        system="You read handwritten student answers from notebook photos. Output JSON only.",
+        user_content=content,
+        schema=ANSWER_EXTRACT_SCHEMA,
+        schema_name="answer_extract",
+        max_tokens=min(profile["max_output_tokens"], 4000),
+    )
+
+
+def _grade_from_extracts(
+    *,
+    problems: dict[str, Any],
+    answers: dict[str, Any],
+    profile: dict[str, Any],
+    mode: str,
+    grade_level: Optional[str],
+    subject_hint: Optional[str],
+    key_image: Optional[bytes],
+    key_media_type: Optional[str],
+) -> dict[str, Any]:
+    payload = {
+        "problems": problems.get("items", []),
+        "answers": answers.get("items", []),
+    }
+    intro = (
+        "以下は問題プリントと答案ノートから OCR した JSON です。"
+        "設問番号で対応づけ、採点結果 JSON を出力する。"
+        "answers の read_confidence=low の設問は verdict=uncertain を優先。"
+        "child_answer は answers の値をそのまま使う（書き換えない）。"
+        f"\n\n{json.dumps(payload, ensure_ascii=False)}"
+    )
+    if mode == "simple":
+        intro += SIMPLE_MODE_INSTRUCTION
+
+    user_content: list[dict[str, Any]] = [{"type": "text", "text": intro}]
+    if key_image is not None:
+        user_content.extend(
+            [
+                {
+                    "type": "text",
+                    "text": "次の画像は公式解答ページ。正解はここを最優先（basis=answer_key）。",
+                },
+                _image_part(key_image, key_media_type or "image/jpeg", profile["image_detail"]),
+            ]
+        )
+
+    closing = "設問ごとに採点してください。"
+    if grade_level:
+        closing = f"対象は小学{grade_level}年生です。" + closing
+    if subject_hint:
+        closing = f"教科は「{subject_hint}」です。" + closing
+    user_content.append({"type": "text", "text": closing})
+
+    data = _chat_json_schema(
+        model=profile["model"],
+        system=SYSTEM_PROMPT,
+        user_content=user_content,
+        schema=OUTPUT_SCHEMA,
+        schema_name="grading",
+        max_tokens=profile["max_output_tokens"],
+    )
+    data["answer_key_present"] = key_image is not None
+    if not data.get("subject_detected"):
+        data["subject_detected"] = problems.get("subject_detected") or subject_hint or ""
+    return data
+
+
+def _grade_split_two_stage(
+    *,
+    normalized_problem_images: Sequence[tuple[bytes, str]],
+    normalized_answer_images: Sequence[tuple[bytes, str]],
+    profile: dict[str, Any],
+    mode: str,
+    grade_level: Optional[str],
+    subject_hint: Optional[str],
+    key_image: Optional[bytes],
+    key_media_type: Optional[str],
+) -> dict[str, Any]:
+    logger.info(
+        "split two-stage start model=%s problems=%d answers=%d",
+        profile["model"],
+        len(normalized_problem_images),
+        len(normalized_answer_images),
+    )
+    problems = _extract_problems(
+        normalized_problem_images, profile, subject_hint, grade_level
+    )
+    answers = _extract_answers(normalized_answer_images, profile, grade_level)
+    logger.info(
+        "split extract done problems=%d answers=%d",
+        len(problems.get("items", [])),
+        len(answers.get("items", [])),
+    )
+    if os.getenv("MARUKE_DEBUG_EXTRACT") == "1":
+        logger.info("extract problems=%s", json.dumps(problems, ensure_ascii=False)[:2000])
+        logger.info("extract answers=%s", json.dumps(answers, ensure_ascii=False)[:2000])
+
+    data = _grade_from_extracts(
+        problems=problems,
+        answers=answers,
+        profile=profile,
+        mode=mode,
+        grade_level=grade_level,
+        subject_hint=subject_hint,
+        key_image=key_image,
+        key_media_type=key_media_type,
+    )
+    data["grading_strategy"] = "split_two_stage"
+    return data
 
 
 def demo_result(
@@ -513,6 +785,29 @@ def grade(
     if normalized_problem_images and not normalized_answer_images:
         raise GraderError("答案ノートの写真を1枚以上選んでください。")
 
+    if normalized_problem_images and SPLIT_TWO_STAGE:
+        data = _grade_split_two_stage(
+            normalized_problem_images=normalized_problem_images,
+            normalized_answer_images=normalized_answer_images,
+            profile=profile,
+            mode=mode,
+            grade_level=grade_level,
+            subject_hint=subject_hint,
+            key_image=key_image,
+            key_media_type=key_media_type,
+        )
+        data["grading_profile"] = profile["label"] + "・2段階"
+        data["layout_mode"] = "split"
+        result = _with_counts(data, mode)
+        logger.info(
+            "grade done strategy=split_two_stage items=%d correct=%d incorrect=%d uncertain=%d",
+            result.get("total", 0),
+            result.get("correct_count", 0),
+            result.get("incorrect_count", 0),
+            result.get("uncertain_count", 0),
+        )
+        return result
+
     user_content = _build_user_content(
         profile=profile,
         mode=mode,
@@ -561,4 +856,13 @@ def grade(
     data["answer_key_present"] = key_image is not None
     data["grading_profile"] = profile["label"]
     data["layout_mode"] = "split" if normalized_problem_images else "combined"
-    return _with_counts(data, mode)
+    data["grading_strategy"] = "single_pass"
+    result = _with_counts(data, mode)
+    logger.info(
+        "grade done strategy=single_pass layout=%s items=%d correct=%d incorrect=%d",
+        data["layout_mode"],
+        result.get("total", 0),
+        result.get("correct_count", 0),
+        result.get("incorrect_count", 0),
+    )
+    return result
