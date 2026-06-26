@@ -144,7 +144,22 @@
     <p class="hint" id="modeHint" style="text-align:left;margin-top:8px">解説・図・ママ向け解説つき（時間・料金多め）</p>
 
     <div style="height:14px"></div>
-    <label class="field">子どもの答案（問題＋答え）を撮影</label>
+    <label class="field">撮影パターン</label>
+    <div class="chips" id="layouts">
+      <button data-l="combined">1枚に<br><small style="font-weight:400;font-size:10px">問題＋答え</small></button>
+      <button data-l="split">別々<br><small style="font-weight:400;font-size:10px">プリント＋ノート</small></button>
+    </div>
+    <p class="hint" id="layoutHint" style="text-align:left;margin-top:8px">問題と答えが同じ用紙・同じ写真に写っている場合</p>
+
+    <div style="height:14px"></div>
+    <div id="splitProblemBlock" hidden>
+      <label class="field">問題プリント（テキスト・空欄のみのページ）</label>
+      <label class="shot" id="shotProb" for="fileProb">
+        <span class="big">📄</span><span>問題ページを撮る / 選ぶ</span>
+      </label>
+      <input type="file" id="fileProb" accept="image/*" multiple />
+    </div>
+    <label class="field" id="ansFieldLabel">子どもの答案（問題＋答え）を撮影</label>
     <label class="shot" id="shotAns" for="fileAns">
       <span class="big">📸</span><span>カメラで撮る / 写真を選ぶ（複数可）</span>
     </label>
@@ -169,7 +184,7 @@
 
     <div style="height:14px"></div>
     <button class="go" id="go" disabled>答え合わせする</button>
-    <p class="hint">🟡＝AIが自信なし。保護者がご確認ください。<br>国語の見開き・縦書きは時間がかかります。問題ページだけの撮影がおすすめです。</p>
+    <p class="hint">🟡＝AIが自信なし。保護者がご確認ください。<br>塾で「問題はテキスト・答えはノート」の場合は「別々」を選んでください。</p>
     <p class="status" id="apiStatus"></p>
     <div class="err" id="err" hidden></div>
   </div>
@@ -178,11 +193,15 @@
 </main>
 
 <script>
-const state = { subject: "", grade: "", mode: "rich", ans: null, key: null };
+const state = { subject: "", grade: "", mode: "rich", layout: "combined", ans: null, prob: null, key: null };
 
 const MODE_HINTS = {
   simple: "○×と正解だけ。毎日サクッと丸つけ向け（原価・時間とも軽め）",
   rich: "ママ向け解説・子どもヒント・図形の図つき。わからない問題向け",
+};
+const LAYOUT_HINTS = {
+  combined: "問題と答えが同じ用紙・同じ写真に写っている場合",
+  split: "問題はテキスト、答えはノートに書く塾向け。問題プリントと答案ノートをそれぞれ撮影",
 };
 
 function el(tag, props, ...kids) {
@@ -219,7 +238,33 @@ document.getElementById("modes").addEventListener("click", (e) => {
 document.querySelectorAll("#grades button").forEach(b => b.classList.remove("on"));
 document.querySelector("#grades button[data-g='5']").classList.add("on");
 document.querySelector("#modes button[data-m='rich']").classList.add("on");
+document.querySelector("#layouts button[data-l='combined']").classList.add("on");
 state.grade = "5";
+
+function updateLayoutUi() {
+  const split = state.layout === "split";
+  document.getElementById("splitProblemBlock").hidden = !split;
+  document.getElementById("ansFieldLabel").textContent = split
+    ? "答案ノート（計算・答えを書いたページ）"
+    : "子どもの答案（問題＋答え）を撮影";
+  document.getElementById("layoutHint").textContent = LAYOUT_HINTS[state.layout] || "";
+  document.getElementById("go").disabled = !canSubmit();
+}
+
+function canSubmit() {
+  if (!state.ans) return false;
+  if (state.layout === "split" && !state.prob) return false;
+  return true;
+}
+
+document.getElementById("layouts").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  [...document.getElementById("layouts").children].forEach(x => x.classList.remove("on"));
+  b.classList.add("on");
+  state.layout = b.dataset.l || "combined";
+  updateLayoutUi();
+});
+updateLayoutUi();
 
 function toJpeg(file, maxEdge = 2000) {
   return new Promise((resolve, reject) => {
@@ -259,10 +304,12 @@ function wireShot(inputId, shotId, slot) {
         const spreadWarn = document.getElementById("spreadWarn");
         spreadWarn.hidden = !(img.width > 0 && img.width / img.height > 1.25);
       }
-      state[slot] = slot === "ans" ? converted.map(item => item.blob) : converted[0].blob;
+      state[slot] = (slot === "ans" || slot === "prob")
+        ? converted.map(item => item.blob)
+        : converted[0].blob;
       shot.classList.add("has");
       clear(shot);
-      if (slot === "ans" && converted.length > 1) {
+      if ((slot === "ans" || slot === "prob") && converted.length > 1) {
         shot.append(
           el("span", { class: "big", text: "📚" }),
           el("span", { text: `${converted.length}枚選択中` })
@@ -270,11 +317,12 @@ function wireShot(inputId, shotId, slot) {
       } else {
         shot.append(el("img", { src: converted[0].preview, alt: "プレビュー" }));
       }
-      document.getElementById("go").disabled = !state.ans;
+      document.getElementById("go").disabled = !canSubmit();
     } catch (err) { showErr(err.message); }
   });
 }
 wireShot("fileAns", "shotAns", "ans");
+wireShot("fileProb", "shotProb", "prob");
 wireShot("fileKey", "shotKey", "key");
 
 function showErr(msg) {
@@ -315,6 +363,14 @@ document.getElementById("go").addEventListener("click", async () => {
   state.ans.forEach((blob, index) => {
     fd.append("images", blob, `answer-${index + 1}.jpg`);
   });
+  if (state.layout === "split" && state.prob) {
+    state.prob.forEach((blob, index) => {
+      fd.append("problem_images", blob, `problem-${index + 1}.jpg`);
+    });
+    fd.append("layout_mode", "split");
+  } else {
+    fd.append("layout_mode", "combined");
+  }
   if (state.subject) fd.append("subject", state.subject);
   if (state.grade) fd.append("grade_level", state.grade);
   if (state.key) fd.append("answer_key", state.key, "key.jpg");

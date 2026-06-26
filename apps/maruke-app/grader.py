@@ -33,6 +33,14 @@ SYSTEM_PROMPT = """あなたは中学受験生の家庭学習を支える、丁�
 9. child_answer には「子どもが鉛筆・ペンで手書きした内容」だけを入れる。問題文に印刷されている選択肢ラベル（ア・イ・ウなど）、番号、見出し、例文は child_answer に入れない。
 10. 丸・枠・下線の空欄に手書きがない場合は必ず未記入とする。空欄を推測して「ウ」などと書いたり、graded / correct にしない。
 11. result_type="answer_example"（未記入）のときは verdict は必ず uncertain、basis は answer_key にしない（採点していないので解答照合ではない）。
+12. 【問題と答案が別画像】問題プリントと答案ノートが分かれている場合:
+    - 問題文・図・選択肢は「問題プリント」から読む。空欄□に手書きがなくても、答案ノートに (1)(2)… の答えがあればそこから child_answer を読む。
+    - 設問番号 (1)(2)… で問題プリントと答案ノートを対応づける。番号の対応が不明な設問は verdict=uncertain。
+    - 答案ノートの途中式と最終答えを区別する。赤丸・二重線・下線で囲った数字が最終答えのことが多い。
+    - 問題プリントだけで空欄の設問に、答案ノートに該当番号の手書きがなければ child_answer="（未記入）"、result_type=answer_example。
+13. 子どもの手書き数字・分数・単位は画像をよく見て読む。480 と 32、0.08 と 0.18 など似た桁を取り違えない。読み取りに自信がなければ uncertain。
+14. 問題文を要約するとき、与えられた数字・記号を落とさない（例: 並べ替え問題では使える数字をすべて使う）。
+15. correct_answer と explanation の数値は必ず一致させる。矛盾したら confidence=low、verdict=uncertain。
 
 【モードの区別（result_type）】
 - 子どもの手書きの答えがあり、それと正解を比較した: result_type="graded"
@@ -388,34 +396,35 @@ def demo_result(
     return _with_counts(data, grading_mode)
 
 
-def grade(
-    answer_image: Optional[bytes] = None,
-    answer_media_type: str = "image/jpeg",
-    subject_hint: Optional[str] = None,
-    grade_level: Optional[str] = None,
-    key_image: Optional[bytes] = None,
-    key_media_type: Optional[str] = None,
-    answer_images: Optional[Sequence[tuple[bytes, str]]] = None,
-    grading_mode: str = "rich",
-) -> dict[str, Any]:
-    if not os.environ.get("OPENAI_API_KEY"):
-        raise GraderError("OPENAI_API_KEY が未設定です。")
-
-    mode = grading_mode if grading_mode in VALID_GRADING_MODES else "rich"
-    profile = _grade_profile(grade_level, mode)
-    normalized_answer_images = list(answer_images or [])
-    if not normalized_answer_images and answer_image is not None:
-        normalized_answer_images = [(answer_image, answer_media_type)]
-    if not normalized_answer_images:
-        raise GraderError("採点する答案写真がありません。")
-
-    intro = (
-        "次の画像は、子どもが解いた宿題（問題と子どもの答え）です。"
-        "複数枚ある場合は同じ宿題の続きとして、画像の順番に設問を読み取ってください。"
-        "各設問について、鉛筆・ペンで手書きされた答えが写真に見える場合のみ mode=採点（result_type=graded）で答え合わせする。"
-        "空欄・未記入の場合は mode=答え表示（result_type=answer_example）とし、"
-        "child_answer は必ず「（未記入）」、correct_answer に正解を書く（採点しない）。"
-    )
+def _build_user_content(
+    *,
+    profile: dict[str, Any],
+    mode: str,
+    normalized_answer_images: Sequence[tuple[bytes, str]],
+    normalized_problem_images: Sequence[tuple[bytes, str]],
+    key_image: Optional[bytes],
+    key_media_type: Optional[str],
+    grade_level: Optional[str],
+    subject_hint: Optional[str],
+) -> list[dict[str, Any]]:
+    split_mode = bool(normalized_problem_images)
+    if split_mode:
+        intro = (
+            "【問題プリントと答案ノートが別】"
+            "まず「問題プリント」から各設問の問題文・図・選択肢を読み取る。"
+            "次に「答案ノート」から同じ設問番号 (1)(2)… の子どもの手書き答えを読み取る。"
+            "問題プリントの空欄□だけを見て未記入と決めつけない。答案ノートに手書きがあれば採点する。"
+            "設問番号で対応づけられない場合は verdict=uncertain。"
+            "答案ノートでは赤丸・最終行の数字を最終答えとして優先する。"
+        )
+    else:
+        intro = (
+            "次の画像は、子どもが解いた宿題（問題と子どもの答え）です。"
+            "複数枚ある場合は同じ宿題の続きとして、画像の順番に設問を読み取ってください。"
+            "各設問について、鉛筆・ペンで手書きされた答えが写真に見える場合のみ mode=採点（result_type=graded）で答え合わせする。"
+            "空欄・未記入の場合は mode=答え表示（result_type=answer_example）とし、"
+            "child_answer は必ず「（未記入）」、correct_answer に正解を書く（採点しない）。"
+        )
     if mode == "simple":
         intro += SIMPLE_MODE_INSTRUCTION
     else:
@@ -428,13 +437,36 @@ def grade(
     )
 
     user_content: list[dict[str, Any]] = [{"type": "text", "text": intro}]
-    for index, (image_bytes, media_type) in enumerate(normalized_answer_images, start=1):
-        user_content.extend(
-            [
-                {"type": "text", "text": f"答案写真 {index} / {len(normalized_answer_images)}"},
-                _image_part(image_bytes, media_type, profile["image_detail"]),
-            ]
-        )
+
+    if split_mode:
+        for index, (image_bytes, media_type) in enumerate(normalized_problem_images, start=1):
+            user_content.extend(
+                [
+                    {
+                        "type": "text",
+                        "text": f"【問題プリント】{index} / {len(normalized_problem_images)}（問題文・空欄・図。手書き答えはここではなく答案ノートを見る）",
+                    },
+                    _image_part(image_bytes, media_type, profile["image_detail"]),
+                ]
+            )
+        for index, (image_bytes, media_type) in enumerate(normalized_answer_images, start=1):
+            user_content.extend(
+                [
+                    {
+                        "type": "text",
+                        "text": f"【答案ノート】{index} / {len(normalized_answer_images)}（(1)(2)… の手書き答え・途中式。最終答えを child_answer に）",
+                    },
+                    _image_part(image_bytes, media_type, profile["image_detail"]),
+                ]
+            )
+    else:
+        for index, (image_bytes, media_type) in enumerate(normalized_answer_images, start=1):
+            user_content.extend(
+                [
+                    {"type": "text", "text": f"答案写真 {index} / {len(normalized_answer_images)}"},
+                    _image_part(image_bytes, media_type, profile["image_detail"]),
+                ]
+            )
 
     if key_image is not None:
         user_content.extend(
@@ -453,6 +485,44 @@ def grade(
     if subject_hint:
         closing = f"この宿題の教科は「{subject_hint}」です。" + closing
     user_content.append({"type": "text", "text": closing})
+    return user_content
+
+
+def grade(
+    answer_image: Optional[bytes] = None,
+    answer_media_type: str = "image/jpeg",
+    subject_hint: Optional[str] = None,
+    grade_level: Optional[str] = None,
+    key_image: Optional[bytes] = None,
+    key_media_type: Optional[str] = None,
+    answer_images: Optional[Sequence[tuple[bytes, str]]] = None,
+    problem_images: Optional[Sequence[tuple[bytes, str]]] = None,
+    grading_mode: str = "rich",
+) -> dict[str, Any]:
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise GraderError("OPENAI_API_KEY が未設定です。")
+
+    mode = grading_mode if grading_mode in VALID_GRADING_MODES else "rich"
+    profile = _grade_profile(grade_level, mode)
+    normalized_answer_images = list(answer_images or [])
+    if not normalized_answer_images and answer_image is not None:
+        normalized_answer_images = [(answer_image, answer_media_type)]
+    normalized_problem_images = list(problem_images or [])
+    if not normalized_answer_images:
+        raise GraderError("採点する答案写真がありません。")
+    if normalized_problem_images and not normalized_answer_images:
+        raise GraderError("答案ノートの写真を1枚以上選んでください。")
+
+    user_content = _build_user_content(
+        profile=profile,
+        mode=mode,
+        normalized_answer_images=normalized_answer_images,
+        normalized_problem_images=normalized_problem_images,
+        key_image=key_image,
+        key_media_type=key_media_type,
+        grade_level=grade_level,
+        subject_hint=subject_hint,
+    )
 
     resp = _post_chat_completion(
         {
@@ -490,4 +560,5 @@ def grade(
 
     data["answer_key_present"] = key_image is not None
     data["grading_profile"] = profile["label"]
+    data["layout_mode"] = "split" if normalized_problem_images else "combined"
     return _with_counts(data, mode)

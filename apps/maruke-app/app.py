@@ -26,6 +26,7 @@ BETA_INVITE_CODE = os.environ.get("BETA_INVITE_CODE", "").strip()
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 MAX_BYTES = 15 * 1024 * 1024
 MAX_ANSWER_IMAGES = 6
+MAX_PROBLEM_IMAGES = 4
 VALID_GRADES = {"1", "2", "3", "4", "5", "6"}
 VALID_GRADING_MODES = {"simple", "rich"}
 
@@ -63,15 +64,39 @@ async def api_config():
     }
 
 
+async def _read_uploads(
+    uploads: list[UploadFile] | None,
+    *,
+    label: str,
+) -> tuple[list[tuple[bytes, str]], JSONResponse | None]:
+    images: list[tuple[bytes, str]] = []
+    for upload in uploads or []:
+        if not upload.filename:
+            continue
+        raw = await upload.read()
+        if len(raw) > MAX_BYTES:
+            return [], JSONResponse(
+                {"error": f"{label}が大きすぎます（1枚15MBまで）。"},
+                status_code=413,
+            )
+        media_type = upload.content_type or "image/jpeg"
+        if media_type not in ALLOWED_TYPES:
+            media_type = "image/jpeg"
+        images.append((raw, media_type))
+    return images, None
+
+
 @app.post("/api/grade")
 async def api_grade(
     images: Optional[list[UploadFile]] = File(None),
     image: Optional[UploadFile] = File(None),
+    problem_images: Optional[list[UploadFile]] = File(None),
     subject: Optional[str] = Form(None),
     grade_level: Optional[str] = Form(None),
     answer_key: Optional[UploadFile] = File(None),
     invite_code: Optional[str] = Form(None),
     grading_mode: Optional[str] = Form("rich"),
+    layout_mode: Optional[str] = Form("combined"),
 ):
     if BETA_INVITE_CODE and (invite_code or "").strip() != BETA_INVITE_CODE:
         return JSONResponse({"error": "招待コードが正しくありません。"}, status_code=403)
@@ -92,19 +117,31 @@ async def api_grade(
             status_code=400,
         )
 
+    problem_uploads = [upload for upload in (problem_images or []) if upload.filename]
+    if len(problem_uploads) > MAX_PROBLEM_IMAGES:
+        return JSONResponse(
+            {"error": f"問題プリントは最大{MAX_PROBLEM_IMAGES}枚までです。"},
+            status_code=400,
+        )
+
+    layout = (layout_mode or "combined").strip()
+    if layout == "split" and not problem_uploads:
+        return JSONResponse(
+            {"error": "「問題と答案が別」の場合は問題プリントも撮影してください。"},
+            status_code=400,
+        )
+
     normalized_grade = (grade_level or "").strip()
     if normalized_grade and normalized_grade not in VALID_GRADES:
         return JSONResponse({"error": "学年は小1〜小6から選んでください。"}, status_code=400)
 
-    answer_images = []
-    for upload in answer_uploads:
-        answer_bytes = await upload.read()
-        if len(answer_bytes) > MAX_BYTES:
-            return JSONResponse({"error": "画像が大きすぎます（1枚15MBまで）。"}, status_code=413)
-        media_type = upload.content_type or "image/jpeg"
-        if media_type not in ALLOWED_TYPES:
-            media_type = "image/jpeg"
-        answer_images.append((answer_bytes, media_type))
+    answer_images, answer_err = await _read_uploads(answer_uploads, label="答案写真")
+    if answer_err:
+        return answer_err
+
+    problem_image_data, problem_err = await _read_uploads(problem_uploads, label="問題プリント")
+    if problem_err:
+        return problem_err
 
     key_bytes = None
     key_media_type = None
@@ -126,6 +163,7 @@ async def api_grade(
     try:
         result = grader.grade(
             answer_images=answer_images,
+            problem_images=problem_image_data or None,
             subject_hint=subject or None,
             grade_level=normalized_grade or None,
             key_image=key_bytes,
