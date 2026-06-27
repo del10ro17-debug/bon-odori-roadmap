@@ -1,4 +1,6 @@
 # X事業 90日フォロワー増加戦略
+
+> **履歴スナップショット（2026-05-17）。** 最新は Git `company/projects/x-business/status.md`。`company/memory/README.md` 参照。
 - 日付: 2026-05-17
 - 決定者: CEO
 - 承認: 2026-05-17 CEO承認済み

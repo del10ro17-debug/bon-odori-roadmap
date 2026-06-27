@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Company HQ TODO Dashboard</title>
+  <style>
+    :root {
+      --bg: #f7f4ef;
+      --card: #ffffff;
+      --ink: #222222;
+      --muted: #6b6b6b;
+      --line: #ded6cc;
+      --accent: #b4532a;
+      --accent-soft: #f8e5da;
+      --green: #1f7a4d;
+      --yellow: #a15c00;
+      --red: #a33131;
+      --blue: #245f9f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 16px 56px;
+    }
+
+    header {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(26px, 5vw, 40px);
+      line-height: 1.2;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      border-left: 6px solid var(--accent);
+      padding-left: 10px;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    p {
+      margin: 0 0 10px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .section {
+      margin-top: 18px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .stat {
+      background: #fffdf9;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--accent);
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .project-card {
+      background: #fffdf9;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .bar {
+      height: 10px;
+      display: flex;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #eeeeee;
+      margin: 10px 0;
+    }
+
+    .bar span {
+      display: block;
+      min-width: 2px;
+    }
+
+    .todo { background: var(--muted); }
+    .doing { background: var(--blue); }
+    .waiting { background: var(--yellow); }
+    .done { background: var(--green); }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      background: #eeeeee;
+      color: var(--muted);
+    }
+
+    .pill.high { background: #ffe2dc; color: var(--red); }
+    .pill.medium { background: #fff0d6; color: var(--yellow); }
+    .pill.low { background: #e7eef8; color: var(--blue); }
+    .pill.doing { background: #e7eef8; color: var(--blue); }
+    .pill.waiting { background: #fff0d6; color: var(--yellow); }
+    .pill.done { background: #def5e8; color: var(--green); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fffdf9;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--accent-soft);
+      font-size: 13px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--ink);
+      padding: 6px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .notice {
+      border-left: 6px solid var(--yellow);
+      background: #fff8ea;
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    @media (max-width: 720px) {
+      th, td {
+        font-size: 13px;
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="meta">社内用 PMO ダッシュボード</p>
+      <h1>Company HQ TODO Dashboard</h1>
+      <p>複数事業・プロジェクトのTODOを、期限・状態・優先度で横断管理します。</p>
+      <p class="meta" id="updated"></p>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <section class="section">
+      <h2>プロジェクト別の状況</h2>
+      <div class="grid" id="project-grid"></div>
+    </section>
+
+    <section class="section">
+      <h2>今すぐ見るべきTODO</h2>
+      <div class="notice" id="focus-note"></div>
+    </section>
+
+    <section class="section">
+      <h2>TODO一覧</h2>
+      <div class="filters" id="filters"></div>
+      <div id="todo-table"></div>
+    </section>
+  </main>
+
+  <script>
+    const dashboard = {
+      updatedAt: "2026-05-17 18:16",
+      projects: [
+        { id: "bon", name: "盆踊り出店", type: "案件", status: "active", nextReview: "2026-05-24" },
+        { id: "x", name: "X事業", type: "事業", status: "planning", nextReview: "2026-05-24" },
+        { id: "instagram", name: "Instagram事業", type: "事業", status: "planning", nextReview: "2026-05-24" },
+        { id: "minpaku", name: "民泊事業", type: "事業検討", status: "planning", nextReview: "未設定" },
+      ],
+      todos: [
+        { project: "盆踊り出店", owner: "坂倉", priority: "高", task: "火気使用申請書が必要か主催者に確認する", due: "2026-05-24", status: "未着手" },
+        { project: "盆踊り出店", owner: "坂倉", priority: "高", task: "5月末予定の会場レイアウト決定通知を確認する", due: "2026-05-31", status: "待ち" },
+        { project: "盆踊り出店", owner: "坂倉", priority: "高", task: "7/11・7/12の参加可能スタッフを募集する", due: "2026-05-31", status: "未着手" },
+        { project: "盆踊り出店", owner: "Event Ops", priority: "高", task: "当日役割表のたたき台を作る", due: "2026-06-07", status: "未着手" },
+        { project: "盆踊り出店", owner: "経理", priority: "中", task: "食材・包材・備品の概算予算を作る", due: "2026-06-07", status: "未着手" },
+        { project: "盆踊り出店", owner: "Event Ops", priority: "中", task: "搬入手段、台車、保冷容器の必要数を洗い出す", due: "2026-06-07", status: "未着手" },
+        { project: "盆踊り出店", owner: "秘書", priority: "中", task: "チーム共有文と返信フォーマットを整える", due: "2026-05-24", status: "下書き済み" },
+
+        { project: "X事業", owner: "戦略", priority: "高", task: "X事業の目的とターゲット市場を定義する", due: "2026-05-24", status: "未着手" },
+        { project: "X事業", owner: "戦略", priority: "高", task: "北極星指標と週次KPIを決める", due: "2026-05-24", status: "未着手" },
+        { project: "X事業", owner: "戦略", priority: "中", task: "投稿カテゴリ、トーン、承認基準を整理する", due: "2026-05-31", status: "未着手" },
+        { project: "X事業", owner: "IT", priority: "中", task: "wangan-agentのメトリクスを事業レポート化する方法を整理する", due: "2026-05-31", status: "未着手" },
+        { project: "X事業", owner: "COO", priority: "低", task: "x-poster / x-auto-post-agentを残すか統合するか判断材料を整理する", due: "2026-06-07", status: "未着手" },
+
+        { project: "Instagram事業", owner: "CEO", priority: "高", task: "Instagram登録画面でメールまたは電話番号、パスワード、認証コードを入力する", due: "2026-05-17", status: "進行中" },
+        { project: "Instagram事業", owner: "戦略", priority: "高", task: "プロフィール文・コンセプトを決める", due: "2026-05-24", status: "未着手" },
+        { project: "Instagram事業", owner: "戦略", priority: "高", task: "30日間の北極星指標と週次KPIを決める", due: "2026-05-24", status: "未着手" },
+        { project: "Instagram事業", owner: "戦略", priority: "高", task: "投稿カテゴリを3つに絞る", due: "2026-05-24", status: "未着手" },
+        { project: "Instagram事業", owner: "営業", priority: "中", task: "初期の顧客候補と将来の提案導線を整理する", due: "2026-05-31", status: "未着手" },
+        { project: "Instagram事業", owner: "IT", priority: "中", task: "投稿制作・分析・レポート化に必要な運用ツールを整理する", due: "2026-05-31", status: "未着手" },
+        { project: "Instagram事業", owner: "PMO", priority: "中", task: "X事業との共通運用ルールを決める", due: "2026-05-31", status: "未着手" },
+
+        { project: "民泊事業", owner: "CEO", priority: "高", task: "読谷村の具体的物件を2〜3件ピックアップして現地内覧する", due: "未設定", status: "未着手" },
+        { project: "民泊事業", owner: "CEO", priority: "高", task: "行政書士へ旅館業法取得可否の事前確認を相談する", due: "未設定", status: "未着手" },
+        { project: "民泊事業", owner: "CEO", priority: "高", task: "沖縄振興開発金融公庫へ打診・面談予約する", due: "未設定", status: "未着手" },
+        { project: "民泊事業", owner: "CEO", priority: "中", task: "日本政策金融公庫の新規開業資金の申請書類を確認する", due: "未設定", status: "未着手" },
+        { project: "民泊事業", owner: "CEO", priority: "中", task: "プール設置業者へ見積依頼する", due: "未設定", status: "未着手" },
+        { project: "民泊事業", owner: "CEO", priority: "中", task: "近隣物件に宿泊して競合調査・サービス品質確認を行う", due: "未設定", status: "未着手" },
+        { project: "民泊事業", owner: "CEO", priority: "中", task: "読谷村専門の地元不動産業者と関係構築する", due: "未設定", status: "未着手" },
+      ],
+    };
+
+    const statusGroup = (status) => {
+      if (status === "未着手") return "todo";
+      if (status === "待ち") return "waiting";
+      if (status === "完了") return "done";
+      return "doing";
+    };
+
+    const priorityClass = (priority) => {
+      if (priority === "高") return "high";
+      if (priority === "中") return "medium";
+      return "low";
+    };
+
+    const byProject = (project) => dashboard.todos.filter((todo) => todo.project === project.name);
+    const counts = (items) => ({
+      total: items.length,
+      todo: items.filter((item) => statusGroup(item.status) === "todo").length,
+      doing: items.filter((item) => statusGroup(item.status) === "doing").length,
+      waiting: items.filter((item) => statusGroup(item.status) === "waiting").length,
+      done: items.filter((item) => statusGroup(item.status) === "done").length,
+      high: items.filter((item) => item.priority === "高").length,
+    });
+
+    const allCounts = counts(dashboard.todos);
+    const dueSoon = dashboard.todos.filter((todo) => ["2026-05-17", "2026-05-24"].includes(todo.due));
+
+    document.getElementById("updated").textContent = `最終更新: ${dashboard.updatedAt}`;
+    document.getElementById("stats").innerHTML = `
+      <div class="stat"><strong>${dashboard.projects.length}</strong><span>管理プロジェクト</span></div>
+      <div class="stat"><strong>${allCounts.total}</strong><span>TODO総数</span></div>
+      <div class="stat"><strong>${allCounts.high}</strong><span>高優先TODO</span></div>
+      <div class="stat"><strong>${dueSoon.length}</strong><span>5/24までのTODO</span></div>
+      <div class="stat"><strong>${allCounts.doing + allCounts.waiting}</strong><span>進行中・待ち</span></div>
+    `;
+
+    document.getElementById("project-grid").innerHTML = dashboard.projects.map((project) => {
+      const items = byProject(project);
+      const c = counts(items);
+      const width = (value) => c.total ? `${(value / c.total) * 100}%` : "0%";
+      return `
+        <article class="project-card">
+          <h3>${project.name}</h3>
+          <p class="meta">${project.type} / ${project.status} / 次回レビュー: ${project.nextReview}</p>
+          <div class="bar">
+            <span class="done" style="width:${width(c.done)}"></span>
+            <span class="doing" style="width:${width(c.doing)}"></span>
+            <span class="waiting" style="width:${width(c.waiting)}"></span>
+            <span class="todo" style="width:${width(c.todo)}"></span>
+          </div>
+          <p>TODO ${c.total}件 / 高優先 ${c.high}件 / 未着手 ${c.todo}件</p>
+        </article>
+      `;
+    }).join("");
+
+    document.getElementById("focus-note").innerHTML = `
+      <strong>最優先は、Instagram登録の完了と5/24期限の戦略・盆踊り確認です。</strong><br>
+      5/24までに「火気使用申請」「X/InstagramのKPI・目的」「Instagramプロフィール」を決めると、次週の運用設計に入れます。
+    `;
+
+    let activeProject = "all";
+    const projectsForFilter = ["all", ...dashboard.projects.map((project) => project.name)];
+
+    const renderFilters = () => {
+      document.getElementById("filters").innerHTML = projectsForFilter.map((project) => `
+        <button class="${activeProject === project ? "active" : ""}" data-project="${project}">
+          ${project === "all" ? "全件" : project}
+        </button>
+      `).join("");
+      document.querySelectorAll("button[data-project]").forEach((button) => {
+        button.addEventListener("click", () => {
+          activeProject = button.dataset.project;
+          renderFilters();
+          renderTodos();
+        });
+      });
+    };
+
+    const renderTodos = () => {
+      const rows = dashboard.todos
+        .filter((todo) => activeProject === "all" || todo.project === activeProject)
+        .map((todo) => `
+          <tr>
+            <td>${todo.project}</td>
+            <td><span class="pill ${priorityClass(todo.priority)}">${todo.priority}</span></td>
+            <td>${todo.task}</td>
+            <td>${todo.owner}</td>
+            <td>${todo.due}</td>
+            <td><span class="pill ${statusGroup(todo.status)}">${todo.status}</span></td>
+          </tr>
+        `).join("");
+
+      document.getElementById("todo-table").innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>プロジェクト</th>
+              <th>優先</th>
+              <th>TODO</th>
+              <th>担当</th>
+              <th>期限</th>
+              <th>状態</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    };
+
+    renderFilters();
+    renderTodos();
+  </script>
+</body>
+</html>

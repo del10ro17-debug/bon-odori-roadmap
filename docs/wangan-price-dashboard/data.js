@@ -14,7 +14,7 @@ window.WANGAN_PRICE_DASHBOARD_DATA = {
     "芝浦",
     "豊洲"
   ],
-  "generatedAt": "2026-05-18T02:58:29.691424+00:00",
+  "generatedAt": "2026-05-25T03:23:31.027296+00:00",
   "months": [
     "2025-11",
     "2025-12",

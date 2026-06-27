@@ -1,0 +1,7 @@
+タスク名,担当,期限,ステータス,優先度,関連プロジェクト,メモ
+Notionに会社HQページを作る,CEO,要確認,todo,high,notion-operations,議事録・タスク・予定DBの親ページ
+議事録DBを作成する,秘書,要確認,todo,high,notion-operations,notion-schema.mdに沿って作成
+タスクDBを作成する,秘書,要確認,todo,high,notion-operations,担当・期限・ステータス・優先度を入れる
+予定DBを作成する,秘書,要確認,todo,medium,notion-operations,カレンダービューを作る
+Notion MCPの利用可否を確認する,IT,要確認,todo,medium,notion-operations,認証と権限はCEO確認
+盆踊り運営MTGの議事録を作成する,Event Ops,要確認,todo,medium,bon-odori-harumi-2026,出店準備・許認可・人員・備品を整理

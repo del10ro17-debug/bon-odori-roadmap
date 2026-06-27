@@ -1,0 +1,286 @@
+{
+  "meta": {
+    "title": "晴海盆踊り2026 — 5/30 認識合わせ",
+    "event": "晴海ふ頭公園盆踊り大会2026",
+    "meeting": "2026-05-30 19:30 坂倉家 60min",
+    "production": "2026-07-11/12",
+    "booth": "37番 ケバブ",
+    "updated": "2026-05-30",
+    "webUrl": "https://del10ro17-debug.github.io/bon-odori-roadmap/bon-odori/",
+    "venueMapImage": "assets/2026盆踊り大会_会場図.pdf.png"
+  },
+  "design": {
+    "aspectRatio": "16:9",
+    "fonts": ["Noto Sans JP", "Hiragino Sans"],
+    "colors": {
+      "done": "#197A4B",
+      "tonight": "#E65100",
+      "next": "#0017C1",
+      "risk": "#CE0000",
+      "text": "#222222",
+      "muted": "#666666",
+      "bg": "#FFFFFF"
+    },
+    "labels": {
+      "done": "確定",
+      "tonight": "今夜決める",
+      "next": "これから",
+      "risk": "注意"
+    }
+  },
+  "nameRules": {
+    "policy": "Romaji full name when known; hiragana when kanji uncertain; prose uses given name + さん",
+    "members": [
+      { "display": "Sho Sakakura", "call": "Shoさん" },
+      { "display": "Haruka Sakakura", "call": "Harukaさん" },
+      { "display": "Hiro Takeyama", "call": "Hiroさん" },
+      { "display": "Nozomi Aoshima", "call": "Nozomiさん" },
+      { "display": "ゆうや", "call": "ゆうやさん" },
+      { "display": "たくろう", "call": "たくろうさん" },
+      { "display": "りさ", "call": "りささん" },
+      { "display": "Sakauchi", "call": "Sakauchiさん", "note": "協力確定" },
+      { "display": "Hiraga", "call": "Hiragaさん", "note": "協力確定" },
+      { "display": "Kuratani", "call": "Kurataniさん", "note": "協力確定" },
+      { "display": "Tsunoda", "call": "Tsunodaさん", "note": "協力確定" },
+      { "display": "Saito", "call": "Saitoさん", "note": "調整中" },
+      { "display": "Suzuki", "call": "Suzukiさん", "note": "調整中" }
+    ]
+  },
+  "meetingGoals": {
+    "primary": "各チーム×7/11・7/12の必要人数（安心ライン）→ 不足分の可視化",
+    "secondary": [
+      "テント内レイアウト・当日準備の論点整理",
+      "PayPay決済（基本PayPay、ゆうや準備中）",
+      "7/11–12デイリースケジュール案",
+      "ソフトドリンク有無（1テント1品目要確認）"
+    ]
+  },
+  "timeline": [
+    { "date": "5/31", "label": "人員確定" },
+    { "date": "6/7", "label": "たたき台" },
+    { "date": "6/13", "label": "準備完結" },
+    { "date": "6/15", "label": "価格" },
+    { "date": "6/21", "label": "試作" },
+    { "date": "6/30", "label": "シフト" },
+    { "date": "7/9", "label": "仕込み" },
+    { "date": "7/11-12", "label": "本番" }
+  ],
+  "readinessChecklist": [
+    "搬入手段（車両/台車）と入構証の要否",
+    "搬入計画1枚（誰が・何を・何時に）",
+    "備品リスト",
+    "販売価格・目標数量・仕入れ量",
+    "調理・衛生手順",
+    "シフト案（4シフト）",
+    "試作日（6/21）と担当",
+    "雨天時の仕入れ方針",
+    "2日間の持ち帰り／再搬入の大枠"
+  ],
+  "homework": [
+    { "owner": "全員", "task": "7/11・7/12 参加可否Web入力", "due": "5/31" },
+    { "owner": "Sho Sakakura", "task": "一次名簿 → Hiro Takeyama", "due": "5/31" },
+    { "owner": "ゆうや", "task": "バディ4名名簿反映", "due": "5/31" },
+    { "owner": "たくろう", "task": "搬入方針・備品リスト", "due": "6/7" },
+    { "owner": "ゆうや", "task": "PayPay案・価格たたき台", "due": "6/7" },
+    { "owner": "Nozomi Aoshima", "task": "調理・衛生手順", "due": "6/7" },
+    { "owner": "Hiro Takeyama", "task": "シフト案", "due": "6/7" },
+    { "owner": "Sho + たくろう", "task": "車両搬入要否", "due": "6/10" }
+  ],
+  "risks": [
+    "雨天中止 → 資材費・営業補填なし",
+    "搬入13時以降＋駐車不可 → 設営遅延リスク",
+    "夜間残置不可 → 2日間の持ち帰り／再搬入が必要",
+    "申込外の機器・資材持込禁止",
+    "スタッフ不足 → 調理・会計・列整理が回らない"
+  ],
+  "slides": [
+    {
+      "id": 1,
+      "title": "晴海盆踊り2026 — 認識合わせ",
+      "label": null,
+      "type": "title",
+      "lines": ["5/30（土）19:30 · 坂倉家 · 60分", "本番：7/11（土）· 7/12（日）"],
+      "notes": "決まっていることと決めることを全員で揃える。6/13までに準備完結。"
+    },
+    {
+      "id": 2,
+      "title": "今夜のゴール",
+      "label": "tonight",
+      "type": "bullets",
+      "bullets": [
+        "各チーム × 7/11・7/12 の「安心人数」を決める",
+        "あと何人集めるか、全員で把握する",
+        "レイアウト・PayPay・スケジュール等の論点を整理"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "すでに決まっていること（1/2）",
+      "label": "done",
+      "type": "bullets",
+      "bullets": [
+        "出店許可・保健所OK（再提出不要）",
+        "商材：ケバブ（1テント1品目）",
+        "調理：電源のみ · 火気不使用",
+        "野菜：事前加熱75℃ → 個別容器・ラベルで搬入",
+        "会場での仕込みは禁止"
+      ]
+    },
+    {
+      "id": 4,
+      "title": "すでに決まっていること（2/2）",
+      "label": "done",
+      "type": "bullets",
+      "bullets": [
+        "ブース：37番「ケバブ」（南側飲食列）",
+        "搬入：当日13時以降 · 公園内駐車不可",
+        "Times駐車場も当日終日閉鎖",
+        "夜間：警備なし → 原則テントに残置しない",
+        "決済：PayPay が基本（ゆうやさん準備中）"
+      ]
+    },
+    {
+      "id": 5,
+      "title": "会場マップ",
+      "label": "done",
+      "type": "image",
+      "bullets": [
+        "37番「ケバブ」— やぐらから南側・飲食列",
+        "隣：36（体験） / 38（とうもろこし焼き）"
+      ],
+      "image": "assets/2026盆踊り大会_会場図.pdf.png"
+    },
+    {
+      "id": 6,
+      "title": "6チーム体制",
+      "label": "done",
+      "type": "table",
+      "headers": ["チーム", "リーダー", "主な役割"],
+      "rows": [
+        ["統括・会場", "Sho Sakakura", "全体判断、事務局、スタッフ募集"],
+        ["シフト", "Hiro Takeyama", "シフト割り当て"],
+        ["調理・衛生", "Nozomi Aoshima", "仕込み、加熱・保冷、試作"],
+        ["物流・備品", "たくろう", "搬入、設営・撤収、備品"],
+        ["会計", "ゆうや", "PayPay、価格、売上記録"],
+        ["子ども", "Haruka Sakakura", "子どもケア・安全"]
+      ],
+      "notes": "調理メンバー：りささん。仮割り—希望があれば調整。"
+    },
+    {
+      "id": 7,
+      "title": "今夜決める：必要人数",
+      "label": "tonight",
+      "type": "table",
+      "headers": ["チーム", "7/11（土）", "7/12（日）"],
+      "rows": [
+        ["統括・会場", "", ""],
+        ["シフト・店頭", "", ""],
+        ["調理・衛生", "", ""],
+        ["物流・設営", "", ""],
+        ["会計", "", ""],
+        ["子ども", "", ""],
+        ["合計", "", ""]
+      ],
+      "notes": "各リーダー：1日トータルの安心人数。参考：2日合計16〜18名。"
+    },
+    {
+      "id": 8,
+      "title": "不足人数の出し方",
+      "label": "tonight",
+      "type": "formula",
+      "lines": [
+        "必要人数 − 参加見込み ＝ 不足",
+        "7/11：必要　　名 − 見込　　名 ＝ 不足　　名",
+        "7/12：必要　　名 − 見込　　名 ＝ 不足　　名",
+        "→ 追加募集の優先を決める"
+      ]
+    },
+    {
+      "id": 9,
+      "title": "本番までの道筋",
+      "label": "next",
+      "type": "timeline"
+    },
+    {
+      "id": 10,
+      "title": "6/13「準備完璧」チェック",
+      "label": "next",
+      "type": "checklist"
+    },
+    {
+      "id": 11,
+      "title": "今夜の論点（1/2）",
+      "label": "tonight",
+      "type": "bullets",
+      "bullets": [
+        "テント内レイアウト（調理 / PayPay / 保冷 / 動線）",
+        "当日準備：搬入13時 → 設営 → 販売開始",
+        "→ 6/7 たたき台（たくろう） → 6/13 確定"
+      ]
+    },
+    {
+      "id": 12,
+      "title": "今夜の論点（2/2）",
+      "label": "tonight",
+      "type": "bullets",
+      "bullets": [
+        "7/11・7/12 デイリースケジュール（時間軸）",
+        "ソフトドリンクを扱うか",
+        "→ 今夜：論点整理 / 6/7：各リーダーたたき台"
+      ]
+    },
+    {
+      "id": 13,
+      "title": "PayPay決済",
+      "label": "done",
+      "type": "bullets",
+      "bullets": [
+        "基本：PayPay支払い（ゆうやさん準備中）",
+        "今夜確認：端末操作者 / 売上記録 / 現金要否 / 引き継ぎフロー"
+      ]
+    },
+    {
+      "id": 14,
+      "title": "ソフトドリンク",
+      "label": "tonight",
+      "type": "bullets",
+      "bullets": [
+        "検討中：ソフトドリンクを購入するか？",
+        "⚠ 1テント1品目ルール → 事務局・保健所確認が必要",
+        "→ 6/7 までに方針決定（ゆうや + たくろう）"
+      ]
+    },
+    {
+      "id": 15,
+      "title": "宿題と期限",
+      "label": "next",
+      "type": "homework"
+    },
+    {
+      "id": 16,
+      "title": "気をつける点",
+      "label": "risk",
+      "type": "risks"
+    },
+    {
+      "id": 17,
+      "title": "次のアクション",
+      "label": null,
+      "type": "bullets",
+      "bullets": [
+        "7/11・7/12 参加可否をWeb入力（5/31まで）",
+        "https://del10ro17-debug.github.io/bon-odori-roadmap/bon-odori/",
+        "次回：6/13（土）19:00 準備完結MTG",
+        "質問・コメント"
+      ]
+    }
+  ],
+  "agenda60min": [
+    { "time": "0:00–0:05", "slides": "1-2", "topic": "オープニング・ゴール" },
+    { "time": "0:05–0:13", "slides": "3-6", "topic": "確定事項・体制" },
+    { "time": "0:13–0:33", "slides": "7-8", "topic": "必要人数・不足分（主決定）" },
+    { "time": "0:33–0:45", "slides": "5,11", "topic": "会場・テント・当日準備" },
+    { "time": "0:45–0:55", "slides": "12-15", "topic": "PayPay・論点・宿題" },
+    { "time": "0:55–1:00", "slides": "16-17", "topic": "リスク・クロージング" }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "湾岸キッズナビ: スマホ用起動 (LAN)",
+      "type": "shell",
+      "command": "${workspaceFolder}/tools/wangan_family_app/start-dev.sh",
+      "args": ["lan"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "expo",
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting Metro",
+          "endsPattern": "Waiting on|Logs for your project"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
+    },
+    {
+      "label": "湾岸キッズナビ: トンネル起動 (QRが読めないとき)",
+      "type": "shell",
+      "command": "${workspaceFolder}/tools/wangan_family_app/start-dev.sh",
+      "args": ["tunnel"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "expo",
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting Metro",
+          "endsPattern": "Waiting on|Tunnel ready|Logs for your project"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
+    },
+    {
+      "label": "タッチリール: スマホ用起動 (LAN)",
+      "type": "shell",
+      "command": "${workspaceFolder}/tools/touch_reel/start-dev.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "uvicorn",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Uvicorn running",
+          "endsPattern": "Application startup complete"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
+    },
+    {
+      "label": "まるつけ: スマホ用起動 (LAN)",
+      "type": "shell",
+      "command": "${workspaceFolder}/tools/maruke_app/start-dev.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "uvicorn",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Uvicorn running",
+          "endsPattern": "Application startup complete"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
+    },
+    {
+      "label": "まるつけ: トンネル起動 (別Wi-Fi・LTE)",
+      "type": "shell",
+      "command": "${workspaceFolder}/tools/maruke_app/start-dev.sh",
+      "args": ["tunnel"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "maruke-tunnel",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "トンネル起動",
+          "endsPattern": "trycloudflare\\.com"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
+    },
+    {
+      "label": "湾岸キッズナビ: iOSシミュレータ (QR不要)",
+      "type": "shell",
+      "command": "${workspaceFolder}/tools/wangan_family_app/start-dev.sh",
+      "args": ["ios"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "expo",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting Metro",
+          "endsPattern": "Waiting on|Logs for your project"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

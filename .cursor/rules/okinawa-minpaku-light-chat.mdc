@@ -1,0 +1,20 @@
+---
+description: 沖縄民泊・物件精査・ROI分析用。新規チャットで @okinawa-minpaku-light-chat。
+globs: company/projects/okinawa-minpaku/**,company/memory/minpaku_project_status.md,.cursor/skills/okinawa-minpaku-research/**
+alwaysApply: false
+---
+
+# 沖縄民泊 — 軽量チャット
+
+## 必須
+
+1. `.cursor/skills/okinawa-minpaku-research/SKILL.md` を Read
+2. 前提: `company/projects/okinawa-minpaku/AGENT_CONTEXT.md`（または `status.md`）+ 必要時のみ `report-2026-05-29.md` + Obsidian `wiki/hot.md`
+3. **禁止**: `agent-transcripts` の読取、法務・税務の断定
+4. 回答は **【COO】** + **【戦略】** / **【経理】**（ROI時）
+
+## 新チャット一行
+
+```
+@okinawa-minpaku-light-chat @company/projects/okinawa-minpaku/AGENT_CONTEXT.md を前提に。agent-transcripts は読まないで。
+```

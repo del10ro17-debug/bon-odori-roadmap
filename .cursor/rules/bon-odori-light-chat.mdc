@@ -1,0 +1,19 @@
+---
+description: 晴海盆踊り2026の軽量Agentチャット用。新規チャットで @bon-odori-light-chat を付ける。履歴・transcript読取禁止。
+globs: company/projects/bon-odori-harumi-2026/**,docs/bon-odori/**
+alwaysApply: false
+---
+
+# 盆踊り2026 — 軽量チャット
+
+## 必須
+
+1. 前提は `company/projects/bon-odori-harumi-2026/AGENT_CONTEXT.md` と、必要最小限の `status.md` / `schedule.md` / `teams.md` / `comms.md` のみ
+2. **禁止**: `agent-transcripts` の読取、別 Agent チャット履歴の Grep、Browser MCP で Gmail を開く
+3. 公開Webは **`docs/bon-odori/data.js` を優先**（`index.html` の大量パッチは避ける）
+4. 回答は **【COO】** で始め、Event Ops 作業時は **【Event Ops】** を付ける
+
+## 更新時
+
+- 決定・タスク変更は `status.md`（と必要なら `schedule.md`）に反映してから回答する
+- `AGENT_CONTEXT.md` の「今すぐ」は status と矛盾しないよう揃える

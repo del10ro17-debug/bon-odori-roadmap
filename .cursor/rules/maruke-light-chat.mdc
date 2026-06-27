@@ -1,0 +1,25 @@
+---
+description: まるつけ（maruke-app）の軽量Agentチャット用。新規チャットで @maruke-light-chat を付ける。履歴・transcript読取禁止。
+globs: company/projects/maruke-app/**,apps/maruke-app/**
+alwaysApply: false
+---
+
+# まるつけ — 軽量チャット
+
+## 必須
+
+1. 前提は `company/projects/maruke-app/AGENT_CONTEXT.md` と、必要最小限の `status.md` のみ
+2. **禁止**: `agent-transcripts` の読取、別 Agent チャット履歴の Grep、`.env` の読取・コミット
+3. コード変更は `apps/maruke-app/` が正本。JFC 書類は `company/projects/maruke-app/` 配下
+4. 回答は **【COO】** 1行 + **【IT】** または **【戦略】**（事業・GTM時）
+
+## 更新時
+
+- 決定・タスク変更は `status.md` に反映してから回答する
+- `AGENT_CONTEXT.md` と矛盾しないよう揃える
+
+## 新チャット一行
+
+```
+@maruke-light-chat @company/projects/maruke-app/AGENT_CONTEXT.md を前提に。agent-transcripts は読まないで。
+```

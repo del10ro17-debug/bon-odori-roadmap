@@ -1,0 +1,228 @@
+{
+  "assumptions": {
+    "design": "現行: 写真→Vision採点。親の手入力なし",
+    "usd_jpy": 150,
+    "pricing_usd_per_1m": {
+      "gpt-4o-mini": {
+        "in": 0.15,
+        "out": 0.6
+      },
+      "gpt-4o": {
+        "in": 2.5,
+        "out": 10.0
+      },
+      "gpt-5-mini": {
+        "in": 0.4,
+        "out": 1.6
+      },
+      "gpt-5": {
+        "in": 5.0,
+        "out": 20.0
+      }
+    },
+    "grade_5_6_rich": "PRECISE_MODEL + high + max 14000",
+    "simple_mode": "FAST_MODEL + low + max 3500",
+    "usage_blend": {
+      "S1": 0.35,
+      "S2": 0.15,
+      "S3": 0.1,
+      "S4": 0.2,
+      "S5": 0.1,
+      "S6": 0.1
+    }
+  },
+  "per_session_archetypes_gpt4o": [
+    {
+      "archetype": "S1",
+      "label": "小5-6・リッチ・答案1枚・10問",
+      "model": "gpt-4o",
+      "input_tokens": 4200,
+      "output_tokens": 5500,
+      "cost_yen": 9.8
+    },
+    {
+      "archetype": "S2",
+      "label": "小5-6・リッチ・答案+解答・10問",
+      "model": "gpt-4o",
+      "input_tokens": 5400,
+      "output_tokens": 4500,
+      "cost_yen": 8.8
+    },
+    {
+      "archetype": "S3",
+      "label": "小5-6・リッチ・見開き・25問",
+      "model": "gpt-4o",
+      "input_tokens": 4800,
+      "output_tokens": 12000,
+      "cost_yen": 19.8
+    },
+    {
+      "archetype": "S4",
+      "label": "小5-6・お手軽・答案1枚・10問",
+      "model": "gpt-4o-mini",
+      "input_tokens": 3512,
+      "output_tokens": 1800,
+      "cost_yen": 0.2
+    },
+    {
+      "archetype": "S5",
+      "label": "小4・リッチ・答案1枚・8問",
+      "model": "gpt-4o-mini",
+      "input_tokens": 4000,
+      "output_tokens": 4000,
+      "cost_yen": 0.4
+    },
+    {
+      "archetype": "S6",
+      "label": "小5-6・リッチ・複数枚・15問",
+      "model": "gpt-4o",
+      "input_tokens": 5400,
+      "output_tokens": 7500,
+      "cost_yen": 13.3
+    }
+  ],
+  "per_session_archetypes_gpt5": [
+    {
+      "archetype": "S1",
+      "label": "小5-6・リッチ・答案1枚・10問",
+      "model": "gpt-5",
+      "input_tokens": 4200,
+      "output_tokens": 5500,
+      "cost_yen": 19.7
+    },
+    {
+      "archetype": "S2",
+      "label": "小5-6・リッチ・答案+解答・10問",
+      "model": "gpt-5",
+      "input_tokens": 5400,
+      "output_tokens": 4500,
+      "cost_yen": 17.5
+    },
+    {
+      "archetype": "S3",
+      "label": "小5-6・リッチ・見開き・25問",
+      "model": "gpt-5",
+      "input_tokens": 4800,
+      "output_tokens": 12000,
+      "cost_yen": 39.6
+    },
+    {
+      "archetype": "S4",
+      "label": "小5-6・お手軽・答案1枚・10問",
+      "model": "gpt-5-mini",
+      "input_tokens": 3512,
+      "output_tokens": 1800,
+      "cost_yen": 0.6
+    },
+    {
+      "archetype": "S5",
+      "label": "小4・リッチ・答案1枚・8問",
+      "model": "gpt-5-mini",
+      "input_tokens": 4000,
+      "output_tokens": 4000,
+      "cost_yen": 1.2
+    },
+    {
+      "archetype": "S6",
+      "label": "小5-6・リッチ・複数枚・15問",
+      "model": "gpt-5",
+      "input_tokens": 5400,
+      "output_tokens": 7500,
+      "cost_yen": 26.5
+    }
+  ],
+  "blended_per_session_yen": {
+    "gpt4o": 8.1,
+    "gpt5": 16.4,
+    "gpt5_conservative_x1_5": 24.6,
+    "gpt5_rich_single_page": 19.7,
+    "gpt5_rich_spread_25q": 39.6
+  },
+  "monthly_per_user": {
+    "light": {
+      "gpt4o": {
+        "sessions_per_month": 30,
+        "cost_per_session_yen": 8.1,
+        "api_cost_per_month_yen": 243.0
+      },
+      "gpt5": {
+        "sessions_per_month": 30,
+        "cost_per_session_yen": 16.4,
+        "api_cost_per_month_yen": 492.0
+      }
+    },
+    "standard": {
+      "gpt4o": {
+        "sessions_per_month": 50,
+        "cost_per_session_yen": 8.1,
+        "api_cost_per_month_yen": 405.0
+      },
+      "gpt5": {
+        "sessions_per_month": 50,
+        "cost_per_session_yen": 16.4,
+        "api_cost_per_month_yen": 820.0
+      }
+    },
+    "heavy": {
+      "gpt4o": {
+        "sessions_per_month": 80,
+        "cost_per_session_yen": 8.1,
+        "api_cost_per_month_yen": 648.0
+      },
+      "gpt5": {
+        "sessions_per_month": 80,
+        "cost_per_session_yen": 16.4,
+        "api_cost_per_month_yen": 1312.0
+      }
+    }
+  },
+  "plans_gpt5": {
+    "rich_only_gpt5": {
+      "sessions_per_month": 50,
+      "cost_per_session_yen": 16.4,
+      "api_cost_per_month_yen": 820.0
+    },
+    "simple_only_gpt5": {
+      "sessions_per_month": 50,
+      "cost_per_session_yen": 0.6,
+      "api_cost_per_month_yen": 30.0
+    },
+    "mixed_60simple_40rich": {
+      "sessions_per_month": 50,
+      "cost_per_session_yen": 8.24,
+      "api_cost_per_month_yen": 412.0
+    }
+  },
+  "scale_monthly_gpt5_standard50": [
+    {
+      "paid_users": 0,
+      "production_api_yen": 0.0,
+      "dev_api_yen": 120000,
+      "total_api_yen": 120000.0
+    },
+    {
+      "paid_users": 200,
+      "production_api_yen": 164000.0,
+      "dev_api_yen": 60000,
+      "total_api_yen": 224000.0
+    },
+    {
+      "paid_users": 783,
+      "production_api_yen": 642060.0,
+      "dev_api_yen": 60000,
+      "total_api_yen": 702060.0
+    },
+    {
+      "paid_users": 1982,
+      "production_api_yen": 1625240.0,
+      "dev_api_yen": 40000,
+      "total_api_yen": 1665240.0
+    },
+    {
+      "paid_users": 4067,
+      "production_api_yen": 3334940.0,
+      "dev_api_yen": 40000,
+      "total_api_yen": 3374940.0
+    }
+  ]
+}

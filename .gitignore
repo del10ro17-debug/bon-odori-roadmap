@@ -1,1 +1,27 @@
 .DS_Store
+
+# dependencies
+**/node_modules/
+
+# git worktrees (local only)
+.worktrees/
+
+# Python
+**/.venv/
+**/__pycache__/
+*.pyc
+
+# Expo / RN build artifacts
+**/.expo/
+**/dist/
+**/web-build/
+
+# local env
+.env
+.env*.local
+
+# maruke tunnel binary (auto-downloaded)
+tools/maruke_app/bin/
+
+# data (regenerate locally)
+data/*.sqlite

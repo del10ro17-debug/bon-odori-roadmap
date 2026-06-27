@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>まるつけアプリ Cursor 引き継ぎメモ</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --ink: #172026;
+      --muted: #5e6872;
+      --line: #dce2ea;
+      --accent: #2563eb;
+      --warn: #a16207;
+      --bad: #b91c1c;
+      --good: #15803d;
+      --code: #111827;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      line-height: 1.65;
+    }
+    main {
+      width: min(1040px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+    header {
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin: 14px 0;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+    h3 {
+      margin: 16px 0 8px;
+      font-size: 15px;
+    }
+    ul, ol {
+      margin: 8px 0 0 22px;
+      padding: 0;
+    }
+    li { margin: 4px 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .status {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      color: var(--muted);
+    }
+    .status.good { color: var(--good); background: #ecfdf5; border-color: #bbf7d0; }
+    .status.warn { color: var(--warn); background: #fffbeb; border-color: #fde68a; }
+    .status.bad { color: var(--bad); background: #fef2f2; border-color: #fecaca; }
+    code {
+      background: #eef2f7;
+      border: 1px solid #d8e0ea;
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    pre {
+      overflow: auto;
+      background: var(--code);
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    pre code {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      color: inherit;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 8px 6px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 700;
+      width: 28%;
+    }
+    .note {
+      border-left: 4px solid var(--accent);
+      padding: 8px 12px;
+      background: #eff6ff;
+      border-radius: 6px;
+      color: #1e3a8a;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>まるつけアプリ Cursor 引き継ぎメモ</h1>
+      <p class="lead">作成日: 2026-06-25 JST。Codex上で試作していた「宿題の丸つけ、未回答なら解答作成」アプリの現状整理。</p>
+    </header>
+
+    <section>
+      <h2>やりたいこと</h2>
+      <ol>
+        <li>問題を写真で撮る。</li>
+        <li>写真内に子どもの答えが書いてあれば、答え合わせをする。</li>
+        <li>答えが書いてなければ、AIが問題を解いて答えを教える。</li>
+      </ol>
+      <p class="note">重要: 未回答は単なる「要確認」で終わらせず、<code>correct_answer</code> に保護者がそのまま使える解答例を出す。</p>
+    </section>
+
+    <section>
+      <h2>現在のプロジェクト</h2>
+      <table>
+        <tr><th>実体</th><td><code>/Users/sho_sakakura/Projects/maruke-app</code></td></tr>
+        <tr><th>起動中URL</th><td><code>http://192.168.1.8:8000/</code> または Mac上では <code>http://127.0.0.1:8000/</code></td></tr>
+        <tr><th>現在の待受</th><td><span class="status good">起動中</span> PID <code>60702</code> が <code>*:8000</code> でLISTENしていることを確認済み</td></tr>
+        <tr><th>主要ファイル</th><td><code>app.py</code>, <code>grader.py</code>, <code>static/index.html</code>, <code>static/manifest.webmanifest</code>, <code>.env</code></td></tr>
+        <tr><th>APIキー</th><td><code>.env</code> に <code>OPENAI_API_KEY</code>, <code>OPENAI_FAST_MODEL</code>, <code>OPENAI_PRECISE_MODEL</code> がある。キー値はこのメモには書かない。</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>現在入っている実装</h2>
+      <div class="grid">
+        <div>
+          <h3>フロントエンド</h3>
+          <ul>
+            <li><code>static/index.html</code> の答案入力は <code>multiple</code> 対応済み。</li>
+            <li><code>capture</code> は外してあり、カメラロールから選択できる。</li>
+            <li>複数写真はJPEG変換後、<code>FormData</code> に <code>images</code> として送る。</li>
+            <li>未記入かつAIが解いたものは、画面上で <code>解答例</code> と表示する修正を入れた。</li>
+          </ul>
+        </div>
+        <div>
+          <h3>バックエンド</h3>
+          <ul>
+            <li><code>app.py</code> は <code>images: Optional[list[UploadFile]]</code> を受け取る。</li>
+            <li>答案写真は最大 <code>MAX_ANSWER_IMAGES = 6</code>。</li>
+            <li>旧単一フィールド <code>image</code> も互換で残している。</li>
+            <li><code>OPENAI_API_KEY</code> が無い場合、デモ結果ではなくエラーを返す。</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>AI呼び出し</h3>
+      <ul>
+        <li><code>grader.py</code> はOpenAI SDK import待ちが遅かったため、SDKを使わず <code>urllib.request</code> で <code>/v1/chat/completions</code> を直接呼ぶ形に変更済み。</li>
+        <li><code>response_format: json_schema</code> を指定して構造化JSONを返させている。</li>
+        <li>出力上限は大きめに変更済み。未指定時は <code>max_output_tokens = 8000</code>。</li>
+        <li>画像読み取りは全学年で <code>image_detail = high</code>。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>直近で起きていた問題と対応</h2>
+      <table>
+        <tr>
+          <th>サンプルしか出ない</th>
+          <td>当初、動いているアプリが <code>ANTHROPIC_API_KEY</code> を見ており、キー未設定でデモ結果に落ちていた。現在は <code>OPENAI_API_KEY</code> に切り替え、デモ分岐は廃止。</td>
+        </tr>
+        <tr>
+          <th>ずっと返ってこない</th>
+          <td>OpenAI SDKの初回importがローカルで重かった。SDKを外しREST API直叩きに変更後、API応答は数秒から十数秒で返るようになった。</td>
+        </tr>
+        <tr>
+          <th>JSONとして読めない</th>
+          <td>問題数が多い写真に対して出力上限が小さく、返答が途中で切れていた。出力上限を増やし、<code>finish_reason == "length"</code> の場合は分かるエラーを返すようにした。</td>
+        </tr>
+        <tr>
+          <th>未回答なのに答えが出ない</th>
+          <td>プロンプトを修正し、答えが未記入なら <code>child_answer="（未記入）"</code>, <code>basis="solved"</code>, <code>correct_answer</code> に解答例を書く方針にした。</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>実テスト結果</h2>
+      <p>ユーザー添付の実画像でローカルAPIを直接テストした。</p>
+      <table>
+        <tr>
+          <th>写真1</th>
+          <td>算数、大きな数の読み書き。<span class="status good">HTTP 200</span> 約14秒。未記入問題に <code>correct_answer</code> が返った。全29 items。</td>
+        </tr>
+        <tr>
+          <th>写真2</th>
+          <td>国語、擬声語/擬態語。<span class="status good">HTTP 200</span> 約7秒。未記入問題に解答例が返った。全11 items。</td>
+        </tr>
+      </table>
+      <p class="note">ただし、見開き全体を1枚で撮ると読み取りミスが残る。Cursor側では、写真の前処理、範囲指定、ページ分割、設問抽出を強化するのが次の本筋。</p>
+    </section>
+
+    <section>
+      <h2>現状の課題</h2>
+      <ol>
+        <li><strong>読み取り精度:</strong> 見開き写真では問題文や選択肢の読み間違いがある。片ページ、または大問単位で撮ると安定する。</li>
+        <li><strong>UIのフィードバック:</strong> APIエラー時にユーザーへ何が起きたかをもっと分かりやすく表示すべき。</li>
+        <li><strong>設問数が多い時のUX:</strong> 全問一括ではなく、「写真を分割して処理」「大問ごとに処理」「最初のN問だけ処理」などの設計が必要。</li>
+        <li><strong>採点と解答作成の分離:</strong> 今は同じJSONで処理しているが、内部的には <code>mode = grade</code> と <code>mode = solve</code> を分けた方が安定する。</li>
+        <li><strong>解答欄の有無判定:</strong> 子どもの手書き回答があるかどうかの判定がまだ曖昧。画像上の空欄判定を強化したい。</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Cursorで最初に見るべきコード</h2>
+      <pre><code>/Users/sho_sakakura/Projects/maruke-app/app.py
+/Users/sho_sakakura/Projects/maruke-app/grader.py
+/Users/sho_sakakura/Projects/maruke-app/static/index.html
+/Users/sho_sakakura/Projects/maruke-app/.env.example
+/Users/sho_sakakura/Projects/maruke-app/requirements.txt</code></pre>
+    </section>
+
+    <section>
+      <h2>起動と確認コマンド</h2>
+      <pre><code>cd /Users/sho_sakakura/Projects/maruke-app
+source .venv/bin/activate
+uvicorn app:app --host 0.0.0.0 --port 8000</code></pre>
+      <p>現在Codex側では次の形式で起動している。</p>
+      <pre><code>cd /Users/sho_sakakura/Projects/maruke-app
+PYTHONPYCACHEPREFIX=/tmp/maruke-project-pycache .venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000</code></pre>
+      <p>ローカル確認:</p>
+      <pre><code>curl -s -X POST http://127.0.0.1:8000/api/grade
+# 画像なしなら {"error":"答案写真を1枚以上選んでください。"} が返るのが正常</code></pre>
+    </section>
+
+    <section>
+      <h2>次にCursorでやるとよいこと</h2>
+      <ol>
+        <li><code>grader.py</code> のプロンプトを整理し、仕様を「採点」「解答作成」に明確に分ける。</li>
+        <li>フロントにモード表示を追加する。例: 「答え合わせ中」「解答例を作成中」。</li>
+        <li>写真アップロード後に、画像をアプリ内でトリミングまたは回転できるようにする。</li>
+        <li>APIレスポンスに <code>mode</code> または <code>result_type</code> を追加する。例: <code>graded</code>, <code>answer_example</code>, <code>unreadable</code>。</li>
+        <li>選択肢問題では選択肢を抽出してから回答させる二段階処理にする。</li>
+        <li>大きい見開き写真は、アプリ側で「片ページずつ撮ると精度が上がります」と出す。</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>注意</h2>
+      <ul>
+        <li><code>.env</code> のAPIキーはCursorに渡してもよいが、スクショや共有資料には載せない。</li>
+        <li>OpenAIモデル名は現在 <code>OPENAI_FAST_MODEL=gpt-5.4-mini</code>, <code>OPENAI_PRECISE_MODEL=gpt-5.5</code> が設定されている。もしAPIエラーが出る場合は、利用可能なモデル名に差し替える。</li>
+        <li>現在のゴールは完成品ではなく、まず「未回答なら答えを出す」が確実に動く状態にすること。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

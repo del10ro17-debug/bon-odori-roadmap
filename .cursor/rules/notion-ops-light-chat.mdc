@@ -1,0 +1,25 @@
+---
+description: Notion運用の軽量Agentチャット用。新規チャットで @notion-ops-light-chat を付ける。履歴・transcript読取禁止。
+globs: company/projects/notion-operations/**
+alwaysApply: false
+---
+
+# Notion Operations — 軽量チャット
+
+## 必須
+
+1. 前提は `company/projects/notion-operations/status.md` と、必要最小限の `notion-schema.md` / `secretary-workflow.md` のみ
+2. **禁止**: `agent-transcripts` の読取、無関係な別チャット履歴の Grep
+3. Notion MCP 利用前に接続状態を確認。未認証なら `mcp_auth`（server: `project-0-company-hq-notion`）を案内
+4. 回答は **【COO】** 1行 + **【秘書】** または **【IT】**
+
+## 更新時
+
+- 決定・タスク変更は `status.md` に反映してから回答する
+- DB設計変更は `notion-schema.md` を更新
+
+## 新チャットの最初の一行（コピペ用）
+
+```
+@notion-ops-light-chat @company/projects/notion-operations/status.md を前提に答えて。agent-transcripts は読まないで。
+```

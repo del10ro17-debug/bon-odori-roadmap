@@ -67,6 +67,7 @@ def fetch_newsletter_rows(conn: sqlite3.Connection) -> list[dict[str, Any]]:
         SELECT message_id, received_at, subject, body_text
         FROM gmail_messages
         WHERE subject LIKE '%湾岸マンション価格ナビ%'
+           OR subject LIKE '%マンションマガジン%'
         ORDER BY received_at
         """
     ).fetchall()

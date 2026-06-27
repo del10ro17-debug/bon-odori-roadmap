@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>晴海盆踊り2026 — 5/30 認識合わせ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --done: #197A4B;
+      --tonight: #E65100;
+      --next: #0017C1;
+      --risk: #CE0000;
+      --text: #1a1a1a;
+      --muted: #5c5c5c;
+      --line: #e8e8e8;
+      --bg: #fafafa;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: "Noto Sans JP", "Hiragino Sans", sans-serif; background: #111; color: var(--text); overflow: hidden; }
+    .deck { height: 100vh; width: 100vw; position: relative; }
+    .slide {
+      position: absolute; inset: 0; display: none; flex-direction: column;
+      background: var(--bg); padding: 0;
+    }
+    .slide.active { display: flex; animation: fade .25s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .label {
+      align-self: flex-start; color: #fff; font-size: 0.85rem; font-weight: 700;
+      padding: 0.45rem 1.25rem; letter-spacing: 0.04em;
+    }
+    .label.done { background: var(--done); }
+    .label.tonight { background: var(--tonight); }
+    .label.next { background: var(--next); }
+    .label.risk { background: var(--risk); }
+    .body {
+      flex: 1; display: flex; flex-direction: column; justify-content: center;
+      padding: 1.5rem 3.5rem 2.5rem; max-width: 1280px; margin: 0 auto; width: 100%;
+    }
+    h1 { font-size: clamp(1.75rem, 3.2vw, 2.75rem); font-weight: 700; line-height: 1.25; margin-bottom: 1.25rem; color: var(--text); }
+    h1.hero { font-size: clamp(2.2rem, 4.5vw, 3.5rem); text-align: center; margin-bottom: 0.5rem; }
+    .subtitle { text-align: center; font-size: clamp(1.1rem, 2vw, 1.5rem); color: var(--muted); line-height: 1.6; }
+    .subtitle strong { color: var(--next); }
+    ul.clean { list-style: none; font-size: clamp(1rem, 1.8vw, 1.35rem); line-height: 1.75; }
+    ul.clean li { padding: 0.35rem 0 0.35rem 1.75rem; position: relative; }
+    ul.clean li::before { content: ""; position: absolute; left: 0; top: 0.95rem; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--next); }
+    ul.check li::before { content: "✓"; background: none; color: var(--done); font-weight: 700; left: 0; top: 0.35rem; }
+    ul.warn li::before { background: var(--tonight); }
+    ul.risk li::before { background: var(--risk); }
+    .formula {
+      font-size: clamp(1.1rem, 2vw, 1.45rem); line-height: 2; background: var(--card);
+      border-left: 4px solid var(--tonight); padding: 1.25rem 1.5rem; border-radius: 0 8px 8px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: clamp(0.85rem, 1.4vw, 1.05rem); background: var(--card); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,.07); }
+    th { background: var(--next); color: #fff; text-align: left; padding: 0.75rem 1rem; font-weight: 600; }
+    td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--line); }
+    tr:nth-child(even) td { background: #f7f8fc; }
+    tr:last-child td { border-bottom: none; font-weight: 700; background: #eef1fb; }
+    .empty { min-height: 1.5em; }
+    .timeline { display: flex; gap: 0.35rem; flex-wrap: wrap; align-items: stretch; margin-top: 0.5rem; }
+    .tl-item {
+      flex: 1; min-width: 90px; background: var(--next); color: #fff; text-align: center;
+      padding: 0.85rem 0.5rem; border-radius: 8px; font-size: clamp(0.75rem, 1.2vw, 0.95rem); font-weight: 600; line-height: 1.35;
+    }
+    .tl-item:last-child { background: var(--done); }
+    .tl-item span { display: block; font-size: 0.8em; opacity: 0.9; margin-top: 0.25rem; font-weight: 500; }
+    .map-wrap { display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.5rem; align-items: center; height: 100%; }
+    .map-wrap img { width: 100%; max-height: 55vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.12); border: 3px solid var(--risk); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 2rem; font-size: clamp(0.9rem, 1.5vw, 1.1rem); }
+    .grid-2 div { padding: 0.4rem 0; border-bottom: 1px solid var(--line); }
+    .nav {
+      position: fixed; bottom: 1rem; right: 1.5rem; display: flex; gap: 0.5rem; z-index: 100;
+      background: rgba(0,0,0,.75); padding: 0.5rem 0.75rem; border-radius: 999px; color: #fff; font-size: 0.85rem; align-items: center;
+    }
+    .nav button {
+      background: #fff; border: none; border-radius: 6px; padding: 0.35rem 0.85rem; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+    }
+    .nav button:hover { background: #eee; }
+    .progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--next); transition: width .2s; z-index: 100; }
+    .hint { position: fixed; bottom: 1rem; left: 1.5rem; color: rgba(255,255,255,.5); font-size: 0.75rem; z-index: 99; }
+    .due-urgent { color: var(--tonight); font-weight: 700; }
+    @media (max-width: 900px) {
+      .body { padding: 1rem 1.25rem 2rem; }
+      .map-wrap { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide active" data-label="">
+    <div class="body" style="justify-content:center;text-align:center;">
+      <h1 class="hero">晴海盆踊り2026</h1>
+      <p class="subtitle" style="font-size:clamp(1.3rem,2.5vw,2rem);font-weight:500;color:var(--text);">認識合わせ</p>
+      <p class="subtitle" style="margin-top:2rem;">5/30（土）19:30 · 坂倉家 · 60分</p>
+      <p class="subtitle">本番：<strong>7/11（土）· 7/12（日）</strong></p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide" data-label="tonight">
+    <div class="label tonight">今夜決める</div>
+    <div class="body">
+      <h1>今夜のゴール</h1>
+      <ul class="clean warn">
+        <li>各チーム × 7/11・7/12 の「<strong>安心人数</strong>」を決める</li>
+        <li>あと何人集めるか、全員で把握する</li>
+        <li>レイアウト · PayPay · スケジュール等の論点を整理</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide" data-label="done">
+    <div class="label done">確定</div>
+    <div class="body">
+      <h1>すでに決まっていること（1/2）</h1>
+      <ul class="clean check">
+        <li>出店許可 · 保健所OK（再提出不要）</li>
+        <li>商材：<strong>ケバブ</strong>（1テント1品目）</li>
+        <li>調理：電源のみ · 火気不使用</li>
+        <li>野菜：事前加熱75℃ → 個別容器 · ラベルで搬入</li>
+        <li>会場での仕込みは禁止</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide" data-label="done">
+    <div class="label done">確定</div>
+    <div class="body">
+      <h1>すでに決まっていること（2/2）</h1>
+      <ul class="clean check">
+        <li>ブース：<strong>37番「ケバブ」</strong>（南側飲食列）</li>
+        <li>搬入：当日13時以降 · 公園内駐車不可</li>
+        <li>Times駐車場も当日終日閉鎖</li>
+        <li>夜間：警備なし → 原則テントに残置しない</li>
+        <li>決済：<strong>PayPay</strong> が基本（ゆうやさん準備中）</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide" data-label="done">
+    <div class="label done">確定</div>
+    <div class="body">
+      <h1>会場マップ</h1>
+      <div class="map-wrap">
+        <ul class="clean">
+          <li><strong>37番「ケバブ」</strong><br>やぐらから南側 · 飲食列</li>
+          <li>隣：36（体験） / 38（とうもろこし焼き）</li>
+        </ul>
+        <img src="assets/2026盆踊り大会_会場図.pdf.png" alt="会場図 37番">
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide" data-label="done">
+    <div class="label done">確定</div>
+    <div class="body">
+      <h1>6チーム体制</h1>
+      <table>
+        <thead><tr><th>チーム</th><th>リーダー</th><th>主な役割</th></tr></thead>
+        <tbody>
+          <tr><td>統括 · 会場</td><td>Sho Sakakura</td><td>全体判断、事務局、スタッフ募集</td></tr>
+          <tr><td>シフト</td><td>Hiro Takeyama</td><td>シフト割り当て</td></tr>
+          <tr><td>調理 · 衛生</td><td>Nozomi Aoshima</td><td>仕込み、加熱 · 保冷、試作（メンバー：りさ）</td></tr>
+          <tr><td>物流 · 備品</td><td>たくろう</td><td>搬入、設営 · 撤収、備品</td></tr>
+          <tr><td>会計</td><td>ゆうや</td><td>PayPay、価格、売上記録</td></tr>
+          <tr><td>子ども</td><td>Haruka Sakakura</td><td>子どもケア · 安全</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide" data-label="tonight">
+    <div class="label tonight">今夜決める</div>
+    <div class="body">
+      <h1>必要人数（その場記入）</h1>
+      <table>
+        <thead><tr><th>チーム</th><th>7/11（土）</th><th>7/12（日）</th></tr></thead>
+        <tbody>
+          <tr><td>統括 · 会場</td><td class="empty"></td><td class="empty"></td></tr>
+          <tr><td>シフト · 店頭</td><td class="empty"></td><td class="empty"></td></tr>
+          <tr><td>調理 · 衛生</td><td class="empty"></td><td class="empty"></td></tr>
+          <tr><td>物流 · 設営</td><td class="empty"></td><td class="empty"></td></tr>
+          <tr><td>会計</td><td class="empty"></td><td class="empty"></td></tr>
+          <tr><td>子ども</td><td class="empty"></td><td class="empty"></td></tr>
+          <tr><td>合計</td><td class="empty"></td><td class="empty"></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:1rem;color:var(--muted);font-size:0.95rem;">参考：2日合計 16〜18名 · 各リーダーは1日トータルで「安心人数」を</p>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide" data-label="tonight">
+    <div class="label tonight">今夜決める</div>
+    <div class="body">
+      <h1>不足人数の出し方</h1>
+      <div class="formula">
+        <div><strong>必要人数 − 参加見込み ＝ 不足</strong></div>
+        <div style="margin-top:1rem;">7/11：必要 <span style="border-bottom:2px solid #ccc;padding:0 2rem;">&nbsp;</span> 名 − 見込 <span style="border-bottom:2px solid #ccc;padding:0 2rem;">&nbsp;</span> 名 ＝ 不足 <span style="border-bottom:2px solid #ccc;padding:0 2rem;">&nbsp;</span> 名</div>
+        <div>7/12：必要 <span style="border-bottom:2px solid #ccc;padding:0 2rem;">&nbsp;</span> 名 − 見込 <span style="border-bottom:2px solid #ccc;padding:0 2rem;">&nbsp;</span> 名 ＝ 不足 <span style="border-bottom:2px solid #ccc;padding:0 2rem;">&nbsp;</span> 名</div>
+        <div style="margin-top:1rem;color:var(--tonight);font-weight:600;">→ 追加募集の優先を決める</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide" data-label="next">
+    <div class="label next">これから</div>
+    <div class="body">
+      <h1>本番までの道筋</h1>
+      <div class="timeline">
+        <div class="tl-item">5/31<span>人員確定</span></div>
+        <div class="tl-item">6/7<span>たたき台</span></div>
+        <div class="tl-item">6/13<span>準備完結</span></div>
+        <div class="tl-item">6/15<span>価格</span></div>
+        <div class="tl-item">6/21<span>試作</span></div>
+        <div class="tl-item">6/30<span>シフト</span></div>
+        <div class="tl-item">7/9<span>仕込み</span></div>
+        <div class="tl-item">7/11-12<span>本番</span></div>
+      </div>
+      <p style="margin-top:1.5rem;color:var(--muted);">6/13（土）19:00 準備完結MTG — 中澤家出国前 · 迷いゼロが目標</p>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide" data-label="next">
+    <div class="label next">これから</div>
+    <div class="body">
+      <h1>6/13「準備完璧」チェック</h1>
+      <div class="grid-2">
+        <div>□ 搬入手段と入構証の要否</div>
+        <div>□ 搬入計画1枚</div>
+        <div>□ 備品リスト</div>
+        <div>□ 価格 · 目標数量 · 仕入れ量</div>
+        <div>□ 調理 · 衛生手順</div>
+        <div>□ シフト案（4シフト）</div>
+        <div>□ 試作日（6/21）と担当</div>
+        <div>□ 雨天時の仕入れ方針</div>
+        <div>□ 2日間の持ち帰り／再搬入</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide" data-label="tonight">
+    <div class="label tonight">今夜決める</div>
+    <div class="body">
+      <h1>今夜の論点（1/2）</h1>
+      <ul class="clean warn">
+        <li><strong>テント内レイアウト</strong><br>調理 / PayPay端末 / 保冷 / 受け渡し動線</li>
+        <li><strong>当日準備の流れ</strong><br>搬入13時 → 設営 → 販売開始</li>
+        <li style="color:var(--muted);">→ 6/7 たたき台（たくろう） → 6/13 確定</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide" data-label="tonight">
+    <div class="label tonight">今夜決める</div>
+    <div class="body">
+      <h1>今夜の論点（2/2）</h1>
+      <ul class="clean warn">
+        <li>7/11 · 7/12 <strong>デイリースケジュール</strong>（時間軸）</li>
+        <li><strong>ソフトドリンク</strong>を扱うか</li>
+        <li style="color:var(--muted);">→ 今夜：論点整理 / 6/7：各リーダーたたき台</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section class="slide" data-label="done">
+    <div class="label done">確定</div>
+    <div class="body">
+      <h1>PayPay決済</h1>
+      <ul class="clean check">
+        <li>基本：<strong>PayPay支払い</strong>（ゆうやさん準備中）</li>
+      </ul>
+      <p style="margin:1.25rem 0 0.5rem;font-weight:600;">今夜確認</p>
+      <ul class="clean">
+        <li>誰が端末を操作するか</li>
+        <li>売上の記録方法</li>
+        <li>現金対応の要否</li>
+        <li>シフト引き継ぎ時の会計フロー</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 14 -->
+  <section class="slide" data-label="tonight">
+    <div class="label tonight">今夜決める</div>
+    <div class="body">
+      <h1>ソフトドリンク</h1>
+      <ul class="clean warn">
+        <li>検討中：ソフトドリンクを購入するか？</li>
+        <li><strong style="color:var(--risk);">⚠ 1テント1品目ルール</strong> → 事務局 · 保健所確認が必要</li>
+        <li>→ 6/7 までに方針決定（ゆうや + たくろう）</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 15 -->
+  <section class="slide" data-label="next">
+    <div class="label next">これから</div>
+    <div class="body">
+      <h1>宿題と期限</h1>
+      <table>
+        <thead><tr><th>担当</th><th>内容</th><th>期限</th></tr></thead>
+        <tbody>
+          <tr><td>全員</td><td>7/11 · 7/12 参加可否Web入力</td><td class="due-urgent">5/31</td></tr>
+          <tr><td>Sho Sakakura</td><td>一次名簿 → Hiro Takeyama</td><td class="due-urgent">5/31</td></tr>
+          <tr><td>ゆうや</td><td>バディ4名名簿反映</td><td class="due-urgent">5/31</td></tr>
+          <tr><td>たくろう</td><td>搬入方針 · 備品リスト</td><td>6/7</td></tr>
+          <tr><td>ゆうや</td><td>PayPay案 · 価格たたき台</td><td>6/7</td></tr>
+          <tr><td>Nozomi Aoshima</td><td>調理 · 衛生手順</td><td>6/7</td></tr>
+          <tr><td>Hiro Takeyama</td><td>シフト案</td><td>6/7</td></tr>
+          <tr><td>Sho + たくろう</td><td>車両搬入要否</td><td>6/10</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 16 -->
+  <section class="slide" data-label="risk">
+    <div class="label risk">注意</div>
+    <div class="body">
+      <h1>気をつける点</h1>
+      <ul class="clean risk">
+        <li>雨天中止 → 資材費 · 営業補填なし</li>
+        <li>搬入13時以降＋駐車不可 → 設営遅延リスク</li>
+        <li>夜間残置不可 → 2日間の持ち帰り／再搬入が必要</li>
+        <li>申込外の機器 · 資材持込禁止</li>
+        <li>スタッフ不足 → 調理 · 会計 · 列整理が回らない</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 17 -->
+  <section class="slide" data-label="">
+    <div class="body" style="justify-content:center;">
+      <h1>次のアクション</h1>
+      <ul class="clean" style="font-size:clamp(1.1rem,2vw,1.4rem);">
+        <li>7/11 · 7/12 参加可否をWeb入力（<strong class="due-urgent">5/31まで</strong>）</li>
+        <li style="word-break:break-all;"><a href="https://del10ro17-debug.github.io/bon-odori-roadmap/bon-odori/" style="color:var(--next);">del10ro17-debug.github.io/bon-odori-roadmap/bon-odori/</a></li>
+        <li>次回：<strong>6/13（土）19:00</strong> 準備完結MTG</li>
+        <li>質問 · コメント</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav">
+  <button type="button" id="prev">←</button>
+  <span id="counter">1 / 17</span>
+  <button type="button" id="next">→</button>
+</div>
+<p class="hint">← → キー · F 全画面</p>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  let i = 0;
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, j) => s.classList.toggle('active', j === i));
+    counter.textContent = `${i + 1} / ${slides.length}`;
+    progress.style.width = `${((i + 1) / slides.length) * 100}%`;
+  }
+
+  document.getElementById('prev').onclick = () => show(i - 1);
+  document.getElementById('next').onclick = () => show(i + 1);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); show(i + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); show(i - 1); }
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  show(0);
+</script>
+</body>
+</html>

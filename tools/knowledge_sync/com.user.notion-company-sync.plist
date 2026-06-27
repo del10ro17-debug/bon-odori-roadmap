@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.notion-company-sync</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/sho_sakakura/company-hq/tools/knowledge_sync/run-notion-company-sync.sh</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>8</integer>
+        <key>Minute</key>
+        <integer>10</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/tmp/notion-company-sync.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/notion-company-sync-error.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/Users/sho_sakakura</string>
+        <key>PATH</key>
+        <string>/Users/sho_sakakura/.nvm/versions/node/v24.15.0/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+</dict>
+</plist>

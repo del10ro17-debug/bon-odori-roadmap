@@ -1,0 +1,26 @@
+---
+description: 動画文字起こし・YouTube要約用。新規チャットで @video-knowledge-light-chat。
+globs: tools/video_knowledge/**,company/projects/video-knowledge/**,company/memory/videos/**
+alwaysApply: false
+---
+
+# Video Knowledge — 軽量チャット
+
+## 必須
+
+1. `.cursor/skills/video-knowledge/SKILL.md` の手順に従う
+2. 前提: `company/projects/video-knowledge/status.md`（必要時のみ）
+3. **禁止**: `agent-transcripts` の読取
+4. 回答は **【COO】** 1行 + **【IT】** または動画ナレッジ作業結果
+
+## 実行
+
+- ローカル: `tools/video_knowledge/process_local_video.py`
+- YouTube: `tools/video_knowledge/process_video.py`
+- 出力: `company/memory/videos/`
+
+## 新チャット一行
+
+```
+@video-knowledge-light-chat この動画を文字起こしして: /path/to/video.mp4
+```

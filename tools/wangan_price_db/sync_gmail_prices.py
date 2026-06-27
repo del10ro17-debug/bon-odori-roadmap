@@ -21,7 +21,9 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
-DEFAULT_QUERY = 'subject:"湾岸マンション価格ナビ" newer_than:180d'
+DEFAULT_QUERY = (
+    '(subject:"湾岸マンション価格ナビ" OR subject:"マンションマガジン") newer_than:180d'
+)
 
 
 @dataclass(frozen=True)

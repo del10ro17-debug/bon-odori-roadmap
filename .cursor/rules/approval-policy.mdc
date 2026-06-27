@@ -1,0 +1,33 @@
+---
+description: CEO approval boundaries for autonomous project execution
+alwaysApply: true
+---
+
+# Approval Policy
+
+通常の調査・実装・テスト・軽微な修正は、CEO に逐一確認せず進める。
+
+## 確認なしで進めてよいこと
+
+- ファイル検索、コード読解、既存仕様の整理
+- 小さな実装、リファクタ、ドキュメント修正
+- ローカルの lint、test、typecheck、build
+- `git status`、`git diff`、`git log` などの読み取り専用 Git 操作
+- 既存方針に沿ったタスク分解、進捗整理、下書き作成
+
+## CEO 確認が必要なこと
+
+- 破壊的または不可逆な操作
+- 本番環境、顧客、課金、外部送信に影響する操作
+- 秘密情報、認証情報、個人情報を扱う操作
+- `git push`、force push、release、deploy
+- DB migration、データ削除、大量更新
+- 契約、予算、採用、顧客対応方針など経営判断を伴う決定
+- `company/memory/` への永続保存
+- 依頼の目的や成功条件が大きく曖昧で、誤ると手戻りが大きい場合
+
+## 迷った場合
+
+確認が必要な場合は、選択肢を絞って CEO に 1 問だけ確認する。
+
+通常作業では、短い方針を示して実行し、完了後に変更点・検証結果・残リスクを報告する。

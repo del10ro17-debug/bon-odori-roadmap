@@ -1,0 +1,24 @@
+---
+description: X事業・湾岸ウォッチャー投稿文案用。新規チャットで @x-business-light-chat。実投稿はwangan-agent(UI)側。
+globs: company/projects/x-business/**,company/memory/2026-05-17-x-business.md
+alwaysApply: false
+---
+
+# X事業 — 軽量チャット
+
+## 必須
+
+1. 前提は `company/projects/x-business/AGENT_CONTEXT.md` と `status.md` のみ
+2. **禁止**: `agent-transcripts` の読取、X APIキーの要求・保存
+3. 文案生成まで。実投稿は **wangan-agent**（`~/Projects/wangan-agent` → http://localhost:3000/）を案内
+4. 回答は **【COO】** 1行 + **【戦略】** または **【営業】**
+
+## 更新時
+
+- 方針変更は `status.md` に反映
+
+## 新チャット一行
+
+```
+@x-business-light-chat @company/projects/x-business/AGENT_CONTEXT.md を前提に。agent-transcripts は読まないで。
+```

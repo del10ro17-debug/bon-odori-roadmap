@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  DEPRECATED: 日次同期は com.user.cursor-daily-sync (08:30) が
+  cursor-transcript-sync を内包する。この plist は登録しない。
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.user.cursor-transcript-sync</string>
+</dict>
+</plist>

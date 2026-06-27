@@ -12,7 +12,7 @@ Gmailに毎週届く湾岸マンション関連メールを取得し、価格情
 - 定期実行: `.github/workflows/wangan-price-db.yml`
 - データソース方針: `docs/wangan-price-source-policy.md`
 - 実行タイミング: 毎週金曜 18:00 JST
-- 取得条件の初期値: `subject:"湾岸マンション価格ナビ" newer_than:180d`
+- 取得条件の初期値: `(subject:"湾岸マンション価格ナビ" OR subject:"マンションマガジン") newer_than:180d`
 - 取得件数の初期値: `500`
 
 ## DBテーブル
@@ -75,8 +75,8 @@ Repository secrets に以下を登録します。
 Repository variables は任意です。
 
 - `WANGAN_GMAIL_QUERY`
-  - 例: `subject:"湾岸マンション価格ナビ" newer_than:180d`
-  - 未設定時: `subject:"湾岸マンション価格ナビ" newer_than:180d`
+  - 例: `(subject:"湾岸マンション価格ナビ" OR subject:"マンションマガジン") newer_than:180d`
+  - 未設定時: 上記と同じ
 - `WANGAN_GMAIL_MAX_RESULTS`
   - 未設定時: `500`
 
@@ -86,7 +86,7 @@ Repository variables は任意です。
 
 推奨入力:
 
-- `query`: `subject:"湾岸マンション価格ナビ" newer_than:180d`
+- `query`: `(subject:"湾岸マンション価格ナビ" OR subject:"マンションマガジン") newer_than:180d`
 - `max_results`: `500`
 
 ノイズメールを避けるため、通常は件名を `湾岸マンション価格ナビ` に絞ります。期間を広げる場合は `newer_than:365d` のように変更できます。
@@ -123,7 +123,7 @@ export GOOGLE_REFRESH_TOKEN="..."
 
 python3 tools/wangan_price_db/sync_gmail_prices.py \
   --db data/wangan_prices.sqlite \
-  --query 'subject:"湾岸マンション価格ナビ" newer_than:180d' \
+  --query '(subject:"湾岸マンション価格ナビ" OR subject:"マンションマガジン") newer_than:180d' \
   --max-results 500
 ```
 

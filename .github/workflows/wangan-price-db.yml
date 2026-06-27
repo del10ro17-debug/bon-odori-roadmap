@@ -6,7 +6,7 @@ on:
       query:
         description: Gmail search query. Leave blank to use the 180-day Wangan default.
         required: false
-        default: 'subject:"湾岸マンション価格ナビ" newer_than:180d'
+        default: '(subject:"湾岸マンション価格ナビ" OR subject:"マンションマガジン") newer_than:180d'
       max_results:
         description: Maximum Gmail messages to scan.
         required: false

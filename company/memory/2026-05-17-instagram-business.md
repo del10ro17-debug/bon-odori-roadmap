@@ -1,4 +1,6 @@
 # Instagram事業 立ち上げメモ
+
+> **履歴スナップショット（2026-05-17）。** 最新は Git `company/projects/instagram-business/status.md`（作成後）または portfolio。`company/memory/README.md` 参照。
 - 日付: 2026-05-17
 - 決定者: CEO
 - 内容: Instagramを使った地域メディア・送客・運用支援の事業検証を「Instagram事業」として company-hq に追加する。

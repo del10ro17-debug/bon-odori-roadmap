@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>坂倉HQ — エージェント組織図</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #fff;
+      --border: #d8dee9;
+      --text: #1a2332;
+      --muted: #5c6b7a;
+      --ceo: #1e3a5f;
+      --coo: #2563eb;
+      --hq: #0d9488;
+      --growth: #d97706;
+      --tech: #7c3aed;
+      --bu: #dc2626;
+      --project: #64748b;
+      --line: #94a3b8;
+      --ext: #475569;
+      --mcp: #0891b2;
+      --api: #7c3aed;
+      --handoff: #ea580c;
+      --auto: #16a34a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 1.5rem;
+    }
+
+    header {
+      max-width: 1400px;
+      margin: 0 auto 1.5rem;
+      text-align: center;
+    }
+
+    header h1 { font-size: 1.5rem; font-weight: 700; }
+    header p { color: var(--muted); font-size: 0.9rem; margin-top: 0.35rem; }
+    header a { color: var(--coo); }
+
+    .section {
+      max-width: 1400px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .section h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.35rem;
+      text-align: center;
+    }
+
+    .section .hint {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      justify-content: center;
+      font-size: 0.78rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.2rem 0.65rem;
+    }
+
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* d3-org-chart container */
+    #org-chart-container {
+      width: 100%;
+      height: 720px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    #org-chart-container svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .org-node {
+      font-family: inherit;
+      background: #fff;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      width: 100%;
+      height: 100%;
+      box-shadow: 0 2px 6px rgba(0,0,0,.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .org-node .role { font-weight: 700; font-size: 14px; line-height: 1.2; }
+    .org-node .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .org-node .skill {
+      font-family: ui-monospace, monospace;
+      font-size: 10px;
+      color: #4338ca;
+      margin-top: 4px;
+    }
+    .org-node .desc { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.3; }
+    .org-node .tag {
+      display: inline-block;
+      margin-top: 5px;
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-family: ui-monospace, monospace;
+    }
+
+    .org-node.ceo { border-color: var(--ceo); background: #eef4fb; }
+    .org-node.ceo .role { color: var(--ceo); }
+    .org-node.group-hq { border-color: var(--hq); background: #f0fdfa; border-width: 3px; }
+    .org-node.group-growth { border-color: var(--growth); background: #fffbeb; border-width: 3px; }
+    .org-node.group-tech { border-color: var(--tech); background: #f5f3ff; border-width: 3px; }
+    .org-node.group-bu { border-color: var(--bu); background: #fef2f2; border-width: 3px; }
+    .org-node.hq { border-color: var(--hq); }
+    .org-node.hq .role { color: #0f766e; }
+    .org-node.growth { border-color: var(--growth); }
+    .org-node.growth .role { color: #b45309; }
+    .org-node.tech { border-color: var(--tech); }
+    .org-node.tech .role { color: #6d28d9; }
+    .org-node.bu { border-color: var(--bu); }
+    .org-node.bu .role { color: #b91c1c; }
+    .org-node.coo-node { border-color: var(--coo); background: #eff6ff; }
+    .org-node.coo-node .role { color: var(--coo); }
+
+    /* Mermaid diagrams */
+    .mermaid-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      overflow-x: auto;
+    }
+
+    .mermaid { display: flex; justify-content: center; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      background: var(--card);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    th, td {
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th { background: #f8fafc; font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+
+    .external {
+      background: #f1f5f9;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+
+    .external-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .ext-item {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 0.82rem;
+    }
+
+    .ext-item strong { display: block; margin-bottom: 0.25rem; }
+    .ext-item code { font-size: 0.72rem; word-break: break-all; }
+
+    /* Integration */
+    .integration-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      justify-content: center;
+      font-size: 0.78rem;
+      margin-bottom: 1rem;
+    }
+
+    .integration-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.2rem 0.65rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 0.12rem 0.45rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .badge-mcp { background: #ecfeff; color: #0e7490; border: 1px solid #a5f3fc; }
+    .badge-api { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+    .badge-local { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .badge-handoff { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+    .badge-auto { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-git { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+    .integration-table td:first-child { font-weight: 600; white-space: nowrap; }
+    .integration-table .flow { font-size: 0.78rem; color: var(--muted); font-family: ui-monospace, monospace; }
+
+    .integration-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 0.85rem;
+      margin-top: 1.25rem;
+    }
+
+    .int-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      font-size: 0.82rem;
+    }
+
+    .int-card h3 {
+      font-size: 0.92rem;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .int-card dl { margin-top: 0.5rem; }
+    .int-card dt {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-top: 0.45rem;
+    }
+    .int-card dd { font-size: 0.8rem; margin-top: 0.1rem; }
+    .int-card code { font-size: 0.72rem; }
+
+    footer {
+      max-width: 1400px;
+      margin: 2rem auto 0;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 640px) {
+      #org-chart-container { height: 900px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>坂倉HQ — エージェント組織図</h1>
+  <p>仮想会社 company-hq / Cursor Agent 組織 · 最終更新 2026-05-29</p>
+  <p><a href="agent-routing.md">話題別早見表</a> · <a href="agent-playbook.md">運用プレイブック</a></p>
+</header>
+
+<!-- 1. 組織ツリー（報告・所属） -->
+<section class="section">
+  <h2>1. 組織ツリー（所属・管轄）</h2>
+  <p class="hint">CEO の直下は 4 部門。COO は HQ Core の一員（全社窓口だが、組織上は HQ Core 配下）。<br>ノードをドラッグで移動 · ダブルクリックで折りたたみ · ホイールでズーム</p>
+
+  <div class="legend">
+    <span><i class="dot" style="background:var(--ceo)"></i> CEO</span>
+    <span><i class="dot" style="background:var(--hq)"></i> HQ Core</span>
+    <span><i class="dot" style="background:var(--growth)"></i> Growth</span>
+    <span><i class="dot" style="background:var(--tech)"></i> Tech &amp; Data</span>
+    <span><i class="dot" style="background:var(--bu)"></i> Business Units</span>
+  </div>
+
+  <div id="org-chart-container"></div>
+</section>
+
+<!-- 2. 運用フロー（ルーティング） -->
+<section class="section">
+  <h2>2. 運用フロー（CEO → COO → スキル振り分け）</h2>
+  <p class="hint">組織所属とは別軸。通常の Agent チャットは COO がデフォルト窓口となり、11 スキルへ振り分ける。</p>
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart TB
+  CEO["CEO<br/>坂倉 翔"]
+  COO["COO<br/>coo · Executive mode"]
+  PMO["PMO<br/>pmo · Portfolio mode"]
+  L1["Layer 1 機能<br/>秘書 · 経理 · 営業 · 戦略 · IT"]
+  L2["Layer 2 事業<br/>Event Ops · 湾岸不動産 · 沖縄民泊 · 動画ナレッジ"]
+  L3["Layer 3 案件<br/>status.md + AGENT_CONTEXT + @*-light-chat"]
+
+  CEO -->|"通常依頼"| COO
+  CEO -->|"@pmo 明示"| PMO
+  CEO -->|"@it 等 Direct"| L1
+  CEO -->|"@*-light-chat"| L3
+
+  COO --> L1
+  COO --> L2
+  COO --> PMO
+  COO --> L3
+
+  PMO --> L3
+
+  style CEO fill:#eef4fb,stroke:#1e3a5f,stroke-width:2px
+  style COO fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+  style PMO fill:#f0fdfa,stroke:#0d9488,stroke-width:2px
+  style L1 fill:#f8fafc,stroke:#64748b
+  style L2 fill:#f8fafc,stroke:#64748b
+  style L3 fill:#fefce8,stroke:#ca8a04
+    </pre>
+  </div>
+</section>
+
+<!-- 3. 3層アーキテクチャ -->
+<section class="section">
+  <h2>3. 3層アーキテクチャ（スキルのレイヤー分類）</h2>
+  <p class="hint">組織部門（HQ Core 等）とレイヤーは直交する。例: PMO は HQ Core 所属だが Layer 2。動画ナレッジは Tech 所属だが Layer 2。</p>
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart TB
+  subgraph ORG["組織部門（横串グループ）"]
+    direction LR
+    G1["HQ Core"]
+    G2["Growth"]
+    G3["Tech & Data"]
+    G4["Business Units"]
+  end
+
+  subgraph L1["Layer 1 — 機能（業種横串）"]
+    direction LR
+    s1["秘書 secretary"]
+    s2["経理 accounting"]
+    s3["営業 sales"]
+    s4["戦略 strategy"]
+    s5["IT it"]
+  end
+
+  subgraph L2["Layer 2 — 事業ドメイン"]
+    direction LR
+    d1["PMO pmo"]
+    d2["Event Ops event-ops"]
+    d3["湾岸不動産 wangan-real-estate"]
+    d4["沖縄民泊 okinawa-minpaku-research"]
+    d5["動画ナレッジ video-knowledge"]
+  end
+
+  subgraph L3["Layer 3 — 案件コンテキスト"]
+    direction TB
+    p1["bon-odori-harumi-2026"]
+    p2["notion-operations"]
+    p3["x-business / instagram-business"]
+    p4["wangan-price-db / wangan-family-app"]
+    p5["okinawa-minpaku"]
+  end
+
+  L1 --> L2
+  L2 --> L3
+
+  G1 -.-> d1
+  G1 -.-> s1
+  G1 -.-> s2
+  G2 -.-> s3
+  G2 -.-> s4
+  G3 -.-> s5
+  G3 -.-> d5
+  G4 -.-> d2
+  G4 -.-> d3
+  G4 -.-> d4
+
+  style L1 fill:#f0f9ff,stroke:#0284c7
+  style L2 fill:#f0fdf4,stroke:#16a34a
+  style L3 fill:#fefce8,stroke:#ca8a04
+    </pre>
+  </div>
+</section>
+
+<!-- 4. 案件 → 担当スキル -->
+<section class="section">
+  <h2>4. Layer 3 — 案件と担当スキルの依存</h2>
+  <p class="hint">各プロジェクトは primary スキルにぶら下がる。複数部門の場合は主担当を太線で表示。</p>
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart LR
+  subgraph skills["担当スキル"]
+    eventops["Event Ops"]
+    secretary["秘書"]
+    pmo["PMO"]
+    it["IT"]
+    strategy["戦略"]
+    wangan["湾岸不動産"]
+    okinawa["沖縄民泊"]
+    vk["動画ナレッジ"]
+  end
+
+  subgraph projects["Layer 3 案件 / ツール"]
+    bon["盆踊り2026 出店<br/>active"]
+    notion["Notion Operations<br/>active"]
+    video["Video Knowledge<br/>active"]
+    pricedb["湾岸価格DB<br/>active"]
+    xbiz["X事業<br/>planning"]
+    insta["Instagram<br/>planning"]
+    minpaku["沖縄民泊事業<br/>planning"]
+    family["湾岸ファミリーアプリ<br/>planning"]
+  end
+
+  eventops ==> bon
+  secretary ==> notion
+  pmo --> notion
+  it ==> video
+  wangan ==> pricedb
+  it --> pricedb
+  strategy ==> xbiz
+  strategy ==> insta
+  okinawa ==> minpaku
+  it ==> family
+  strategy --> family
+  vk -.-> video
+
+  style bon fill:#dcfce7,stroke:#16a34a
+  style notion fill:#dcfce7,stroke:#16a34a
+  style video fill:#dcfce7,stroke:#16a34a
+  style pricedb fill:#dcfce7,stroke:#16a34a
+  style xbiz fill:#fef9c3,stroke:#ca8a04
+  style insta fill:#fef9c3,stroke:#ca8a04
+  style minpaku fill:#fef9c3,stroke:#ca8a04
+  style family fill:#fef9c3,stroke:#ca8a04
+    </pre>
+  </div>
+</section>
+
+<!-- 5. スキル間依存 -->
+<section class="section">
+  <h2>5. スキル間の追加参照（必要時のみ）</h2>
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart LR
+  wangan["湾岸不動産"] -->|"売買・市況判断"| strategy["戦略"]
+  okinawa["沖縄民泊"] -->|"ROI・損益分岐"| accounting["経理"]
+  eventops["Event Ops"] -->|"共有文・議事録"| secretary["秘書"]
+  vk["動画ナレッジ"] -->|"議事録化"| secretary
+    </pre>
+  </div>
+</section>
+
+<!-- 6. 外部連携マップ -->
+<section class="section">
+  <h2>6. 外部連携マップ（company-hq ↔ 外部ツール）</h2>
+  <p class="hint">Cursor Agent（company-hq）を中心に、MCP・API・ローカルアプリ・CEO手動操作の4種類でつながる。<br>Claude Code は Cursor と別クライアントだが、同じ Git リポジトリと AGENTS.md を共有する並行開発環境。</p>
+
+  <div class="integration-legend">
+    <span><span class="badge badge-mcp">MCP</span> Cursor 内から直接</span>
+    <span><span class="badge badge-api">API</span> キー経由・クラウド</span>
+    <span><span class="badge badge-local">Local</span> localhost / CLI</span>
+    <span><span class="badge badge-handoff">Handoff</span> CEO が橋渡し</span>
+    <span><span class="badge badge-auto">Auto</span> 定期・CI 自動</span>
+    <span><span class="badge badge-git">Git</span> リポジトリ同期</span>
+  </div>
+
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart TB
+  CEO(["CEO 坂倉 翔"])
+
+  subgraph hub["company-hq — Cursor Agent"]
+    COO2["COO + 11 Skills"]
+    LCHAT["@*-light-chat ルール"]
+    GIT[("Git SSoT<br/>status · skills · 設計")]
+    COO2 --> LCHAT
+    LCHAT --> GIT
+  end
+
+  subgraph parallel["並行 AI 開発環境"]
+    CC["Claude Code<br/>CLAUDE.md → AGENTS.md"]
+  end
+
+  subgraph mcp_layer["MCP（Cursor 内蔵）"]
+    NOTION_MCP["Notion MCP<br/>.cursor/mcp.json"]
+    BROWSER_MCP["Browser MCP<br/>UIテスト"]
+  end
+
+  subgraph local_apps["ローカルアプリ / CLI"]
+    WA["wangan-agent<br/>localhost:3000"]
+    VK_CLI["video-knowledge CLI<br/>tools/video_knowledge/"]
+    VK_SRV["video-knowledge server<br/>localhost:8787"]
+    CHROME["Chrome 拡張<br/>video-capture-extension"]
+    DASH["湾岸価格ダッシュボード<br/>docs/wangan-price-dashboard/"]
+    EXPO["Expo / PWA<br/>wangan-family-app"]
+    BON_WEB["盆踊り工程表<br/>GitHub Pages"]
+  end
+
+  subgraph saas["クラウド / SaaS"]
+    NOTION[("Notion 会社HQ<br/>議事録 · タスク · 予定")]
+    GITHUB["GitHub<br/>repo + Actions"]
+    GMAIL["Gmail API"]
+    XAPI["X API"]
+    YT["YouTube"]
+    LLM["Anthropic / OpenAI"]
+  end
+
+  CEO -->|"依頼・承認"| COO2
+  CEO -->|"投稿承認"| WA
+  CEO -->|"開発（任意）"| CC
+
+  CC -.->|"同一リポジトリ"| GIT
+  COO2 --> GIT
+
+  COO2 -->|"Read/Write"| NOTION_MCP
+  NOTION_MCP <-->|"OAuth MCP"| NOTION
+
+  COO2 -->|"テスト"| BROWSER_MCP
+
+  LCHAT -->|"@x-business 文案生成"| GIT
+  GIT -.->|"文案コピー"| WA
+  WA -->|"CEO承認後"| XAPI
+  WA -.-> LLM
+
+  LCHAT -->|"@video-knowledge"| VK_CLI
+  VK_CLI --> YT
+  VK_CLI --> LLM
+  VK_CLI -->|"Markdown"| GIT
+  CHROME -->|"POST ingest"| VK_SRV
+  VK_SRV --> GIT
+  VK_SRV -.->|"任意"| NOTION
+
+  GITHUB -->|"週次 cron"| GMAIL
+  GMAIL -->|"湾岸価格メール"| GITHUB
+  GITHUB -->|"commit DB + data.js"| GIT
+  GIT --> DASH
+  LCHAT -->|"@wangan-price"| DASH
+
+  GITHUB -->|"push"| BON_WEB
+  LCHAT -->|"@bon-odori"| BON_WEB
+
+  LCHAT -->|"@notion-ops / @secretary"| NOTION_MCP
+  LCHAT -->|"@wangan-family"| EXPO
+
+  style hub fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+  style mcp_layer fill:#ecfeff,stroke:#0891b2
+  style local_apps fill:#f8fafc,stroke:#64748b
+  style saas fill:#fefce8,stroke:#ca8a04
+  style parallel fill:#faf5ff,stroke:#7c3aed,stroke-dasharray: 5 5
+  style CEO fill:#eef4fb,stroke:#1e3a5f,stroke-width:2px
+    </pre>
+  </div>
+
+  <h3 style="text-align:center;font-size:1rem;margin:1.5rem 0 0.75rem;">連携一覧</h3>
+  <table class="integration-table">
+    <thead>
+      <tr>
+        <th>外部ツール</th>
+        <th>連携方式</th>
+        <th>接続先（スキル / 案件）</th>
+        <th>データの流れ</th>
+        <th>起動・トリガー</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Notion</td>
+        <td><span class="badge badge-mcp">MCP</span></td>
+        <td>秘書 · PMO · <code>notion-operations</code></td>
+        <td class="flow">Cursor ↔ 議事録/タスク/予定 DB</td>
+        <td><code>@notion-ops-light-chat</code> · OAuth (<code>mcp_auth</code>)</td>
+      </tr>
+      <tr>
+        <td>Git / GitHub</td>
+        <td><span class="badge badge-git">Git</span></td>
+        <td>全スキル · IT · PMO</td>
+        <td class="flow">status.md · skills · 設計 = SSoT</td>
+        <td>通常の git 操作 · push</td>
+      </tr>
+      <tr>
+        <td>GitHub Actions</td>
+        <td><span class="badge badge-auto">Auto</span> <span class="badge badge-api">API</span></td>
+        <td>湾岸不動産 · <code>wangan-price-db</code></td>
+        <td class="flow">Gmail → SQLite → data.js → commit</td>
+        <td>毎週金曜 cron · 手動 workflow_dispatch</td>
+      </tr>
+      <tr>
+        <td>Gmail API</td>
+        <td><span class="badge badge-api">API</span></td>
+        <td>湾岸不動産</td>
+        <td class="flow">価格ナビメール → DB 蓄積</td>
+        <td>GHA または <code>sync_gmail_prices.py</code></td>
+      </tr>
+      <tr>
+        <td>wangan-agent</td>
+        <td><span class="badge badge-local">Local</span> <span class="badge badge-handoff">Handoff</span></td>
+        <td>戦略 · <code>x-business</code></td>
+        <td class="flow">Cursor で文案 → UI で承認 → X 投稿</td>
+        <td><code>cd ~/Projects/wangan-agent && npm start</code></td>
+      </tr>
+      <tr>
+        <td>X API</td>
+        <td><span class="badge badge-api">API</span></td>
+        <td><code>x-business</code>（@hakushu7）</td>
+        <td class="flow">wangan-agent 経由のみ（Cursor から直接投稿しない）</td>
+        <td>wangan-agent UI · CEO 承認後</td>
+      </tr>
+      <tr>
+        <td>Claude Code</td>
+        <td><span class="badge badge-git">Git</span> <span class="badge badge-local">Local</span></td>
+        <td>IT · 各サブプロジェクト</td>
+        <td class="flow">同一 repo · <code>CLAUDE.md</code> → <code>AGENTS.md</code> 参照</td>
+        <td>Cursor とは別クライアント（COO ルール外）</td>
+      </tr>
+      <tr>
+        <td>Cursor Browser MCP</td>
+        <td><span class="badge badge-mcp">MCP</span></td>
+        <td>IT</td>
+        <td class="flow">localhost / Web UI の操作・確認</td>
+        <td>Agent が自動利用（例: ダッシュボード確認）</td>
+      </tr>
+      <tr>
+        <td>video-knowledge CLI</td>
+        <td><span class="badge badge-local">Local</span> <span class="badge badge-api">API</span></td>
+        <td>動画ナレッジ · <code>video-knowledge</code></td>
+        <td class="flow">YouTube/動画 → 文字起こし → <code>company/memory/videos/</code></td>
+        <td><code>@video-knowledge-light-chat</code> · CLI</td>
+      </tr>
+      <tr>
+        <td>Whisper (faster-whisper)</td>
+        <td><span class="badge badge-local">Local</span></td>
+        <td>動画ナレッジ</td>
+        <td class="flow">ローカル音声 → テキスト</td>
+        <td><code>process_local_video.py</code></td>
+      </tr>
+      <tr>
+        <td>Anthropic / OpenAI</td>
+        <td><span class="badge badge-api">API</span></td>
+        <td>動画ナレッジ · wangan-agent</td>
+        <td class="flow">要約・文案生成（キーは各ツール .env）</td>
+        <td>環境変数 · 未設定時は簡易要約</td>
+      </tr>
+      <tr>
+        <td>YouTube</td>
+        <td><span class="badge badge-api">API</span></td>
+        <td>動画ナレッジ</td>
+        <td class="flow">URL → 字幕取得 → Markdown</td>
+        <td><code>process_video.py</code></td>
+      </tr>
+      <tr>
+        <td>Chrome 拡張</td>
+        <td><span class="badge badge-local">Local</span></td>
+        <td>動画ナレッジ</td>
+        <td class="flow">視聴中 → :8787 ingest → Markdown</td>
+        <td><code>server.py</code> 起動 + Load unpacked</td>
+      </tr>
+      <tr>
+        <td>湾岸価格ダッシュボード</td>
+        <td><span class="badge badge-local">Local</span></td>
+        <td>湾岸不動産 · IT</td>
+        <td class="flow">data.js（GHA 更新）→ 静的 HTML 表示</td>
+        <td><code>open_wangan_dashboard.command</code></td>
+      </tr>
+      <tr>
+        <td>Expo Go / PWA</td>
+        <td><span class="badge badge-local">Local</span></td>
+        <td>IT · 戦略 · <code>wangan-family-app</code></td>
+        <td class="flow">開発中アプリの実機確認</td>
+        <td><code>open_wangan_family_app.command</code></td>
+      </tr>
+      <tr>
+        <td>GitHub Pages</td>
+        <td><span class="badge badge-auto">Auto</span> <span class="badge badge-git">Git</span></td>
+        <td>Event Ops · <code>bon-odori-harumi-2026</code></td>
+        <td class="flow">工程表 · 出欠 JSON → チーム共有 Web</td>
+        <td>push 後 1〜2 分</td>
+      </tr>
+      <tr>
+        <td>Apple Calendar</td>
+        <td><span class="badge badge-handoff">Handoff</span></td>
+        <td>秘書 · Event Ops</td>
+        <td class="flow">calendar.ics → AppleScript 登録</td>
+        <td><code>add_calendar_events.applescript</code>（任意）</td>
+      </tr>
+      <tr>
+        <td>Google Calendar</td>
+        <td><span class="badge badge-handoff">Handoff</span></td>
+        <td>秘書</td>
+        <td class="flow">Notion 予定 DB と二重管理リスクあり（当面 Notion 中心）</td>
+        <td>手動 · 未統合</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 style="text-align:center;font-size:1rem;margin:1.5rem 0 0.75rem;">主要連携の詳細</h3>
+  <div class="integration-cards">
+    <div class="int-card">
+      <h3>Notion <span class="badge badge-mcp">MCP</span></h3>
+      <dl>
+        <dt>設定</dt>
+        <dd><code>.cursor/mcp.json</code> → <code>https://mcp.notion.com/mcp</code></dd>
+        <dt>担当</dt>
+        <dd>秘書（議事録）· PMO（タスク同期）· IT（スキーマ拡張）</dd>
+        <dt>Git との役割分担</dt>
+        <dd>Git = 方針・設計の正 / Notion = 実行レイヤー（議事録·タスク·予定）</dd>
+        <dt>リンク</dt>
+        <dd><a href="https://www.notion.so/3633d2ab617d81af81f3e2c548bcfbb2" target="_blank" rel="noopener">会社HQ</a></dd>
+      </dl>
+    </div>
+    <div class="int-card">
+      <h3>wangan-agent + X API <span class="badge badge-handoff">Handoff</span></h3>
+      <dl>
+        <dt>場所</dt>
+        <dd><code>~/Projects/wangan-agent</code>（company-hq 外の別リポジトリ）</dd>
+        <dt>フロー</dt>
+        <dd>① Cursor <code>@x-business-light-chat</code> で文案 → ② localhost:3000 で編集・承認 → ③ X API 投稿</dd>
+        <dt>秘密情報</dt>
+        <dd>X API キー · Anthropic キー · SQLite は wangan-agent 側のみ（HQ に保存しない）</dd>
+      </dl>
+    </div>
+    <div class="int-card">
+      <h3>Claude Code <span class="badge badge-git">Git</span></h3>
+      <dl>
+        <dt>関係</dt>
+        <dd>Cursor Agent（COO オーケストレーション）とは<strong>別クライアント</strong>。同じ company-hq リポジトリを編集可能。</dd>
+        <dt>入口</dt>
+        <dd>各サブプロジェクトの <code>CLAUDE.md</code> が <code>AGENTS.md</code> を参照（例: wangan-family-app）</dd>
+        <dt>注意</dt>
+        <dd>COO ルール · light-chat · approval-policy は Cursor 側の運用。Claude Code では手動で同等の確認が必要。</dd>
+      </dl>
+    </div>
+    <div class="int-card">
+      <h3>動画ナレッジ パイプライン <span class="badge badge-local">Local</span></h3>
+      <dl>
+        <dt>経路 A</dt>
+        <dd>Cursor <code>@video-knowledge</code> → CLI → <code>company/memory/videos/*.md</code></dd>
+        <dt>経路 B</dt>
+        <dd>Chrome 拡張 → <code>localhost:8787</code> → 同上（YouTube 視聴中）</dd>
+        <dt>LLM</dt>
+        <dd><code>ANTHROPIC_API_KEY</code> / <code>OPENAI_API_KEY</code>（任意）</dd>
+        <dt>Notion</dt>
+        <dd>動画メモ DB はスキーマ定義済 · 作成は backlog</dd>
+      </dl>
+    </div>
+    <div class="int-card">
+      <h3>湾岸価格 DB <span class="badge badge-auto">Auto</span></h3>
+      <dl>
+        <dt>自動化</dt>
+        <dd><code>.github/workflows/wangan-price-db.yml</code> — 毎週金曜 Gmail 同期</dd>
+        <dt>出力</dt>
+        <dd><code>data/wangan_prices.sqlite</code> + <code>docs/wangan-price-dashboard/data.js</code></dd>
+        <dt>Agent 連携</dt>
+        <dd><code>@wangan-price-light-chat</code> · <code>@wangan-real-estate</code> で分析・評価</dd>
+      </dl>
+    </div>
+    <div class="int-card">
+      <h3>盆踊り チーム共有 <span class="badge badge-git">Git</span></h3>
+      <dl>
+        <dt>Web</dt>
+        <dd><code>docs/bon-odori/</code> → GitHub Pages で工程表・出欠共有</dd>
+        <dt>Agent</dt>
+        <dd><code>@bon-odori-light-chat</code> + <code>AGENT_CONTEXT.md</code></dd>
+        <dt>制約</dt>
+        <dd>Gmail はブラウザ MCP 不使用。メール内容は status か CEO 貼り付け前提</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>7. ルーティングモード</h2>
+  <table>
+    <thead>
+      <tr><th>モード</th><th>起動</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Executive</strong></td><td>デフォルト（COO）</td><td>方針・複数部門・CEO確認</td></tr>
+      <tr><td><strong>Direct</strong></td><td><code>@it</code> 等を先頭に</td><td>単一スキルで完結する作業</td></tr>
+      <tr><td><strong>Project</strong></td><td><code>@*-light-chat</code></td><td>1案件の継続作業</td></tr>
+      <tr><td><strong>Portfolio</strong></td><td><code>@pmo</code></td><td>週次優先順位・横断整理</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section external">
+  <h2>8. クイック起動リファレンス</h2>
+  <div class="external-grid">
+    <div class="ext-item">
+      <strong>Cursor Agent（通常）</strong>
+      company-hq を Cursor で開く → デフォルト COO
+    </div>
+    <div class="ext-item">
+      <strong>Notion MCP</strong>
+      Cursor 設定 → MCP → Notion OAuth<br>
+      未接続時: Agent に <code>mcp_auth</code> を依頼
+    </div>
+    <div class="ext-item">
+      <strong>wangan-agent（X投稿）</strong>
+      <code>cd ~/Projects/wangan-agent && npm start</code><br>
+      → http://localhost:3000/
+    </div>
+    <div class="ext-item">
+      <strong>湾岸価格ダッシュボード</strong>
+      <code>open_wangan_dashboard.command</code>
+    </div>
+    <div class="ext-item">
+      <strong>動画ナレッジ server</strong>
+      <code>cd tools/video_knowledge && source .venv/bin/activate && python server.py</code><br>
+      → http://127.0.0.1:8787/
+    </div>
+    <div class="ext-item">
+      <strong>湾岸ファミリーアプリ</strong>
+      <code>open_wangan_family_app.command</code>（Expo Go）
+    </div>
+    <div class="ext-item">
+      <strong>Claude Code</strong>
+      同一 repo を Claude Code で開く · <code>CLAUDE.md</code> 参照
+    </div>
+    <div class="ext-item">
+      <strong>GitHub Actions（価格DB）</strong>
+      Actions → Update Wangan Price DB → Run workflow
+    </div>
+  </div>
+</section>
+
+<footer>
+  生成元: AGENTS.md / agent-routing.md / registry.yaml / notion-operations/status.md<br>
+  ライブラリ: d3-org-chart · Mermaid（CDN） · 最終更新 2026-05-29
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-org-chart@3.1.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  // --- 組織ツリー: flat data (id / parentId) ---
+  const orgData = [
+    { id: 'ceo', parentId: '', name: 'CEO', sub: '坂倉 翔', desc: '方針決定・最終承認', cls: 'ceo' },
+
+    { id: 'hq', parentId: 'ceo', name: 'HQ Core', sub: '横串の基盤機能', cls: 'group-hq', isGroup: true },
+    { id: 'growth', parentId: 'ceo', name: 'Growth', sub: '事業拡大・発信', cls: 'group-growth', isGroup: true },
+    { id: 'tech', parentId: 'ceo', name: 'Tech & Data', sub: '実装・データ基盤', cls: 'group-tech', isGroup: true },
+    { id: 'bu', parentId: 'ceo', name: 'Business Units', sub: 'ドメイン専門', cls: 'group-bu', isGroup: true },
+
+    { id: 'coo', parentId: 'hq', name: 'COO', skill: 'coo', desc: 'デフォルト窓口・振り分け', tag: 'Executive', cls: 'coo-node hq' },
+    { id: 'pmo', parentId: 'hq', name: 'PMO', skill: 'pmo', desc: '台帳・優先順位・週次', tag: '@pmo', cls: 'hq', layer: 'L2' },
+    { id: 'secretary', parentId: 'hq', name: '秘書', skill: 'secretary', desc: '日程・議事録・下書き', tag: '@secretary-light-chat', cls: 'hq', layer: 'L1' },
+    { id: 'accounting', parentId: 'hq', name: '経理', skill: 'accounting', desc: '経費・請求・数値', cls: 'hq', layer: 'L1' },
+
+    { id: 'sales', parentId: 'growth', name: '営業', skill: 'sales', desc: '提案・商談・顧客', cls: 'growth', layer: 'L1' },
+    { id: 'strategy', parentId: 'growth', name: '戦略', skill: 'strategy', desc: '市場・KPI・事業計画', cls: 'growth', layer: 'L1' },
+
+    { id: 'it', parentId: 'tech', name: 'IT', skill: 'it', desc: 'コード・CI・自動化', tag: '@it Direct', cls: 'tech', layer: 'L1' },
+    { id: 'video-knowledge', parentId: 'tech', name: '動画ナレッジ', skill: 'video-knowledge', desc: '文字起こし・要約', tag: '@video-knowledge-light-chat', cls: 'tech', layer: 'L2' },
+
+    { id: 'event-ops', parentId: 'bu', name: 'Event Ops', skill: 'event-ops', desc: 'イベント・出店運営', tag: '@bon-odori-light-chat', cls: 'bu', layer: 'L2' },
+    { id: 'wangan', parentId: 'bu', name: '湾岸不動産', skill: 'wangan-real-estate', desc: '市況・時価・売買判断', tag: '@wangan-price-light-chat', cls: 'bu', layer: 'L2' },
+    { id: 'okinawa', parentId: 'bu', name: '沖縄民泊', skill: 'okinawa-minpaku-research', desc: '物件精査・ROI', tag: '@okinawa-minpaku-light-chat', cls: 'bu', layer: 'L2' },
+  ];
+
+  function nodeHtml(d) {
+    const n = d.data;
+    const layerBadge = n.layer
+      ? `<span class="tag">${n.layer}</span>`
+      : (n.tag ? `<span class="tag">${n.tag}</span>` : '');
+    return `
+      <div class="org-node ${n.cls || ''}">
+        <div class="role">${n.name}</div>
+        ${n.sub ? `<div class="sub">${n.sub}</div>` : ''}
+        ${n.skill ? `<div class="skill">${n.skill}</div>` : ''}
+        ${n.desc ? `<div class="desc">${n.desc}</div>` : ''}
+        ${layerBadge}
+      </div>`;
+  }
+
+  const chart = new d3.OrgChart()
+    .container('#org-chart-container')
+    .data(orgData)
+    .nodeWidth(() => 200)
+    .nodeHeight(d => d.data.isGroup ? 72 : 118)
+    .childrenMargin(() => 48)
+    .compactMarginBetween(() => 28)
+    .compactMarginPair(() => 36)
+    .neighbourMargin(() => 24)
+    .siblingsMargin(() => 24)
+    .nodeContent((d) => nodeHtml(d))
+    .buttonContent(({ node }) => {
+      return `<div style="color:#64748b;border-radius:4px;padding:2px 6px;font-size:11px;margin:auto;background:#f1f5f9;border:1px solid #cbd5e1;">${node.children ? '−' : '+'}</div>`;
+    })
+    .onNodeClick(d => {
+      chart.setExpanded(d.id, !d.children).render().fit();
+    });
+
+  chart.render().expandAll().fit();
+
+  // --- Mermaid ---
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'neutral',
+    flowchart: { curve: 'basis', htmlLabels: true, padding: 16 },
+    securityLevel: 'loose',
+  });
+</script>
+</body>
+</html>

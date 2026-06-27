@@ -1,0 +1,18 @@
+# Cursor AI / search — exclude heavy generated dirs (actual project ~400 files)
+**/node_modules/
+**/.venv/
+**/__pycache__/
+**/.expo/
+**/dist/
+**/web-build/
+**/.git/
+**/ios/
+**/android/
+**/.metro-health-check*
+**/*.tsbuildinfo
+
+# Large data / binaries
+**/data/*.sqlite
+**/*.dylib
+**/*.so
+**/*.node

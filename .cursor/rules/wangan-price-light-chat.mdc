@@ -1,0 +1,32 @@
+---
+description: 湾岸マンション価格DBの軽量Agentチャット用。新規チャットで @wangan-price-light-chat を付ける。履歴・transcript読取禁止。
+globs: docs/wangan-price-*,tools/wangan_price_db/**
+alwaysApply: false
+---
+
+# 湾岸価格DB — 軽量チャット
+
+## 必須
+
+1. 前提は `docs/wangan-price-db.md` と、必要最小限の `tools/wangan_price_db/` 内スクリプトのみ
+2. **禁止**: `agent-transcripts` の読取、無関係な別チャット履歴の Grep
+3. 価格分析・物件評価時は `.cursor/skills/wangan-real-estate/SKILL.md` を Read
+4. 実装・CI・DB同期時は `.cursor/skills/it/SKILL.md` を Read
+5. 回答は **【COO】** 1行 + **【湾岸不動産】** または **【IT】**
+
+## 参照優先
+
+- DB: `data/wangan_prices.sqlite`（ローカルに無ければ `origin/main:data/wangan_prices.sqlite`）
+- ダッシュボード: `docs/wangan-price-dashboard/`
+- Gmail同期: `tools/wangan_price_db/sync_gmail_prices.py`
+
+## 更新時
+
+- スキーマ・運用変更は `docs/wangan-price-db.md` を更新
+- 事業判断の確定事項は `company/memory/` への保存を CEO に提案
+
+## 新チャットの最初の一行（コピペ用）
+
+```
+@wangan-price-light-chat @docs/wangan-price-db.md を前提に答えて。agent-transcripts は読まないで。
+```

@@ -1,0 +1,85 @@
+# プロジェクト台帳（機械可読）
+# PMO が週次で status.md と整合させる
+
+projects:
+  - id: bon-odori-harumi-2026
+    name: 晴海ふ頭公園盆踊り大会2026 出店
+    type: 案件
+    status: active
+    owner: 坂倉
+    agent_context: true
+    light_chat_rule: bon-odori-light-chat
+    status_file: company/projects/bon-odori-harumi-2026/status.md
+
+  - id: notion-operations
+    name: Notion Operations
+    type: 基盤
+    status: active
+    owner: COO
+    agent_context: false
+    light_chat_rule: notion-ops-light-chat
+    status_file: company/projects/notion-operations/status.md
+
+  - id: video-knowledge
+    name: Video Knowledge Pipeline
+    type: 基盤
+    status: active
+    owner: IT
+    agent_context: false
+    light_chat_rule: video-knowledge-light-chat
+    status_file: company/projects/video-knowledge/status.md
+
+  - id: x-business
+    name: X事業
+    type: 事業
+    status: planning
+    owner: 坂倉
+    agent_context: true
+    light_chat_rule: x-business-light-chat
+    status_file: company/projects/x-business/status.md
+
+  - id: instagram-business
+    name: Instagram事業
+    type: 事業
+    status: planning
+    owner: 坂倉
+    agent_context: true
+    light_chat_rule: instagram-light-chat
+    status_file: company/projects/instagram-business/status.md
+
+  # リポジトリ内ツール・アプリ（project-id なし、status は各 README / docs 参照）
+  - id: wangan-price-db
+    name: 湾岸マンション価格DB
+    type: ツール
+    status: active
+    owner: IT
+    agent_context: false
+    light_chat_rule: wangan-price-light-chat
+    status_file: docs/wangan-price-db.md
+
+  - id: wangan-family-app
+    name: 湾岸ファミリーアプリ
+    type: アプリ
+    status: planning
+    owner: 坂倉
+    agent_context: false
+    light_chat_rule: wangan-family-light-chat
+    status_file: apps/wangan-family-app/README.md
+
+  - id: maruke-app
+    name: まるつけ（宿題写真答え合わせ）
+    type: アプリ
+    status: active
+    owner: 坂倉
+    agent_context: true
+    light_chat_rule: maruke-light-chat
+    status_file: company/projects/maruke-app/status.md
+
+  - id: okinawa-minpaku
+    name: 沖縄民泊事業
+    type: 事業
+    status: planning
+    owner: 坂倉
+    agent_context: true
+    light_chat_rule: okinawa-minpaku-light-chat
+    status_file: company/projects/okinawa-minpaku/status.md

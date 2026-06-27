@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>まるつけ — 公庫面談用 事業概要</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #111111;
+      --muted: #555555;
+      --line: #dddddd;
+      --accent: #111111;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    main {
+      width: min(900px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+    h2 {
+      margin: 28px 0 10px;
+      font-size: 16px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--ink);
+      padding-bottom: 4px;
+    }
+    p { margin: 8px 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f5f5f5; width: 28%; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 12px 0;
+    }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+    figure {
+      margin: 0;
+      border: 1px solid var(--line);
+      padding: 8px;
+    }
+    figure img { width: 100%; height: auto; display: block; }
+    figcaption { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .callout {
+      border: 1px solid var(--ink);
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+    .callout strong { display: block; margin-bottom: 4px; }
+    ul { margin: 6px 0 0 18px; padding: 0; }
+    li { margin: 3px 0; }
+    @media print {
+      main { width: 100%; padding: 0; }
+      figure { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>まるつけ — 事業概要（公庫面談用）</h1>
+    <p class="meta">2026-06-25｜報酬35万固定・自宅オフィス｜借入希望 1,200万（自己400万）</p>
+
+    <div class="callout">
+      <strong>一言</strong>
+      中学受験家庭の「毎晩2〜3時間の丸つけ」を、写真1枚で5分に。月980円で塾年200万のうち「親の採点・弱点見える化」を代替。
+    </div>
+
+    <h2>1. 課題と解決</h2>
+    <table>
+      <tr><th>課題</th><td>共働き受験家庭の夕方ボトルネック。塾代年200〜300万でも丸つけは親の無償労働</td></tr>
+      <tr><th>解決</th><td>答案を撮影 → AIが⭕️❌🟡採点。未記入は解答例。将来は弱点→週次コーチ</td></tr>
+      <tr><th>ミッション</th><td>全ての子供に学習機会を — 高い塾に頼らず家庭学習の質を上げる</td></tr>
+    </table>
+
+    <h2>2. プロダクト状況（2026-06時点）</h2>
+    <ul>
+      <li>FastAPI + OpenAI Vision + PWA（iPhone ホーム画面追加可）</li>
+      <li>小1〜6・4教科・複数枚答案・解答ページ添付対応</li>
+      <li>🟡要確認設計（誤採点回避）、未記入→解答例</li>
+      <li>合成3ケース自動テスト合格（4〜6秒/枚）</li>
+      <li>Fly.io ベータ公開手順整備済</li>
+    </ul>
+
+    <h2>3. 競合との差別化</h2>
+    <table>
+      <tr><th>採点くん</th><td>汎用小中・月600円。国語精度に不満の口コミ。受験特化なし</td></tr>
+      <tr><th>まるつけ</th><td>中学受験特化・🟡信頼・未記入→解答例・弱点コーチング出口</td></tr>
+    </table>
+
+    <h2>4. 市場・売上計画</h2>
+    <div class="grid">
+      <figure>
+        <img src="../../../docs/creative-visual/maruke/market_size.png" alt="市場規模">
+        <figcaption>市場規模と Year1 獲得想定（億円）</figcaption>
+      </figure>
+      <figure>
+        <img src="../../../docs/creative-visual/maruke/revenue_scenarios.png" alt="売上シナリオ">
+        <figcaption>Year1 月次売上（万円/月）— 標準シナリオ採用</figcaption>
+      </figure>
+    </div>
+    <table>
+      <tr><th>Year1</th><td>売上1,303万・有料4,067人（12月）・営業CF ▲472万</td></tr>
+      <tr><th>Year2</th><td>売上5,880万・営業利益680万</td></tr>
+      <tr><th>Year3</th><td>売上10,584万・営業利益2,400万</td></tr>
+    </table>
+
+    <h2>5. ユニットエコノミ</h2>
+    <figure>
+      <img src="../../../docs/creative-visual/maruke/unit_economics.png" alt="ユニットエコノミ">
+      <figcaption>1家庭・月80採点: API原価480円 vs 月額980円 → 粗利約51%</figcaption>
+    </figure>
+
+    <h2>6. 資金計画（1,600万円）</h2>
+    <table>
+      <tr><th>設備 46万</th><td>開発PC・クラウド・App Store</td></tr>
+      <tr><th>運転 1,554万</th><td>API919万 / 人件483万 / 事務所18万 / マーケ130万 / 外注128万 / 他</td></tr>
+      <tr><th>自己資金</th><td>400万</td></tr>
+      <tr><th>公庫借入</th><td><strong>1,200万</strong></td></tr>
+      <tr><th>Y1末残</th><td>1,012万（最低771万・M9）</td></tr>
+    </table>
+
+    <h2>7. 返済計画</h2>
+    <ul>
+      <li>借入1,200万・10年・元金据置6ヶ月</li>
+      <li>M10以降月次営業CFプラス</li>
+      <li>Year2営業黒字680万 → 返済原資: サブスク売上</li>
+    </ul>
+
+    <h2>8. 創業者</h2>
+    <table>
+      <tr><th>経歴</th><td>SAP Japan 営業Mgr → CADDi ENT Sales 副部長（2026/7退職予定）</td></tr>
+      <tr><th>強み</th><td>AI SaaS GTM・OpenAI実務・受験家庭の当事者性</td></tr>
+      <tr><th>報酬</th><td>代表35万/月固定</td></tr>
+      <tr><th>事務所</th><td>自宅兼事務所（按分1.5万/月）</td></tr>
+      <tr><th>開業</th><td>2026年8月（まるつけ株式会社）</td></tr>
+
+    <h2>9. リスクと対策</h2>
+    <table>
+      <tr><th>精度失望</th><td>🟡要確認・片ページ推奨・段階的教科拡大</td></tr>
+      <tr><th>APIコスト</th><td>モデル最適化（25円→6円/回）</td></tr>
+      <tr><th>競合先行</th><td>受験特化・ミッション・コーチング出口で棲み分け</td></tr>
+    </table>
+
+    <p class="meta" style="margin-top:32px">詳細: company/projects/maruke-app/jfc-application-index.md</p>
+  </main>
+</body>
+</html>

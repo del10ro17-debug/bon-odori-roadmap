@@ -1,0 +1,20 @@
+---
+description: Instagram事業・湾岸暮らしメモ用。新規チャットで @instagram-light-chat。
+globs: company/projects/instagram-business/**,company/memory/2026-05-17-instagram-business.md
+alwaysApply: false
+---
+
+# Instagram事業 — 軽量チャット
+
+## 必須
+
+1. 前提は `company/projects/instagram-business/AGENT_CONTEXT.md` と `status.md` のみ
+2. **禁止**: `agent-transcripts` の読取
+3. X事業（`x-business`）との役割分担を意識。重複投稿案は避ける
+4. 回答は **【COO】** 1行 + **【戦略】** または **【営業】**
+
+## 新チャット一行
+
+```
+@instagram-light-chat @company/projects/instagram-business/AGENT_CONTEXT.md を前提に。agent-transcripts は読まないで。
+```
