@@ -18,6 +18,7 @@ from fastapi.staticfiles import StaticFiles
 
 import grader
 from image_prep import normalize_image
+from pdf_prep import pdf_to_jpeg_pages
 
 load_dotenv()
 
@@ -31,10 +32,11 @@ BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
 BETA_INVITE_CODE = os.environ.get("BETA_INVITE_CODE", "").strip()
 
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"}
 MAX_BYTES = 15 * 1024 * 1024
 MAX_ANSWER_IMAGES = 6
 MAX_PROBLEM_IMAGES = 4
+MAX_PDF_PAGES = 6
 VALID_GRADES = {"1", "2", "3", "4", "5", "6"}
 VALID_GRADING_MODES = {"simple", "rich"}
 VALID_LAYOUT_MODES = {"combined", "split", "spread"}
@@ -92,10 +94,34 @@ async def _read_uploads(
         raw = await upload.read()
         if len(raw) > MAX_BYTES:
             return [], JSONResponse(
-                {"error": f"{label}が大きすぎます（1枚15MBまで）。"},
+                {"error": f"{label}が大きすぎます（1ファイル15MBまで）。"},
                 status_code=413,
             )
         media_type = upload.content_type or "image/jpeg"
+        filename = (upload.filename or "").lower()
+        is_pdf = media_type == "application/pdf" or filename.endswith(".pdf")
+        if is_pdf:
+            try:
+                page_bytes_list = pdf_to_jpeg_pages(raw, max_pages=MAX_PDF_PAGES)
+            except ValueError as exc:
+                return [], JSONResponse({"error": str(exc)}, status_code=400)
+            except RuntimeError as exc:
+                logger.exception("pdf conversion unavailable")
+                return [], JSONResponse({"error": str(exc)}, status_code=500)
+            except Exception:
+                logger.exception("pdf conversion failed")
+                return [], JSONResponse(
+                    {"error": f"{label}の PDF を読み取れませんでした。"},
+                    status_code=400,
+                )
+            for page_index, page_bytes in enumerate(page_bytes_list, start=1):
+                normalized, out_type = normalize_image(
+                    page_bytes,
+                    "image/jpeg",
+                    enhance_handwriting=enhance_handwriting,
+                )
+                images.append((normalized, out_type))
+            continue
         if media_type not in ALLOWED_TYPES:
             media_type = "image/jpeg"
         normalized, media_type = normalize_image(
@@ -151,35 +177,54 @@ async def api_grade(
             {"error": "「問題と答案が別」の場合は問題プリントも撮影してください。"},
             status_code=400,
         )
-    if layout == "spread" and len(answer_uploads) < 2:
-        return JSONResponse(
-            {"error": "「見開き2枚」は左ページ・右ページを2枚以上撮影してください。"},
-            status_code=400,
-        )
 
     normalized_grade = (grade_level or "").strip()
     if normalized_grade and normalized_grade not in VALID_GRADES:
         return JSONResponse({"error": "学年は小1〜小6から選んでください。"}, status_code=400)
 
     answer_images, answer_err = await _read_uploads(
-        answer_uploads, label="答案写真", enhance_handwriting=True
+        answer_uploads, label="答案ファイル", enhance_handwriting=True
     )
     if answer_err:
         return answer_err
+    if len(answer_images) > MAX_ANSWER_IMAGES:
+        return JSONResponse(
+            {"error": f"答案は PDF ページ含め最大{MAX_ANSWER_IMAGES}枚までです。"},
+            status_code=400,
+        )
+    if layout == "spread" and len(answer_images) < 2:
+        return JSONResponse(
+            {"error": "「見開き2枚」は2ページ以上必要です。PDF なら2ページ以上のファイル、または写真を2枚選んでください。"},
+            status_code=400,
+        )
 
     problem_image_data, problem_err = await _read_uploads(problem_uploads, label="問題プリント")
     if problem_err:
         return problem_err
+    if len(problem_image_data) > MAX_PROBLEM_IMAGES:
+        return JSONResponse(
+            {"error": f"問題プリントは PDF ページ含め最大{MAX_PROBLEM_IMAGES}枚までです。"},
+            status_code=400,
+        )
 
     key_bytes = None
     key_media_type = None
     if answer_key is not None and answer_key.filename:
-        key_bytes = await answer_key.read()
-        if len(key_bytes) > MAX_BYTES:
-            return JSONResponse({"error": "解答画像が大きすぎます（15MBまで）。"}, status_code=413)
+        key_raw = await answer_key.read()
+        if len(key_raw) > MAX_BYTES:
+            return JSONResponse({"error": "解答ファイルが大きすぎます（15MBまで）。"}, status_code=413)
         key_media_type = answer_key.content_type or "image/jpeg"
-        if key_media_type not in ALLOWED_TYPES:
-            key_media_type = "image/jpeg"
+        key_name = (answer_key.filename or "").lower()
+        if key_media_type == "application/pdf" or key_name.endswith(".pdf"):
+            try:
+                key_pages = pdf_to_jpeg_pages(key_raw, max_pages=1)
+            except Exception:
+                return JSONResponse({"error": "解答 PDF を読み取れませんでした。"}, status_code=400)
+            key_bytes, key_media_type = normalize_image(key_pages[0], "image/jpeg")
+        else:
+            if key_media_type not in ALLOWED_TYPES:
+                key_media_type = "image/jpeg"
+            key_bytes, key_media_type = normalize_image(key_raw, key_media_type)
 
     if not os.environ.get("OPENAI_API_KEY"):
         return grader.demo_result(

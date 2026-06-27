@@ -158,28 +158,28 @@
       <label class="shot" id="shotProb" for="fileProb">
         <span class="big">📄</span><span>問題ページを撮る / 選ぶ</span>
       </label>
-      <input type="file" id="fileProb" accept="image/*" multiple />
+      <input type="file" id="fileProb" accept="image/*,.pdf,application/pdf" multiple />
       <p class="hint" style="text-align:left;margin-top:8px">文字が横になるよう撮影。暗い・斜め・小さすぎると読み取りミスが出ます。</p>
     </div>
     <label class="field" id="ansFieldLabel">子どもの答案（問題＋答え）を撮影</label>
     <label class="shot" id="shotAns" for="fileAns">
-      <span class="big">📸</span><span>カメラで撮る / 写真を選ぶ（複数可）</span>
+      <span class="big">📸</span><span>カメラ / 写真 / PDF（複数可）</span>
     </label>
-    <input type="file" id="fileAns" accept="image/*" multiple />
+    <input type="file" id="fileAns" accept="image/*,.pdf,application/pdf" multiple />
     <p class="hint" id="answerHint" style="text-align:left;margin-top:8px" hidden>
       答案ノートは (1)(2)… の番号がすべて写るように。明るい場所・真上から・鉛筆の字がはっきり見える距離で。
       斜め・影・指で隠さないと読み取り精度が上がります。
     </p>
     <div class="warnbox" id="spreadWarn" hidden>見開き全体を1枚に収めると読み取りミスが出やすいです。「見開き2枚」で左右ページを別々に撮ると精度が上がります。</div>
-    <div class="warnbox" id="spreadNeedSecond" hidden>あと1枚（右ページ）を追加してください。左→右の順で2枚必要です。</div>
+    <div class="warnbox" id="spreadNeedSecond" hidden>あと1枚（右ページ）を追加するか、2ページ以上の PDF を選んでください。左→右の順で2ページ必要です。</div>
 
     <details class="keyrow">
       <summary>＋ 解答ページも撮る（精度アップ・任意）</summary>
       <label class="field" style="margin-top:10px">解答（正解）ページ</label>
       <label class="shot" id="shotKey" for="fileKey">
-        <span class="big">🔑</span><span>解答を撮影 / 写真を選ぶ</span>
+        <span class="big">🔑</span><span>解答を撮影 / 写真・PDF</span>
       </label>
-      <input type="file" id="fileKey" accept="image/*" />
+      <input type="file" id="fileKey" accept="image/*,.pdf,application/pdf" />
     </details>
 
     <details class="keyrow" id="inviteRow" hidden>
@@ -191,7 +191,7 @@
 
     <div style="height:14px"></div>
     <button class="go" id="go" disabled>答え合わせする</button>
-    <p class="hint">🟡＝AIが自信なし。保護者がご確認ください。<br>国語は「見開き2枚」、算数塾のプリント＋ノートは「別々」を選んでください。</p>
+    <p class="hint">🟡＝AIが自信なし。保護者がご確認ください。<br>国語は「見開き2枚」、算数塾のプリント＋ノートは「別々」を選んでください。<br>PDF は1ファイル最大6ページまで（各ページを1枚の写真として採点します）。</p>
     <p class="status" id="apiStatus"></p>
     <div class="err" id="err" hidden></div>
   </div>
@@ -268,7 +268,7 @@ function updateLayoutUi() {
   if (split) answerHint.textContent = ANSWER_HINTS.split;
   else if (spread) answerHint.textContent = ANSWER_HINTS.spread;
   document.getElementById("spreadWarn").hidden = split || spread;
-  if (spread && state.ans && state.ans.length === 1) {
+  if (spread && state.ans && state.ans.length === 1 && !isPdfBlob(state.ans[0])) {
     document.getElementById("spreadNeedSecond").hidden = false;
   } else {
     document.getElementById("spreadNeedSecond").hidden = true;
@@ -276,10 +276,19 @@ function updateLayoutUi() {
   document.getElementById("go").disabled = !canSubmit();
 }
 
+function isPdfBlob(blob) {
+  const name = (blob && blob.name ? blob.name : "").toLowerCase();
+  return blob && (blob.type === "application/pdf" || name.endsWith(".pdf"));
+}
+
 function canSubmit() {
   if (!state.ans) return false;
   if (state.layout === "split" && !state.prob) return false;
-  if (state.layout === "spread" && state.ans.length < 2) return false;
+  if (state.layout === "spread") {
+    if (state.ans.length >= 2) return true;
+    if (state.ans.length === 1 && isPdfBlob(state.ans[0])) return true;
+    return false;
+  }
   return true;
 }
 
@@ -303,6 +312,11 @@ document.getElementById("subjects").addEventListener("click", (e) => {
   }
 });
 
+function isPdfFile(file) {
+  const name = (file.name || "").toLowerCase();
+  return file.type === "application/pdf" || name.endsWith(".pdf");
+}
+
 function toJpeg(file, maxEdge = 2000) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -323,6 +337,14 @@ function toJpeg(file, maxEdge = 2000) {
   });
 }
 
+async function prepareUpload(file) {
+  if (isPdfFile(file)) {
+    return { blob: file, preview: null, isPdf: true, name: file.name };
+  }
+  const converted = await toJpeg(file);
+  return { ...converted, isPdf: false, name: file.name };
+}
+
 function wireShot(inputId, shotId, slot) {
   const input = document.getElementById(inputId);
   const shot = document.getElementById(shotId);
@@ -332,9 +354,9 @@ function wireShot(inputId, shotId, slot) {
     try {
       const converted = [];
       for (const file of files) {
-        converted.push(await toJpeg(file));
+        converted.push(await prepareUpload(file));
       }
-      if (slot === "ans" && converted.length === 1) {
+      if (slot === "ans" && converted.length === 1 && !converted[0].isPdf && converted[0].preview) {
         const img = new Image();
         img.src = converted[0].preview;
         await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; });
@@ -348,10 +370,16 @@ function wireShot(inputId, shotId, slot) {
         : converted[0].blob;
       shot.classList.add("has");
       clear(shot);
+      const pdfCount = converted.filter(item => item.isPdf).length;
       if ((slot === "ans" || slot === "prob") && converted.length > 1) {
         shot.append(
-          el("span", { class: "big", text: "📚" }),
-          el("span", { text: `${converted.length}枚選択中` })
+          el("span", { class: "big", text: pdfCount ? "📄" : "📚" }),
+          el("span", { text: `${converted.length}ファイル選択中${pdfCount ? "（PDF含む）" : ""}` })
+        );
+      } else if (converted[0].isPdf) {
+        shot.append(
+          el("span", { class: "big", text: "📄" }),
+          el("span", { text: converted[0].name || "PDF" })
         );
       } else {
         shot.append(el("img", { src: converted[0].preview, alt: "プレビュー" }));
@@ -400,11 +428,17 @@ document.getElementById("go").addEventListener("click", async () => {
 
   const fd = new FormData();
   state.ans.forEach((blob, index) => {
-    fd.append("images", blob, `answer-${index + 1}.jpg`);
+    const name = blob.type === "application/pdf" || (blob.name || "").toLowerCase().endsWith(".pdf")
+      ? `answer-${index + 1}.pdf`
+      : `answer-${index + 1}.jpg`;
+    fd.append("images", blob, name);
   });
   if (state.layout === "split" && state.prob) {
     state.prob.forEach((blob, index) => {
-      fd.append("problem_images", blob, `problem-${index + 1}.jpg`);
+      const name = blob.type === "application/pdf" || (blob.name || "").toLowerCase().endsWith(".pdf")
+        ? `problem-${index + 1}.pdf`
+        : `problem-${index + 1}.jpg`;
+      fd.append("problem_images", blob, name);
     });
     fd.append("layout_mode", "split");
   } else if (state.layout === "spread") {
@@ -414,7 +448,10 @@ document.getElementById("go").addEventListener("click", async () => {
   }
   if (state.subject) fd.append("subject", state.subject);
   if (state.grade) fd.append("grade_level", state.grade);
-  if (state.key) fd.append("answer_key", state.key, "key.jpg");
+  if (state.key) {
+    const keyName = state.key.type === "application/pdf" ? "key.pdf" : "key.jpg";
+    fd.append("answer_key", state.key, keyName);
+  }
   fd.append("grading_mode", state.mode || "rich");
   const invite = document.getElementById("inviteCode").value.trim();
   if (invite) {
