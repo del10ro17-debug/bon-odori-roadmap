@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 import grader
-from image_prep import normalize_image
+from image_prep import is_wide_spread, normalize_image, split_wide_spread
 from pdf_prep import pdf_to_jpeg_pages
 
 load_dotenv()
@@ -86,6 +86,8 @@ async def _read_uploads(
     *,
     label: str,
     enhance_handwriting: bool = False,
+    preserve_detail: bool = False,
+    max_edge: int = 2400,
 ) -> tuple[list[tuple[bytes, str]], JSONResponse | None]:
     images: list[tuple[bytes, str]] = []
     for upload in uploads or []:
@@ -119,13 +121,19 @@ async def _read_uploads(
                     page_bytes,
                     "image/jpeg",
                     enhance_handwriting=enhance_handwriting,
+                    preserve_detail=preserve_detail,
+                    max_edge=max_edge,
                 )
                 images.append((normalized, out_type))
             continue
         if media_type not in ALLOWED_TYPES:
             media_type = "image/jpeg"
         normalized, media_type = normalize_image(
-            raw, media_type, enhance_handwriting=enhance_handwriting
+            raw,
+            media_type,
+            enhance_handwriting=enhance_handwriting,
+            preserve_detail=preserve_detail,
+            max_edge=max_edge,
         )
         images.append((normalized, media_type))
     return images, None
@@ -182,8 +190,16 @@ async def api_grade(
     if normalized_grade and normalized_grade not in VALID_GRADES:
         return JSONResponse({"error": "学年は小1〜小6から選んでください。"}, status_code=400)
 
+    subject_norm = (subject or "").strip()
+    workbook_detail = subject_norm in {"国語", "理科", "社会"} or layout == "spread"
+    image_max_edge = 3600 if workbook_detail else 2400
+
     answer_images, answer_err = await _read_uploads(
-        answer_uploads, label="答案ファイル", enhance_handwriting=True
+        answer_uploads,
+        label="答案ファイル",
+        enhance_handwriting=False,
+        preserve_detail=workbook_detail,
+        max_edge=image_max_edge,
     )
     if answer_err:
         return answer_err
@@ -192,13 +208,41 @@ async def api_grade(
             {"error": f"答案は PDF ページ含め最大{MAX_ANSWER_IMAGES}枚までです。"},
             status_code=400,
         )
+
+    auto_spread_split = False
+    if len(answer_images) == 1:
+        single_bytes = answer_images[0][0]
+        if is_wide_spread(single_bytes):
+            try:
+                split_pages = split_wide_spread(single_bytes)
+                if len(split_pages) == 2:
+                    answer_images = []
+                    for page_bytes in split_pages:
+                        normalized, media_type = normalize_image(
+                            page_bytes,
+                            "image/jpeg",
+                            preserve_detail=True,
+                            max_edge=image_max_edge,
+                        )
+                        answer_images.append((normalized, media_type))
+                    layout = "spread"
+                    auto_spread_split = True
+                    logger.info("auto split wide spread into left/right pages")
+            except Exception:
+                logger.exception("wide spread auto-split failed")
+
     if layout == "spread" and len(answer_images) < 2:
         return JSONResponse(
-            {"error": "「見開き2枚」は2ページ以上必要です。PDF なら2ページ以上のファイル、または写真を2枚選んでください。"},
+            {"error": "「見開き2枚」は2ページ以上必要です。PDF なら2ページ以上のファイル、写真を2枚選ぶか、見開き全体を1枚で撮ってください（自動分割を試みます）。"},
             status_code=400,
         )
 
-    problem_image_data, problem_err = await _read_uploads(problem_uploads, label="問題プリント")
+    problem_image_data, problem_err = await _read_uploads(
+        problem_uploads,
+        label="問題プリント",
+        preserve_detail=workbook_detail,
+        max_edge=image_max_edge,
+    )
     if problem_err:
         return problem_err
     if len(problem_image_data) > MAX_PROBLEM_IMAGES:
@@ -252,18 +296,27 @@ async def api_grade(
             key_media_type=key_media_type,
             grading_mode=mode,
             layout_mode=layout,
+            auto_spread_split=auto_spread_split,
         )
     except grader.GraderError as e:
         logger.warning("grade failed: %s", e)
         return JSONResponse({"error": str(e)}, status_code=502)
 
     logger.info(
-        "grade ok strategy=%s items=%d correct=%d incorrect=%d",
+        "grade ok strategy=%s layout=%s auto_split=%s items=%d correct=%d incorrect=%d",
         result.get("grading_strategy", "?"),
+        result.get("layout_mode", "?"),
+        auto_spread_split,
         result.get("total", 0),
         result.get("correct_count", 0),
         result.get("incorrect_count", 0),
     )
+    if auto_spread_split:
+        result["auto_spread_split"] = True
+        result["summary"] = (
+            (result.get("summary") or "")
+            + "（見開き1枚を左右に自動分割して採点しました）"
+        ).strip()
     return result
 
 

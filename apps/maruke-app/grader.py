@@ -2,6 +2,8 @@ import base64
 import json
 import logging
 import os
+import re
+from difflib import SequenceMatcher
 from typing import Any, Optional, Sequence
 from urllib import error, request
 
@@ -65,6 +67,12 @@ SYSTEM_PROMPT = """あなたは中学受験生の家庭学習を支える、丁�
     - 「8/15 分」「15分の8分」= 8/15 分（時間）。「8分の15」「15/8 分」と読み替えない。
     - 帯分数は「3と1/3」「4と2/9」の表記を維持。LaTeX は使わずプレーンテキスト。
     - question には印刷された問題文を要約せず書き写す（数字・記号を落とさない）。
+19. 【国語ワーク・慣用句】写真に写っている大問番号（1・2・3 など）だけを使う。写真に無い大問4以降を作らない。
+20. 同じ問題文を別番号で繰り返し出力しない（重複設問の hallucination 禁止）。
+21. ①②付きの小問は別 item にする（例: number="1-①", number="1-②"）。1つにまとめない。
+22. 選択肢がア・イのみの設問で child_answer に「ウ」など存在しない記号を書かない。読めなければ uncertain。
+23. 国語の縦書き見開き: 1枚目＝左ページ、2枚目＝右ページ。各ページ内は右→左・上→下で読む。
+24. 手書きの丸付け（ア・イ・ウ）・漢字（頭・顔・口・足）は鉛筆の筆跡を拡大して読む。1文字の誤読（頭↔頬、顔↔頭）に注意。
 
 【モードの区別（result_type）】
 - 子どもの手書きの答えがあり、それと正解を比較した: result_type="graded"
@@ -235,7 +243,14 @@ ANSWER_EXTRACT_SCHEMA: dict[str, Any] = {
 }
 
 
-def _grade_profile(grade_level: Optional[str], grading_mode: str = "rich") -> dict[str, Any]:
+PRECISE_SUBJECTS = {"国語", "理科", "社会"}
+
+
+def _grade_profile(
+    grade_level: Optional[str],
+    grading_mode: str = "rich",
+    subject_hint: Optional[str] = None,
+) -> dict[str, Any]:
     grade = (grade_level or "").strip()
     if grade in {"1", "2"}:
         profile = {
@@ -275,6 +290,14 @@ def _grade_profile(grade_level: Optional[str], grading_mode: str = "rich") -> di
     else:
         profile = dict(profile)
         profile["label"] = profile["label"] + "・解説リッチ"
+        subject = (subject_hint or "").strip()
+        if subject in PRECISE_SUBJECTS:
+            profile["model"] = OPENAI_PRECISE_MODEL
+            profile["image_detail"] = "high"
+            profile["max_output_tokens"] = max(profile["max_output_tokens"], 14000)
+            if "精密" not in profile["label"]:
+                profile["label"] = profile["label"].replace("・標準", "・精密").replace("・高速", "・精密")
+            profile["label"] = profile["label"] + f"・{subject}精密"
 
     return profile
 
@@ -351,11 +374,83 @@ def _normalize_item(item: dict[str, Any], grading_mode: str = "rich") -> dict[st
     return item
 
 
+def _section_key(number: str) -> str:
+    match = re.match(r"^(\d+)", (number or "").strip())
+    return match.group(1) if match else ""
+
+
+def _question_similarity(left: str, right: str) -> float:
+    a = (left or "").strip()[:120]
+    b = (right or "").strip()[:120]
+    if not a or not b:
+        return 0.0
+    return SequenceMatcher(None, a, b).ratio()
+
+
+def _drop_duplicate_section_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for item in items:
+        key = _section_key(str(item.get("number", "")))
+        grouped.setdefault(key or "?", []).append(item)
+
+    drop_sections: set[str] = set()
+    for sec, sec_items in grouped.items():
+        if not sec.isdigit() or int(sec) <= 3:
+            continue
+        for base_sec in ("1", "2", "3"):
+            base_items = grouped.get(base_sec, [])
+            if not base_items:
+                continue
+            if _question_similarity(sec_items[0].get("question", ""), base_items[0].get("question", "")) >= 0.55:
+                drop_sections.add(sec)
+                break
+
+    if not drop_sections:
+        return items
+    return [
+        item
+        for item in items
+        if _section_key(str(item.get("number", ""))) not in drop_sections
+    ]
+
+
+def _flag_suspicious_items(items: list[dict[str, Any]], subject_hint: Optional[str]) -> list[dict[str, Any]]:
+    valid_marks = {"ア", "イ", "ウ", "エ", "オ"}
+    subject = (subject_hint or "").strip()
+    for item in items:
+        child = (item.get("child_answer") or "").strip()
+        if not child or child == "（未記入）":
+            continue
+        if subject == "国語" and len(child) == 1 and child.isascii() and child.upper() not in {"A", "B", "C"}:
+            item["verdict"] = "uncertain"
+            item["confidence"] = "low"
+        if subject == "国語" and child in {"D", "l", "B", "★"}:
+            item["verdict"] = "uncertain"
+            item["confidence"] = "low"
+        question = item.get("question", "")
+        if subject == "国語" and child == "ウ" and "ウ" not in question and "ア" in question and "イ" in question:
+            if item.get("verdict") == "correct":
+                item["verdict"] = "uncertain"
+                item["confidence"] = "low"
+        if subject == "国語" and len(child) == 1 and child not in valid_marks and not re.search(r"[\u4e00-\u9fff]", child):
+            if item.get("verdict") == "correct":
+                item["verdict"] = "uncertain"
+                item["confidence"] = "low"
+    return items
+
+
+def _postprocess_items(items: list[dict[str, Any]], subject_hint: Optional[str]) -> list[dict[str, Any]]:
+    cleaned = _drop_duplicate_section_items(items)
+    return _flag_suspicious_items(cleaned, subject_hint)
+
+
 def _normalize_items(
     items: list[dict[str, Any]],
     answer_key_present: bool = False,
     grading_mode: str = "rich",
+    subject_hint: Optional[str] = None,
 ) -> list[dict[str, Any]]:
+    items = _postprocess_items(items, subject_hint)
     normalized: list[dict[str, Any]] = []
     for item in items:
         if not answer_key_present and item.get("basis") == "answer_key":
@@ -365,9 +460,18 @@ def _normalize_items(
     return normalized
 
 
-def _with_counts(data: dict[str, Any], grading_mode: str = "rich") -> dict[str, Any]:
+def _with_counts(
+    data: dict[str, Any],
+    grading_mode: str = "rich",
+    subject_hint: Optional[str] = None,
+) -> dict[str, Any]:
     answer_key_present = bool(data.get("answer_key_present"))
-    items = _normalize_items(data.get("items", []), answer_key_present, grading_mode)
+    items = _normalize_items(
+        data.get("items", []),
+        answer_key_present,
+        grading_mode,
+        subject_hint,
+    )
     data["items"] = items
     data["total"] = len(items)
     graded = [item for item in items if item.get("result_type") == "graded"]
@@ -685,7 +789,7 @@ def _grade_split_two_stage(
     data["grading_strategy"] = "split_two_stage"
     data["grading_profile"] = profile["label"] + "・2段階"
     data["layout_mode"] = "split"
-    result = _with_counts(data, mode)
+    result = _with_counts(data, mode, subject_hint)
     if os.getenv("MARUKE_INCLUDE_OCR_PREVIEW", "1").strip().lower() not in {"0", "false", "no"}:
         result["ocr_preview"] = {
             "problems": problems.get("items", []),
@@ -706,7 +810,7 @@ def demo_result(
     grade_level: Optional[str] = None,
     grading_mode: str = "rich",
 ) -> dict[str, Any]:
-    profile = _grade_profile(grade_level, grading_mode)
+    profile = _grade_profile(grade_level, grading_mode, subject_hint)
     data = {
         "demo": True,
         "subject_detected": subject_hint or "算数",
@@ -765,7 +869,7 @@ def demo_result(
                 },
             ],
     }
-    return _with_counts(data, grading_mode)
+    return _with_counts(data, grading_mode, subject_hint)
 
 
 def _spread_page_label(index: int, total: int) -> str:
@@ -817,9 +921,12 @@ def _build_user_content(
             " 1つの宿題として両ページを合わせて読み、すべての設問を漏らさず採点してください。"
             " 各ページには印刷された問題文・本文・設問と、子どもの鉛筆・ペンの手書き答えが一緒に写っています。"
             " 国語の縦書きは各ページ内で右→左・上→下。2ページにまたがる文章は左→右の順に繋げて読む。"
+            " 大問1・2・3… は写真に写っている番号だけ使う。無い大問を作らない。同じ問題を別番号で繰り返さない。"
+            " ①②付き小問は item を分ける（例: 1-①, 1-②）。"
             " 選択マーク（ア・イ・ウの丸付け）、漢字・語句の記入、記述文を child_answer に書く。"
             " 記述問題は要点が合えば correct、表現の違いだけなら柔軟に。自信がなければ uncertain。"
             " 印刷文字を child_answer に入れない。空欄に手書きがなければ未記入。"
+            " 大問2の選択問題（ア・イ・ウ）も必ず読む。読めない設問だけ unreadable にする。"
         )
     else:
         intro = (
@@ -912,12 +1019,13 @@ def grade(
     problem_images: Optional[Sequence[tuple[bytes, str]]] = None,
     grading_mode: str = "rich",
     layout_mode: str = "combined",
+    auto_spread_split: bool = False,
 ) -> dict[str, Any]:
     if not os.environ.get("OPENAI_API_KEY"):
         raise GraderError("OPENAI_API_KEY が未設定です。")
 
     mode = grading_mode if grading_mode in VALID_GRADING_MODES else "rich"
-    profile = _grade_profile(grade_level, mode)
+    profile = _grade_profile(grade_level, mode, subject_hint)
     normalized_answer_images = list(answer_images or [])
     if not normalized_answer_images and answer_image is not None:
         normalized_answer_images = [(answer_image, answer_media_type)]
@@ -949,7 +1057,12 @@ def grade(
         profile = dict(profile)
         profile["model"] = OPENAI_PRECISE_MODEL
         profile["image_detail"] = "high"
-        suffix = "・分割1pass" if normalized_problem_images else "・見開き2枚"
+        if normalized_problem_images:
+            suffix = "・分割1pass"
+        elif auto_spread_split:
+            suffix = "・見開き自動分割"
+        else:
+            suffix = "・見開き2枚"
         profile["label"] = profile.get("label", "") + suffix
 
     if normalized_problem_images and not SPLIT_TWO_STAGE:
@@ -1016,11 +1129,11 @@ def grade(
         )
     elif layout == "spread":
         data["layout_mode"] = "spread"
-        data["grading_strategy"] = "spread_unified"
+        data["grading_strategy"] = "spread_auto_split" if auto_spread_split else "spread_unified"
     else:
         data["layout_mode"] = "combined"
         data["grading_strategy"] = "single_pass"
-    result = _with_counts(data, mode)
+    result = _with_counts(data, mode, subject_hint)
     if answer_hints is not None and os.getenv("MARUKE_INCLUDE_OCR_PREVIEW", "1").strip().lower() not in {
         "0",
         "false",
