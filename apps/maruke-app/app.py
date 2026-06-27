@@ -82,6 +82,7 @@ async def _read_uploads(
     uploads: list[UploadFile] | None,
     *,
     label: str,
+    enhance_handwriting: bool = False,
 ) -> tuple[list[tuple[bytes, str]], JSONResponse | None]:
     images: list[tuple[bytes, str]] = []
     for upload in uploads or []:
@@ -96,7 +97,9 @@ async def _read_uploads(
         media_type = upload.content_type or "image/jpeg"
         if media_type not in ALLOWED_TYPES:
             media_type = "image/jpeg"
-        normalized, media_type = normalize_image(raw, media_type)
+        normalized, media_type = normalize_image(
+            raw, media_type, enhance_handwriting=enhance_handwriting
+        )
         images.append((normalized, media_type))
     return images, None
 
@@ -150,7 +153,9 @@ async def api_grade(
     if normalized_grade and normalized_grade not in VALID_GRADES:
         return JSONResponse({"error": "学年は小1〜小6から選んでください。"}, status_code=400)
 
-    answer_images, answer_err = await _read_uploads(answer_uploads, label="答案写真")
+    answer_images, answer_err = await _read_uploads(
+        answer_uploads, label="答案写真", enhance_handwriting=True
+    )
     if answer_err:
         return answer_err
 

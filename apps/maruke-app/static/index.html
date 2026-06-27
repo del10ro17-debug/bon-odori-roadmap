@@ -165,6 +165,10 @@
       <span class="big">📸</span><span>カメラで撮る / 写真を選ぶ（複数可）</span>
     </label>
     <input type="file" id="fileAns" accept="image/*" multiple />
+    <p class="hint" id="answerHint" style="text-align:left;margin-top:8px" hidden>
+      答案ノートは (1)(2)… の番号がすべて写るように。明るい場所・真上から・鉛筆の字がはっきり見える距離で。
+      斜め・影・指で隠さないと読み取り精度が上がります。
+    </p>
     <div class="warnbox" id="spreadWarn" hidden>見開き全体は読み取りミスが出やすいです。片ページ、または大問ごとに撮ると精度が上がります。</div>
 
     <details class="keyrow">
@@ -249,6 +253,7 @@ function updateLayoutUi() {
     ? "答案ノート（計算・答えを書いたページ）"
     : "子どもの答案（問題＋答え）を撮影";
   document.getElementById("layoutHint").textContent = LAYOUT_HINTS[state.layout] || "";
+  document.getElementById("answerHint").hidden = !split;
   document.getElementById("go").disabled = !canSubmit();
 }
 
