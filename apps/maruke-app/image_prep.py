@@ -24,7 +24,7 @@ def normalize_image(
             img = img.convert("RGB")
 
         width, height = img.size
-        edge_limit = max(max_edge, 3200) if enhance_handwriting else max_edge
+        edge_limit = max(max_edge, 4096) if enhance_handwriting else max_edge
         if max(width, height) > edge_limit:
             scale = edge_limit / max(width, height)
             img = img.resize(
@@ -35,8 +35,8 @@ def normalize_image(
         if enhance_handwriting:
             from PIL import ImageEnhance
 
-            img = ImageEnhance.Contrast(img).enhance(1.18)
-            img = ImageEnhance.Sharpness(img).enhance(1.25)
+            img = ImageEnhance.Contrast(img).enhance(1.22)
+            img = ImageEnhance.Sharpness(img).enhance(1.3)
 
         buf = io.BytesIO()
         quality = 94 if enhance_handwriting else 92

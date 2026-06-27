@@ -195,6 +195,21 @@ PROBLEM_OCR_SYSTEM = """あなたは中学受験プリントの OCR 専門家で
 
 Output JSON only."""
 
+ANSWER_OCR_SYSTEM = """あなたは答案ノートの手書き読み取り専門家です。鉛筆・ペンの筆跡だけを child_answer に写します。
+
+【絶対ルール】
+1. 印刷文字・問題文・設問文は無視。手書きの答えだけを読む。
+2. 赤丸・赤ペン・二重線・下線で囲った数字・式が最終答え。これを最優先で child_answer に写す。
+3. 途中式・筆算の各行は child_answer に含めない（最終答えのみ）。
+4. 除法の筆算: 商の各桁を上から順に並べた数が答え（商が 2 と 9 なら 209）。小数点が明確に見える場合のみ "." を入れる（209 と 20.9 を取り違えない）。
+5. 480と32、0.85と0.18、314と31.4、209と20 のような桁・小数点の取り違えに注意。
+6. 帯分数は「2と4/9」形式。単位（秒・cm・倍・%）が手書きされていれば含める。
+7. 設問番号 (1)(2)… と答案の位置を対応づける。番号が写っていなければ read_confidence=low。
+8. 消えかけ・薄い字・かすれた鉛筆は推測で埋めない。read_confidence=low。
+9. 手書きがなければ child_answer="（未記入）"。
+
+Output JSON only."""
+
 ANSWER_EXTRACT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -543,9 +558,10 @@ def _extract_answers(
     intro = (
         "答案ノートから子どもの手書き答えだけを読み取る。問題文は書かない。"
         "各マス・各設問の (1)(2)… 番号に対応づけ、最終答えを child_answer に書く。"
-        "赤丸・下線・二重線で囲った数字を最終答えとして優先。途中式は無視。"
+        "赤丸・下線・二重線で囲った数字を最終答えとして最優先。途中式は無視。"
         "手書きがなければ child_answer=\"（未記入）\"。"
-        "480と32、0.84と0.08など桁を取り違えない。自信がなければ read_confidence=low。"
+        "480と32、0.84と0.08、209と20.9 のような桁・小数点を取り違えない。"
+        "自信がなければ read_confidence=low。"
     )
     if grade_level:
         intro = f"小学{grade_level}年の答案。" + intro
@@ -553,15 +569,16 @@ def _extract_answers(
         intro,
         answer_images,
         label="【答案ノート】",
-        image_detail=profile["image_detail"],
+        image_detail="high",
     )
+    ocr_model = OPENAI_OCR_MODEL
     return _chat_json_schema(
-        model=profile["model"],
-        system="You read handwritten student answers from notebook photos. Output JSON only.",
+        model=ocr_model,
+        system=ANSWER_OCR_SYSTEM,
         user_content=content,
         schema=ANSWER_EXTRACT_SCHEMA,
         schema_name="answer_extract",
-        max_tokens=min(profile["max_output_tokens"], 4000),
+        max_tokens=4000,
     )
 
 
@@ -772,6 +789,7 @@ def _build_user_content(
     grade_level: Optional[str],
     subject_hint: Optional[str],
     layout_mode: str = "combined",
+    answer_hints: Optional[dict[str, Any]] = None,
 ) -> list[dict[str, Any]]:
     split_mode = bool(normalized_problem_images)
     spread_mode = layout_mode == "spread" and not split_mode
@@ -784,9 +802,14 @@ def _build_user_content(
             " 空欄□だけ見て未記入と決めない。答案ノートに (1) の手書きがあれば採点する。"
             " 答案ノートの赤丸・最終行の数字を child_answer にする（途中式は含めない）。"
             " 手書きは鉛筆の筆跡を拡大して読む。小数点・分数の上下・単位を落とさない。"
-            " 480と32、0.85と0.18、314と31.4 のような桁取り違えに注意。"
+            " 480と32、0.85と0.18、314と31.4、209と20.9 のような桁取り違えに注意。"
             " 読み取りに自信がなければ verdict=uncertain（誤採点より要確認を優先）。"
         )
+        if answer_hints and answer_hints.get("items"):
+            intro += (
+                "\n\n【答案ノート事前読み取り（画像で必ず照合。矛盾があれば画像を優先し read_confidence=low は uncertain）】\n"
+                + json.dumps(answer_hints.get("items", []), ensure_ascii=False)
+            )
     elif spread_mode:
         intro = (
             "【見開き2枚モード — 国語・理科などワーク向け】"
@@ -921,12 +944,21 @@ def grade(
         )
 
     # 分割・見開き2枚は精密モデル + 高解像度固定
+    answer_hints: Optional[dict[str, Any]] = None
     if normalized_problem_images or layout == "spread":
         profile = dict(profile)
         profile["model"] = OPENAI_PRECISE_MODEL
         profile["image_detail"] = "high"
         suffix = "・分割1pass" if normalized_problem_images else "・見開き2枚"
         profile["label"] = profile.get("label", "") + suffix
+
+    if normalized_problem_images and not SPLIT_TWO_STAGE:
+        logger.info("split answer prefetch start answers=%d", len(normalized_answer_images))
+        answer_hints = _extract_answers(normalized_answer_images, profile, grade_level)
+        logger.info(
+            "split answer prefetch done items=%d",
+            len(answer_hints.get("items", [])),
+        )
 
     user_content = _build_user_content(
         profile=profile,
@@ -938,6 +970,7 @@ def grade(
         grade_level=grade_level,
         subject_hint=subject_hint,
         layout_mode=layout,
+        answer_hints=answer_hints,
     )
 
     resp = _post_chat_completion(
@@ -978,7 +1011,9 @@ def grade(
     data["grading_profile"] = profile["label"]
     if normalized_problem_images:
         data["layout_mode"] = "split"
-        data["grading_strategy"] = "split_unified"
+        data["grading_strategy"] = (
+            "split_unified_prefetch" if answer_hints is not None else "split_unified"
+        )
     elif layout == "spread":
         data["layout_mode"] = "spread"
         data["grading_strategy"] = "spread_unified"
@@ -986,6 +1021,12 @@ def grade(
         data["layout_mode"] = "combined"
         data["grading_strategy"] = "single_pass"
     result = _with_counts(data, mode)
+    if answer_hints is not None and os.getenv("MARUKE_INCLUDE_OCR_PREVIEW", "1").strip().lower() not in {
+        "0",
+        "false",
+        "no",
+    }:
+        result["ocr_preview"] = {"answers": answer_hints.get("items", [])}
     logger.info(
         "grade done strategy=%s layout=%s items=%d correct=%d incorrect=%d",
         data["grading_strategy"],
