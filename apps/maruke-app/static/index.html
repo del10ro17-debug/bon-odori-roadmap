@@ -146,7 +146,8 @@
     <div style="height:14px"></div>
     <label class="field">撮影パターン</label>
     <div class="chips" id="layouts">
-      <button data-l="combined">1枚に<br><small style="font-weight:400;font-size:10px">問題＋答え</small></button>
+      <button data-l="combined">1枚<br><small style="font-weight:400;font-size:10px">問題＋答え</small></button>
+      <button data-l="spread">見開き2枚<br><small style="font-weight:400;font-size:10px">国語など</small></button>
       <button data-l="split">別々<br><small style="font-weight:400;font-size:10px">プリント＋ノート</small></button>
     </div>
     <p class="hint" id="layoutHint" style="text-align:left;margin-top:8px">問題と答えが同じ用紙・同じ写真に写っている場合</p>
@@ -169,7 +170,8 @@
       答案ノートは (1)(2)… の番号がすべて写るように。明るい場所・真上から・鉛筆の字がはっきり見える距離で。
       斜め・影・指で隠さないと読み取り精度が上がります。
     </p>
-    <div class="warnbox" id="spreadWarn" hidden>見開き全体は読み取りミスが出やすいです。片ページ、または大問ごとに撮ると精度が上がります。</div>
+    <div class="warnbox" id="spreadWarn" hidden>見開き全体を1枚に収めると読み取りミスが出やすいです。「見開き2枚」で左右ページを別々に撮ると精度が上がります。</div>
+    <div class="warnbox" id="spreadNeedSecond" hidden>あと1枚（右ページ）を追加してください。左→右の順で2枚必要です。</div>
 
     <details class="keyrow">
       <summary>＋ 解答ページも撮る（精度アップ・任意）</summary>
@@ -189,7 +191,7 @@
 
     <div style="height:14px"></div>
     <button class="go" id="go" disabled>答え合わせする</button>
-    <p class="hint">🟡＝AIが自信なし。保護者がご確認ください。<br>塾で「問題はテキスト・答えはノート」の場合は「別々」を選んでください。</p>
+    <p class="hint">🟡＝AIが自信なし。保護者がご確認ください。<br>国語は「見開き2枚」、算数塾のプリント＋ノートは「別々」を選んでください。</p>
     <p class="status" id="apiStatus"></p>
     <div class="err" id="err" hidden></div>
   </div>
@@ -205,8 +207,13 @@ const MODE_HINTS = {
   rich: "ママ向け解説・子どもヒント・図形の図つき。わからない問題向け",
 };
 const LAYOUT_HINTS = {
-  combined: "問題と答えが同じ用紙・同じ写真に写っている場合",
-  split: "問題はテキスト、答えはノートに書く塾向け。問題プリントと答案ノートをそれぞれ撮影",
+  combined: "問題と答えが同じ用紙・1枚の写真に写っている場合",
+  spread: "国語などワークの見開き。左ページ→右ページの順で2枚撮影（問題と答えが同じページに）",
+  split: "算数塾など。問題はテキスト、答えはノートに書く場合。プリントと答案ノートをそれぞれ撮影",
+};
+const ANSWER_HINTS = {
+  split: "答案ノートは (1)(2)… の番号がすべて写るように。明るい場所・真上から・鉛筆の字がはっきり見える距離で。斜め・影・指で隠さないと読み取り精度が上がります。",
+  spread: "左ページ→右ページの順で2枚。見開き全体を1枚に収めず、ページごとに真上から撮影。国語の縦書きもページ単位で。",
 };
 
 function el(tag, props, ...kids) {
@@ -248,18 +255,31 @@ state.grade = "5";
 
 function updateLayoutUi() {
   const split = state.layout === "split";
+  const spread = state.layout === "spread";
   document.getElementById("splitProblemBlock").hidden = !split;
   document.getElementById("ansFieldLabel").textContent = split
     ? "答案ノート（計算・答えを書いたページ）"
-    : "子どもの答案（問題＋答え）を撮影";
+    : spread
+      ? "見開きページ（左→右の順で2枚）"
+      : "子どもの答案（問題＋答え）を撮影";
   document.getElementById("layoutHint").textContent = LAYOUT_HINTS[state.layout] || "";
-  document.getElementById("answerHint").hidden = !split;
+  const answerHint = document.getElementById("answerHint");
+  answerHint.hidden = !(split || spread);
+  if (split) answerHint.textContent = ANSWER_HINTS.split;
+  else if (spread) answerHint.textContent = ANSWER_HINTS.spread;
+  document.getElementById("spreadWarn").hidden = split || spread;
+  if (spread && state.ans && state.ans.length === 1) {
+    document.getElementById("spreadNeedSecond").hidden = false;
+  } else {
+    document.getElementById("spreadNeedSecond").hidden = true;
+  }
   document.getElementById("go").disabled = !canSubmit();
 }
 
 function canSubmit() {
   if (!state.ans) return false;
   if (state.layout === "split" && !state.prob) return false;
+  if (state.layout === "spread" && state.ans.length < 2) return false;
   return true;
 }
 
@@ -271,6 +291,17 @@ document.getElementById("layouts").addEventListener("click", (e) => {
   updateLayoutUi();
 });
 updateLayoutUi();
+
+document.getElementById("subjects").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if ((b.dataset.s || "") === "国語" && state.layout === "combined") {
+    state.layout = "spread";
+    document.querySelectorAll("#layouts button").forEach(x => x.classList.remove("on"));
+    const spreadBtn = document.querySelector("#layouts button[data-l='spread']");
+    if (spreadBtn) spreadBtn.classList.add("on");
+    updateLayoutUi();
+  }
+});
 
 function toJpeg(file, maxEdge = 2000) {
   return new Promise((resolve, reject) => {
@@ -308,8 +339,10 @@ function wireShot(inputId, shotId, slot) {
         img.src = converted[0].preview;
         await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; });
         const spreadWarn = document.getElementById("spreadWarn");
-        spreadWarn.hidden = !(img.width > 0 && img.width / img.height > 1.25);
+        spreadWarn.hidden = state.layout === "spread" || state.layout === "split"
+          || !(img.width > 0 && img.width / img.height > 1.25);
       }
+      if (slot === "ans") updateLayoutUi();
       state[slot] = (slot === "ans" || slot === "prob")
         ? converted.map(item => item.blob)
         : converted[0].blob;
@@ -374,6 +407,8 @@ document.getElementById("go").addEventListener("click", async () => {
       fd.append("problem_images", blob, `problem-${index + 1}.jpg`);
     });
     fd.append("layout_mode", "split");
+  } else if (state.layout === "spread") {
+    fd.append("layout_mode", "spread");
   } else {
     fd.append("layout_mode", "combined");
   }

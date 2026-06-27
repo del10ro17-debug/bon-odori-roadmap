@@ -35,26 +35,32 @@ SYSTEM_PROMPT = """あなたは中学受験生の家庭学習を支える、丁�
    ただし採点は verdict="uncertain" にし、comment に観点だけ示す（無理に○×をつけない）。
 6. 縦書き（タテ書き）の国語プリントでも、右から左・上から下の順で設問を読み取る。
 7. 見開き2ページが1枚の写真に写っている場合は、両ページの設問を読み取る。自信がない設問は uncertain にする。
-8. 選択肢がある問題では、必ず写真に印刷された選択肢の中から答えを選ぶ。選択肢外の答えを勝手に作らない。
-9. child_answer には「子どもが鉛筆・ペンで手書きした内容」だけを入れる。問題文に印刷されている選択肢ラベル（ア・イ・ウなど）、番号、見出し、例文は child_answer に入れない。
-10. 丸・枠・下線の空欄に手書きがない場合は必ず未記入とする。空欄を推測して「ウ」などと書いたり、graded / correct にしない。
-11. result_type="answer_example"（未記入）のときは verdict は必ず uncertain、basis は answer_key にしない（採点していないので解答照合ではない）。
-12. 【問題と答案が別画像】問題プリントと答案ノートが分かれている場合:
+8. 【見開き2枚モード】左右ページが別々の写真として送られた場合、同一ワークの見開きとして1つの宿題とみなす。
+    - 1枚目＝左ページ、2枚目＝右ページ（3枚目以降は続きページ）。順番を入れ替えない。
+    - 国語ワークでは問題文・本文・設問と子どもの手書き答え（選択マーク・記述・語句）が同じページにある。
+    - 縦書きは各ページ内で右→左・上→下。2ページにまたがる文章は左ページの続きを右ページで読む。
+    - 記述・抜き出し・漢字・語句問題は手書きを child_answer に。空欄のみで手書きがなければ未記入。
+    - 国語の記述は完全一致でなくても要点が合えば correct、微妙なら uncertain（厳しすぎない）。
+9. 選択肢がある問題では、必ず写真に印刷された選択肢の中から答えを選ぶ。選択肢外の答えを勝手に作らない。
+10. child_answer には「子どもが鉛筆・ペンで手書きした内容」だけを入れる。問題文に印刷されている選択肢ラベル（ア・イ・ウなど）、番号、見出し、例文は child_answer に入れない。
+11. 丸・枠・下線の空欄に手書きがない場合は必ず未記入とする。空欄を推測して「ウ」などと書いたり、graded / correct にしない。
+12. result_type="answer_example"（未記入）のときは verdict は必ず uncertain、basis は answer_key にしない（採点していないので解答照合ではない）。
+13. 【問題と答案が別画像】問題プリントと答案ノートが分かれている場合:
     - 問題文・図・選択肢は「問題プリント」から読む。空欄□に手書きがなくても、答案ノートに (1)(2)… の答えがあればそこから child_answer を読む。
     - 設問番号 (1)(2)… で問題プリントと答案ノートを対応づける。番号の対応が不明な設問は verdict=uncertain。
     - 答案ノートの途中式と最終答えを区別する。赤丸・二重線・下線で囲った数字が最終答えのことが多い。
     - 問題プリントだけで空欄の設問に、答案ノートに該当番号の手書きがなければ child_answer="（未記入）"、result_type=answer_example。
-13. 子どもの手書き数字・分数・単位は画像をよく見て読む。480 と 32、0.08 と 0.18 など似た桁を取り違えない。読み取りに自信がなければ uncertain。
-14. 【手書き答案の読み取り】答案ノートでは印刷文字ではなく鉛筆・ペンの筆跡だけを child_answer に書く。
+14. 子どもの手書き数字・分数・単位は画像をよく見て読む。480 と 32、0.08 と 0.18 など似た桁を取り違えない。読み取りに自信がなければ uncertain。
+15. 【手書き答案の読み取り】答案ノートでは印刷文字ではなく鉛筆・ペンの筆跡だけを child_answer に書く。
     - 縦書きの筆算・除法は最終行・最下段の数字を最終答えとする。途中の計算行は child_answer に含めない。
     - 小数点の位置を慎重に見る（0.85 と 0.18、314 と 31.4）。点が小さくても推測で動かさない。
     - 帯分数は「3と1/3」「2と4/9」の表記。分子分母の上下関係を画像どおりに読む。
     - 単位（cm・秒・倍・%）が書いてあれば child_answer に含める。
     - 設問番号 (1)(2)… と答案の並びを対応づける。番号が写真に写っていなければ uncertain。
     - 消しゴムで薄くなった字・かすれた鉛筆は推測せず uncertain。
-15. 問題文を要約するとき、与えられた数字・記号を落とさない（例: 並べ替え問題では使える数字をすべて使う）。
-16. correct_answer と explanation の数値は必ず一致させる。矛盾したら confidence=low、verdict=uncertain。
-17. 【算数プリントの読み取り】
+16. 問題文を要約するとき、与えられた数字・記号を落とさない（例: 並べ替え問題では使える数字をすべて使う）。
+17. correct_answer と explanation の数値は必ず一致させる。矛盾したら confidence=low、verdict=uncertain。
+18. 【算数プリントの読み取り】
     - 除法の筆算（0.4）83.6 など）は「83.6÷0.4」であり掛け算ではない。
     - 「8/15 分」「15分の8分」= 8/15 分（時間）。「8分の15」「15/8 分」と読み替えない。
     - 帯分数は「3と1/3」「4と2/9」の表記を維持。LaTeX は使わずプレーンテキスト。
@@ -745,6 +751,16 @@ def demo_result(
     return _with_counts(data, grading_mode)
 
 
+def _spread_page_label(index: int, total: int) -> str:
+    if total == 2:
+        return "左ページ" if index == 1 else "右ページ"
+    if index == 1:
+        return "1ページ目（左）"
+    if index == 2:
+        return "2ページ目（右）"
+    return f"続き {index}ページ目"
+
+
 def _build_user_content(
     *,
     profile: dict[str, Any],
@@ -755,8 +771,10 @@ def _build_user_content(
     key_media_type: Optional[str],
     grade_level: Optional[str],
     subject_hint: Optional[str],
+    layout_mode: str = "combined",
 ) -> list[dict[str, Any]]:
     split_mode = bool(normalized_problem_images)
+    spread_mode = layout_mode == "spread" and not split_mode
     if split_mode:
         intro = (
             "【1枚目＝問題プリント、2枚目以降＝答案ノート】"
@@ -768,6 +786,17 @@ def _build_user_content(
             " 手書きは鉛筆の筆跡を拡大して読む。小数点・分数の上下・単位を落とさない。"
             " 480と32、0.85と0.18、314と31.4 のような桁取り違えに注意。"
             " 読み取りに自信がなければ verdict=uncertain（誤採点より要確認を優先）。"
+        )
+    elif spread_mode:
+        intro = (
+            "【見開き2枚モード — 国語・理科などワーク向け】"
+            " 複数枚の写真は同一見開きの左右ページです（1枚目＝左、2枚目＝右、以降は続き）。"
+            " 1つの宿題として両ページを合わせて読み、すべての設問を漏らさず採点してください。"
+            " 各ページには印刷された問題文・本文・設問と、子どもの鉛筆・ペンの手書き答えが一緒に写っています。"
+            " 国語の縦書きは各ページ内で右→左・上→下。2ページにまたがる文章は左→右の順に繋げて読む。"
+            " 選択マーク（ア・イ・ウの丸付け）、漢字・語句の記入、記述文を child_answer に書く。"
+            " 記述問題は要点が合えば correct、表現の違いだけなら柔軟に。自信がなければ uncertain。"
+            " 印刷文字を child_answer に入れない。空欄に手書きがなければ未記入。"
         )
     else:
         intro = (
@@ -812,10 +841,19 @@ def _build_user_content(
                 ]
             )
     else:
+        total = len(normalized_answer_images)
         for index, (image_bytes, media_type) in enumerate(normalized_answer_images, start=1):
+            if spread_mode:
+                page = _spread_page_label(index, total)
+                caption = (
+                    f"【見開き {page}】{index} / {total}"
+                    "（問題文＋手書き答案。左→右の順で同一宿題として読む）"
+                )
+            else:
+                caption = f"答案写真 {index} / {total}"
             user_content.extend(
                 [
-                    {"type": "text", "text": f"答案写真 {index} / {len(normalized_answer_images)}"},
+                    {"type": "text", "text": caption},
                     _image_part(image_bytes, media_type, profile["image_detail"]),
                 ]
             )
@@ -850,6 +888,7 @@ def grade(
     answer_images: Optional[Sequence[tuple[bytes, str]]] = None,
     problem_images: Optional[Sequence[tuple[bytes, str]]] = None,
     grading_mode: str = "rich",
+    layout_mode: str = "combined",
 ) -> dict[str, Any]:
     if not os.environ.get("OPENAI_API_KEY"):
         raise GraderError("OPENAI_API_KEY が未設定です。")
@@ -865,6 +904,10 @@ def grade(
     if normalized_problem_images and not normalized_answer_images:
         raise GraderError("答案ノートの写真を1枚以上選んでください。")
 
+    layout = (layout_mode or "combined").strip()
+    if layout not in {"combined", "split", "spread"}:
+        layout = "combined"
+
     if normalized_problem_images and SPLIT_TWO_STAGE:
         return _grade_split_two_stage(
             normalized_problem_images=normalized_problem_images,
@@ -877,12 +920,13 @@ def grade(
             key_media_type=key_media_type,
         )
 
-    # 分割モードは ChatGPT 同型の 1pass + 精密モデル固定
-    if normalized_problem_images:
+    # 分割・見開き2枚は精密モデル + 高解像度固定
+    if normalized_problem_images or layout == "spread":
         profile = dict(profile)
         profile["model"] = OPENAI_PRECISE_MODEL
         profile["image_detail"] = "high"
-        profile["label"] = profile.get("label", "") + "・分割1pass"
+        suffix = "・分割1pass" if normalized_problem_images else "・見開き2枚"
+        profile["label"] = profile.get("label", "") + suffix
 
     user_content = _build_user_content(
         profile=profile,
@@ -893,6 +937,7 @@ def grade(
         key_media_type=key_media_type,
         grade_level=grade_level,
         subject_hint=subject_hint,
+        layout_mode=layout,
     )
 
     resp = _post_chat_completion(
@@ -931,11 +976,19 @@ def grade(
 
     data["answer_key_present"] = key_image is not None
     data["grading_profile"] = profile["label"]
-    data["layout_mode"] = "split" if normalized_problem_images else "combined"
-    data["grading_strategy"] = "split_unified" if normalized_problem_images else "single_pass"
+    if normalized_problem_images:
+        data["layout_mode"] = "split"
+        data["grading_strategy"] = "split_unified"
+    elif layout == "spread":
+        data["layout_mode"] = "spread"
+        data["grading_strategy"] = "spread_unified"
+    else:
+        data["layout_mode"] = "combined"
+        data["grading_strategy"] = "single_pass"
     result = _with_counts(data, mode)
     logger.info(
-        "grade done strategy=single_pass layout=%s items=%d correct=%d incorrect=%d",
+        "grade done strategy=%s layout=%s items=%d correct=%d incorrect=%d",
+        data["grading_strategy"],
         data["layout_mode"],
         result.get("total", 0),
         result.get("correct_count", 0),

@@ -37,6 +37,7 @@ MAX_ANSWER_IMAGES = 6
 MAX_PROBLEM_IMAGES = 4
 VALID_GRADES = {"1", "2", "3", "4", "5", "6"}
 VALID_GRADING_MODES = {"simple", "rich"}
+VALID_LAYOUT_MODES = {"combined", "split", "spread"}
 
 
 app = FastAPI(title="まるつけ")
@@ -143,9 +144,16 @@ async def api_grade(
         )
 
     layout = (layout_mode or "combined").strip()
+    if layout not in VALID_LAYOUT_MODES:
+        return JSONResponse({"error": "撮影パターンが不正です。"}, status_code=400)
     if layout == "split" and not problem_uploads:
         return JSONResponse(
             {"error": "「問題と答案が別」の場合は問題プリントも撮影してください。"},
+            status_code=400,
+        )
+    if layout == "spread" and len(answer_uploads) < 2:
+        return JSONResponse(
+            {"error": "「見開き2枚」は左ページ・右ページを2枚以上撮影してください。"},
             status_code=400,
         )
 
@@ -198,6 +206,7 @@ async def api_grade(
             key_image=key_bytes,
             key_media_type=key_media_type,
             grading_mode=mode,
+            layout_mode=layout,
         )
     except grader.GraderError as e:
         logger.warning("grade failed: %s", e)
