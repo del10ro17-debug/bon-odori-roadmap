@@ -61,7 +61,11 @@ function init() {
     const strong = document.createElement("strong");
     strong.textContent = level.label;
     const desc = document.createElement("span");
-    desc.textContent = `${level.description}（${level.count}問）`;
+    const stock =
+      level.pool === "all"
+        ? data.questions.length
+        : data.questions.filter((q) => q.level === level.id).length;
+    desc.textContent = `${level.description} / 毎回${level.count}問（ストック${stock}）`;
     textWrap.appendChild(strong);
     textWrap.appendChild(desc);
 
@@ -88,8 +92,12 @@ function startGame(levelId) {
   const level = data.levels[levelId];
   if (!level) return;
 
-  const pool = data.questions.filter((q) => q.level === levelId);
-  const queue = shuffle(pool).slice(0, level.count);
+  const pool =
+    level.pool === "all"
+      ? data.questions
+      : data.questions.filter((q) => q.level === levelId);
+  const count = level.count || 10;
+  const queue = shuffle(pool).slice(0, Math.min(count, pool.length));
   if (!queue.length) return;
 
   state.level = levelId;
