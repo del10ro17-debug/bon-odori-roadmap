@@ -33,6 +33,7 @@
 | **日程・議事録・メール下書き** | `@secretary-light-chat` | 秘書 | `@secretary-light-chat 以下を議事録にして。決定事項とToDoを分けて:` |
 | **湾岸ファミリーアプリ開発** | `@wangan-family-light-chat` | IT / 戦略 | `@wangan-family-light-chat @apps/wangan-family-app/README.md を前提に。` |
 | **コード・バグ・CI** | `@it`（Direct） | IT | `@it このエラーを直して:（ログを貼る）` |
+| **外出先・Cloud で実装／チェック** | `@it` または案件 light-chat | IT | 詳細: [cloud-dev-environment.md](cloud-dev-environment.md) |
 | **グラフ・データ可視化・図** | COO または `@creative-visual` | クリエイティブ／可視化 | `COO、湾岸価格DBからエリア別坪単価のグラフを作って。` |
 | **絵・チラシ・ロゴ・アイコン** | COO または `@creative-visual` | クリエイティブ／可視化 | `COO、盆踊りの告知チラシ画像を作って。` |
 | **週次・優先順位・複数案件** | `@pmo` | PMO | `@pmo ポートフォリオ更新して。` |

@@ -98,8 +98,15 @@ COO の【COO】見出し・長い振り分け説明は省略される。
 - alwaysApply ルールは `coo-orchestrator` + `approval-policy` の2つのみ維持
 - プロジェクト作業は glob rule（light-chat）で必要な文脈だけ注入
 
+## デスクトップ × クラウド
+
+日常は Desktop、外出先の実装・チェックは Cloud Agent。環境の正本は `.cursor/environment.json`。
+
+手順・Secrets・検証コマンド: [cloud-dev-environment.md](cloud-dev-environment.md)
+
 ## 関連
 
 - [AGENTS.md](../AGENTS.md) — 組織・3層・スキル一覧
+- [cloud-dev-environment.md](cloud-dev-environment.md) — Cloud Environment 構成
 - [company/projects/README.md](../company/projects/README.md) — プロジェクト台帳
 - [company/handbook.md](../company/handbook.md) — 会社方針・優先順位
