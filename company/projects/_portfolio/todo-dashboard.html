@@ -249,43 +249,36 @@
 
   <script>
     const dashboard = {
-      updatedAt: "2026-05-17 18:16",
+      updatedAt: "2026-07-19",
       projects: [
-        { id: "bon", name: "盆踊り出店", type: "案件", status: "active", nextReview: "2026-05-24" },
-        { id: "x", name: "X事業", type: "事業", status: "planning", nextReview: "2026-05-24" },
-        { id: "instagram", name: "Instagram事業", type: "事業", status: "planning", nextReview: "2026-05-24" },
-        { id: "minpaku", name: "民泊事業", type: "事業検討", status: "planning", nextReview: "未設定" },
+        { id: "maruke", name: "まるつけ", type: "アプリ", status: "active", nextReview: "2026-07-25" },
+        { id: "notion", name: "Notion Operations", type: "基盤", status: "active", nextReview: "2026-07-25" },
+        { id: "video", name: "Video Knowledge", type: "基盤", status: "active", nextReview: "2026-07-25" },
+        { id: "wangan-db", name: "湾岸価格DB", type: "ツール", status: "active", nextReview: "2026-07-25" },
+        { id: "conan", name: "コナン家族クイズ", type: "ツール", status: "active", nextReview: "2026-07-25" },
+        { id: "bon", name: "盆踊り出店", type: "案件", status: "waiting", nextReview: "2026-07-26" },
+        { id: "x", name: "X事業", type: "事業", status: "planning", nextReview: "2026-07-25" },
+        { id: "instagram", name: "Instagram事業", type: "事業", status: "planning", nextReview: "2026-07-25" },
+        { id: "minpaku", name: "沖縄民泊", type: "事業", status: "planning", nextReview: "2026-07-25" },
+        { id: "family", name: "湾岸ファミリーアプリ", type: "アプリ", status: "planning", nextReview: "2026-07-25" },
       ],
       todos: [
-        { project: "盆踊り出店", owner: "坂倉", priority: "高", task: "火気使用申請書が必要か主催者に確認する", due: "2026-05-24", status: "未着手" },
-        { project: "盆踊り出店", owner: "坂倉", priority: "高", task: "5月末予定の会場レイアウト決定通知を確認する", due: "2026-05-31", status: "待ち" },
-        { project: "盆踊り出店", owner: "坂倉", priority: "高", task: "7/11・7/12の参加可能スタッフを募集する", due: "2026-05-31", status: "未着手" },
-        { project: "盆踊り出店", owner: "Event Ops", priority: "高", task: "当日役割表のたたき台を作る", due: "2026-06-07", status: "未着手" },
-        { project: "盆踊り出店", owner: "経理", priority: "中", task: "食材・包材・備品の概算予算を作る", due: "2026-06-07", status: "未着手" },
-        { project: "盆踊り出店", owner: "Event Ops", priority: "中", task: "搬入手段、台車、保冷容器の必要数を洗い出す", due: "2026-06-07", status: "未着手" },
-        { project: "盆踊り出店", owner: "秘書", priority: "中", task: "チーム共有文と返信フォーマットを整える", due: "2026-05-24", status: "下書き済み" },
-
-        { project: "X事業", owner: "戦略", priority: "高", task: "X事業の目的とターゲット市場を定義する", due: "2026-05-24", status: "未着手" },
-        { project: "X事業", owner: "戦略", priority: "高", task: "北極星指標と週次KPIを決める", due: "2026-05-24", status: "未着手" },
-        { project: "X事業", owner: "戦略", priority: "中", task: "投稿カテゴリ、トーン、承認基準を整理する", due: "2026-05-31", status: "未着手" },
-        { project: "X事業", owner: "IT", priority: "中", task: "wangan-agentのメトリクスを事業レポート化する方法を整理する", due: "2026-05-31", status: "未着手" },
-        { project: "X事業", owner: "COO", priority: "低", task: "x-poster / x-auto-post-agentを残すか統合するか判断材料を整理する", due: "2026-06-07", status: "未着手" },
-
-        { project: "Instagram事業", owner: "CEO", priority: "高", task: "Instagram登録画面でメールまたは電話番号、パスワード、認証コードを入力する", due: "2026-05-17", status: "進行中" },
-        { project: "Instagram事業", owner: "戦略", priority: "高", task: "プロフィール文・コンセプトを決める", due: "2026-05-24", status: "未着手" },
-        { project: "Instagram事業", owner: "戦略", priority: "高", task: "30日間の北極星指標と週次KPIを決める", due: "2026-05-24", status: "未着手" },
-        { project: "Instagram事業", owner: "戦略", priority: "高", task: "投稿カテゴリを3つに絞る", due: "2026-05-24", status: "未着手" },
-        { project: "Instagram事業", owner: "営業", priority: "中", task: "初期の顧客候補と将来の提案導線を整理する", due: "2026-05-31", status: "未着手" },
-        { project: "Instagram事業", owner: "IT", priority: "中", task: "投稿制作・分析・レポート化に必要な運用ツールを整理する", due: "2026-05-31", status: "未着手" },
-        { project: "Instagram事業", owner: "PMO", priority: "中", task: "X事業との共通運用ルールを決める", due: "2026-05-31", status: "未着手" },
-
-        { project: "民泊事業", owner: "CEO", priority: "高", task: "読谷村の具体的物件を2〜3件ピックアップして現地内覧する", due: "未設定", status: "未着手" },
-        { project: "民泊事業", owner: "CEO", priority: "高", task: "行政書士へ旅館業法取得可否の事前確認を相談する", due: "未設定", status: "未着手" },
-        { project: "民泊事業", owner: "CEO", priority: "高", task: "沖縄振興開発金融公庫へ打診・面談予約する", due: "未設定", status: "未着手" },
-        { project: "民泊事業", owner: "CEO", priority: "中", task: "日本政策金融公庫の新規開業資金の申請書類を確認する", due: "未設定", status: "未着手" },
-        { project: "民泊事業", owner: "CEO", priority: "中", task: "プール設置業者へ見積依頼する", due: "未設定", status: "未着手" },
-        { project: "民泊事業", owner: "CEO", priority: "中", task: "近隣物件に宿泊して競合調査・サービス品質確認を行う", due: "未設定", status: "未着手" },
-        { project: "民泊事業", owner: "CEO", priority: "中", task: "読谷村専門の地元不動産業者と関係構築する", due: "未設定", status: "未着手" },
+        { project: "まるつけ", owner: "CEO", priority: "高", task: "公庫書類【要CEO記入】+ 創業相談予約（7/10超過・再設定）", due: "2026-07-25", status: "書類完成" },
+        { project: "まるつけ", owner: "CEO", priority: "高", task: "実プリント写真を tests/fixtures/real/ に追加して精度再検証", due: "未設定", status: "実写真待ち" },
+        { project: "まるつけ", owner: "IT", priority: "中", task: "Render 本番 URL・環境変数確認", due: "2026-07-25", status: "要確認" },
+        { project: "盆踊り出店", owner: "CEO / 経理", priority: "高", task: "当日売上・原価・残在庫・PayPay実績を記録", due: "2026-07-26", status: "要CEO入力" },
+        { project: "盆踊り出店", owner: "Event Ops", priority: "高", task: "振り返り（成功点／次回改善）を status に追記", due: "2026-07-26", status: "未着手" },
+        { project: "盆踊り出店", owner: "秘書", priority: "中", task: "チームへのお礼文・精算連絡", due: "2026-07-26", status: "未着手" },
+        { project: "Notion Operations", owner: "CEO", priority: "高", task: "会社HQ配下DBを claude-obsidian Connections で共有", due: "未設定", status: "要対応" },
+        { project: "Notion Operations", owner: "IT", priority: "中", task: "共有後 --full で Obsidian 初回移行", due: "共有後", status: "待ち" },
+        { project: "湾岸価格DB", owner: "IT", priority: "高", task: "ダッシュボード再生成（generatedAt 2026-05-25 / 3,269件）", due: "2026-07-25", status: "更新遅延" },
+        { project: "Video Knowledge", owner: "IT", priority: "中", task: "Notion 動画メモ DB 作成 + 1週間パイロット", due: "未設定", status: "未着手" },
+        { project: "X事業", owner: "戦略", priority: "高", task: "X事業の目的とターゲット市場を定義する", due: "未設定", status: "未着手" },
+        { project: "X事業", owner: "戦略", priority: "高", task: "北極星指標と週次KPIを決める", due: "未設定", status: "未着手" },
+        { project: "Instagram事業", owner: "戦略", priority: "高", task: "プロフィール文・コンセプトを決める", due: "未設定", status: "未着手" },
+        { project: "Instagram事業", owner: "CEO", priority: "中", task: "Instagram登録の完了（認証コード入力）", due: "未設定", status: "進行中" },
+        { project: "沖縄民泊", owner: "CEO", priority: "中", task: "バトンズ/TRANBIで旅館業許可済み物件を探索", due: "未設定", status: "進行中" },
+        { project: "コナン家族クイズ", owner: "CEO", priority: "低", task: "公開範囲（家族のみ vs Pages）を確認", due: "未設定", status: "要CEO" },
       ],
     };
 
@@ -313,14 +306,14 @@
     });
 
     const allCounts = counts(dashboard.todos);
-    const dueSoon = dashboard.todos.filter((todo) => ["2026-05-17", "2026-05-24"].includes(todo.due));
+    const dueSoon = dashboard.todos.filter((todo) => ["2026-07-25", "2026-07-26"].includes(todo.due));
 
     document.getElementById("updated").textContent = `最終更新: ${dashboard.updatedAt}`;
     document.getElementById("stats").innerHTML = `
       <div class="stat"><strong>${dashboard.projects.length}</strong><span>管理プロジェクト</span></div>
       <div class="stat"><strong>${allCounts.total}</strong><span>TODO総数</span></div>
       <div class="stat"><strong>${allCounts.high}</strong><span>高優先TODO</span></div>
-      <div class="stat"><strong>${dueSoon.length}</strong><span>5/24までのTODO</span></div>
+      <div class="stat"><strong>${dueSoon.length}</strong><span>7/26までのTODO</span></div>
       <div class="stat"><strong>${allCounts.doing + allCounts.waiting}</strong><span>進行中・待ち</span></div>
     `;
 
@@ -344,8 +337,8 @@
     }).join("");
 
     document.getElementById("focus-note").innerHTML = `
-      <strong>最優先は、Instagram登録の完了と5/24期限の戦略・盆踊り確認です。</strong><br>
-      5/24までに「火気使用申請」「X/InstagramのKPI・目的」「Instagramプロフィール」を決めると、次週の運用設計に入れます。
+      <strong>最優先は、まるつけ公庫記入・実写真検証、盆踊り実績入力、Notion DB共有です。</strong><br>
+      正本は <code>company/projects/_portfolio/status.md</code>。週次で各 status.md から集約します。
     `;
 
     let activeProject = "all";

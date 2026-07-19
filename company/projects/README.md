@@ -52,15 +52,19 @@ company/projects/[project-id]/
 
 ## 現在の管理プロジェクト
 
-| project-id | 概要 | 軽量チャット |
-|------------|------|-------------|
-| `bon-odori-harumi-2026` | 盆踊り・出店運営 | `@bon-odori-light-chat` |
-| `x-business` | X・湾岸ウォッチャー | `@x-business-light-chat` |
-| `instagram-business` | Instagram | `@instagram-light-chat` |
-| `notion-operations` | Notion議事録・予定・タスク | `@notion-ops-light-chat` |
-| `video-knowledge` | 動画文字起こし | `@video-knowledge-light-chat` |
+| project-id | 概要 | 状態 | 軽量チャット |
+|------------|------|------|-------------|
+| `maruke-app` | まるつけ（宿題丸つけ） | `active` | `@maruke-light-chat` |
+| `notion-operations` | Notion議事録・予定・タスク | `active` | `@notion-ops-light-chat` |
+| `video-knowledge` | 動画文字起こし | `active` | `@video-knowledge-light-chat` |
+| `conan-quiz` | コナン家族クイズ | `active` | — |
+| `bon-odori-harumi-2026` | 盆踊り・出店運営 | `waiting` | `@bon-odori-light-chat` |
+| `x-business` | X・湾岸ウォッチャー | `planning` | `@x-business-light-chat` |
+| `instagram-business` | Instagram | `planning` | `@instagram-light-chat` |
+| `okinawa-minpaku` | 沖縄民泊 | `planning` | `@okinawa-minpaku-light-chat` |
 
-その他: [docs/agent-routing.md](../../docs/agent-routing.md)（秘書・沖縄民泊・湾岸DB等）
+横断集約: [`_portfolio/status.md`](_portfolio/status.md) / [`registry.yaml`](registry.yaml)  
+その他: [docs/agent-routing.md](../../docs/agent-routing.md)（湾岸DB・湾岸ファミリー等）
 
 ## 関連ドキュメント
 
