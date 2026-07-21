@@ -84,3 +84,28 @@
 ## カスタマイズ
 
 `company/handbook.md` に社名・ミッション・顧客・禁止事項を書くと、全部門の回答品質が上がります。
+
+## Cursor Cloud specific instructions
+
+Desktop を主、Cloud Agent を外出先の実装・チェック用とする。詳細: [docs/cloud-dev-environment.md](docs/cloud-dev-environment.md)
+
+### 環境
+
+- 定義: `.cursor/environment.json` → `.cursor/Dockerfile` + `.cursor/cloud-install.sh`
+- 依存: リポジトリ直下 `.venv`（install が作成）。作業前に `source .venv/bin/activate`
+- 秘密情報: Cursor Dashboard の Secrets のみ（`.env` をコミットしない）
+- Obsidian vault（Mac 上）には触れない。案件文脈は `status.md` / `AGENT_CONTEXT.md` / Notion MCP
+
+### よく使うコマンド
+
+```bash
+source .venv/bin/activate
+python -c "import fastapi, uvicorn, PIL, fitz, matplotlib; print('ok')"
+cd apps/maruke-app && uvicorn app:app --host 0.0.0.0 --port 8010
+```
+
+### 依頼の型
+
+- 実装・バグ: `@it …`（PR まで）
+- 案件継続: `@*-light-chat` + 該当 `AGENT_CONTEXT.md`
+- UI の最終確認は Desktop に任せる前提で進めてよい
