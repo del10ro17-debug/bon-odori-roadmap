@@ -5,7 +5,7 @@ projects:
   - id: bon-odori-harumi-2026
     name: 晴海ふ頭公園盆踊り大会2026 出店
     type: 案件
-    status: active
+    status: waiting
     owner: 坂倉
     agent_context: true
     light_chat_rule: bon-odori-light-chat
@@ -83,3 +83,12 @@ projects:
     agent_context: true
     light_chat_rule: okinawa-minpaku-light-chat
     status_file: company/projects/okinawa-minpaku/status.md
+
+  - id: conan-quiz
+    name: 名探偵コナン 家族クイズ
+    type: ツール
+    status: active
+    owner: 坂倉
+    agent_context: false
+    light_chat_rule: null
+    status_file: company/projects/conan-quiz/status.md

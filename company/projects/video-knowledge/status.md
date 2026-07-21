@@ -1,8 +1,9 @@
 # Video Knowledge Pipeline
 
-- 状態: **MVP implemented & verified**
+- 状態: `active`（MVP implemented & verified）
 - 主管: IT / COO
 - 目的: YouTube視聴内容・ローカル動画をAI向けMarkdown/Notionに自動蓄積
+- 最終更新: 2026-07-19（ポートフォリオ集約。実装進捗に変更なし）
 
 ## 実装済み
 
