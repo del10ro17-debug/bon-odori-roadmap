@@ -32,6 +32,8 @@
 
 起動: `open_maruke_app.command` / Task「まるつけ: スマホ用起動」
 
+Grok Build で親UXを先行試作するときは `company/projects/maruke-app/grok-build-prompt.md` をそのまま貼る。本番コードの正本は変わらない。
+
 ## 競合
 
 - **採点くん:** 汎用宿題。国語精度に不満。受験特化なし。

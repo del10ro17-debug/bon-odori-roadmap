@@ -3,7 +3,7 @@
 - 状態: `active`
 - 責任者: 坂倉
 - 担当: IT / 戦略（事業構想）
-- 最終更新: 2026-06-25
+- 最終更新: 2026-08-19
 
 ## ミッション（CEO 2026-06-25）
 
@@ -112,6 +112,7 @@ Phase 4        塾なし／塾併用の受験戦略（通信＋まるつけで�
 - アプリ: `apps/maruke-app/`
 - Codex 試作（参考）: `~/Projects/maruke-app`
 - 引き継ぎメモ: `company/projects/maruke-app/handoff-2026-06-25.html`
+- Grok Build 試作プロンプト: [`grok-build-prompt.md`](./grok-build-prompt.md)（2026-08-19。親UX検証用。本番正本ではない）
 
 ## 完了済み（2026-06-25）
 
@@ -139,6 +140,7 @@ Phase 4        塾なし／塾併用の受験戦略（通信＋まるつけで�
 | P0 | IT | `run_accuracy_test.py` で3ケース自動検証 | – | 完了 |
 | P1 | IT | 画像トリミング・回転 UI | – | 未 |
 | P1 | IT | 採点 / 解答作成の API モード分離（二段階） | – | 未 |
+| P0 | CEO | Grok Build で親UX試作（[`grok-build-prompt.md`](./grok-build-prompt.md) を Build に貼る） | – | プロンプト用意済 |
 
 - 未決事項
 
